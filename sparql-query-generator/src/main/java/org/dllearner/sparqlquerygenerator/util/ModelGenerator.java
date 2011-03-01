@@ -1,12 +1,8 @@
 package org.dllearner.sparqlquerygenerator.util;
 
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.sql.SQLException;
-import java.util.Collections;
 import java.util.Iterator;
-import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.dllearner.kb.sparql.ExtractionDBCache;
@@ -34,29 +30,18 @@ public class ModelGenerator {
 	
 	private ExtractionDBCache cache;
 	
-	private Set<String> predicateFilters;
-	
 	public enum Strategy{
 		INCREMENTALLY,
 		CHUNKS
 	}
 	
 	public ModelGenerator(SparqlEndpoint endpoint){
-		this(endpoint, Collections.<String>emptySet());
-	}
-	
-	public ModelGenerator(SparqlEndpoint endpoint, Set<String> predicateFilters){
-		this(endpoint, predicateFilters, new ExtractionDBCache("cache"));
-	}
-	
-	public ModelGenerator(SparqlEndpoint endpoint, Set<String> predicateFilters, ExtractionDBCache cache){
 		this.endpoint = endpoint;
-		this.predicateFilters = predicateFilters;
-		this.cache = cache;
 	}
 	
 	public ModelGenerator(SparqlEndpoint endpoint, ExtractionDBCache cache){
-		this(endpoint, Collections.<String>emptySet(), cache);
+		this.endpoint = endpoint;
+		this.cache = cache;
 	}
 	
 	public ModelGenerator(String endpointURL){
@@ -72,18 +57,19 @@ public class ModelGenerator {
 		if(strategy == Strategy.INCREMENTALLY){
 			return getModelIncrementallyRec(resource, 0);
 		} else if(strategy == Strategy.CHUNKS){
-			return getModelChunked(resource);
+			return getModel(resource);
+		}else if(strategy == null){
+			return getModelOptional(resource);
 		}
 		return ModelFactory.createDefaultModel();
 	}
-	
 	
 	/**
 	 * A SPARQL CONSTRUCT query is created, to get a RDF graph for the given example with a specific recursion depth.
 	 * @param example The example resource for which a CONSTRUCT query is created.
 	 * @return The JENA ARQ Query object.
 	 */
-	private String makeConstructQueryOptional(String resource, int limit, int offset, Set<String> predicateFilter){
+	private Query makeConstructQuery(String resource, int limit, int offset){
 		StringBuilder sb = new StringBuilder();
 		sb.append("CONSTRUCT {\n");
 		sb.append("<").append(resource).append("> ").append("?p0 ").append("?o0").append(".\n");
@@ -94,42 +80,71 @@ public class ModelGenerator {
 		sb.append("WHERE {\n");
 		sb.append("<").append(resource).append("> ").append("?p0 ").append("?o0").append(".\n");
 		for(int i = 1; i < recursionDepth; i++){
-			sb.append("OPTIONAL{\n");
 			sb.append("?o").append(i-1).append(" ").append("?p").append(i).append(" ").append("?o").append(i).append(".\n");
 		}
+		
+		sb.append("FILTER (!regex (?p0, \"http://dbpedia.org/property/wikilink\"))");
 		for(int i = 1; i < recursionDepth; i++){
-			sb.append("}");
+			sb.append("FILTER (!regex (?p").append(i).append(", \"http://dbpedia.org/property/wikilink\"))");
 		}
-		
-		
-		for(int i = 0; i < recursionDepth; i++){
-			for(String predicate : predicateFilter){
-				sb.append("FILTER (!REGEX (?p").append(i).append(", \"").append(predicate).append("\"))");
-			}
-			
-		}
-	
 		sb.append("}\n");
-//		sb.append("ORDER BY ");
-//		for(int i = 0; i < recursionDepth; i++){
-//			sb.append("?p").append(i).append(" ").append("?o").append(i).append(" ");
-//		}
-//		sb.append("\n");
+		sb.append("ORDER BY ");
+		for(int i = 0; i < recursionDepth; i++){
+			sb.append("?p").append(i).append(" ").append("?o").append(i).append(" ");
+		}
+		sb.append("\n");
 		sb.append("LIMIT ").append(limit).append("\n");
 		sb.append("OFFSET ").append(offset);
 		
 		Query query = QueryFactory.create(sb.toString());
 		
-		return sb.toString();
+		return query;
 	}
 	
+	/**
+	 * A SPARQL CONSTRUCT query is created, to get a RDF graph for the given example with a specific recursion depth.
+	 * @param example The example resource for which a CONSTRUCT query is created.
+	 * @return The JENA ARQ Query object.
+	 */
+	private Query makeConstructQueryOptional(String resource, int limit, int offset){
+		StringBuilder sb = new StringBuilder();
+		sb.append("CONSTRUCT {\n");
+		sb.append("<").append(resource).append("> ").append("?p0 ").append("?o0").append(".\n");
+		for(int i = 1; i < recursionDepth; i++){
+			sb.append("?o").append(i-1).append(" ").append("?p").append(i).append(" ").append("?o").append(i).append(".\n");
+		}
+		sb.append("}\n");
+		sb.append("WHERE {\n");
+		sb.append("<").append(resource).append("> ").append("?p0 ").append("?o0").append(".\n");
+		for(int i = 1; i < recursionDepth; i++){sb.append("OPTIONAL{\n");
+			sb.append("?o").append(i-1).append(" ").append("?p").append(i).append(" ").append("?o").append(i).append(".\n");
+		}
+		sb.append("}");
+		sb.append("FILTER (!regex (?p0, \"http://dbpedia.org/property/wikilink\"))");
+		for(int i = 1; i < recursionDepth; i++){
+			sb.append("FILTER (!regex (?p").append(i).append(", \"http://dbpedia.org/property/wikilink\"))");
+		}
+	
+		sb.append("}\n");
+		sb.append("ORDER BY ");
+		for(int i = 0; i < recursionDepth; i++){
+			sb.append("?p").append(i).append(" ").append("?o").append(i).append(" ");
+		}
+		sb.append("\n");
+		sb.append("LIMIT ").append(limit).append("\n");
+		sb.append("OFFSET ").append(offset);
+		
+		Query query = QueryFactory.create(sb.toString());
+		
+		return query;
+	}
 	
 	/**
 	 * A SPARQL CONSTRUCT query is created, to get a RDF graph for the given example.
 	 * @param example The example resource for which a CONSTRUCT query is created.
 	 * @return The JENA ARQ Query object.
 	 */
-	private String makeConstructQuery(String example, Set<String> predicateFilters){
+	private Query makeConstructQuery(String example){
 		
 		StringBuilder sb = new StringBuilder();
 		sb.append("CONSTRUCT {\n");
@@ -137,67 +152,147 @@ public class ModelGenerator {
 		sb.append("}\n");
 		sb.append("WHERE {\n");
 		sb.append("<").append(example).append("> ").append("?p ").append("?o").append(".\n");
-		
-		for(String predicate : predicateFilters){
-			sb.append("FILTER (!REGEX (?p, \"").append(predicate).append("\"))");
-		}
-		
+		sb.append("FILTER (!regex (?p, \"http://dbpedia.org/property/wikilink\"))");
 		sb.append("}\n");
 		Query query = QueryFactory.create(sb.toString());
 		
-		return sb.toString();
+		return query;
 	}
 	
 	
-	
-	private Model getModelChunked(String resource){
+	private Model getModel(String resource){
 		logger.debug("Resource: " + resource);
-		String query = makeConstructQueryOptional(resource, CHUNK_SIZE, 0, predicateFilters);
+		Query query = makeConstructQuery(resource, CHUNK_SIZE, 0);
 		logger.debug("Sending SPARQL query ...");
 		logger.debug("Query:\n" + query.toString());
 		queryMonitor.start();
+		QueryExecution qexec = QueryExecutionFactory.sparqlService(
+				endpoint.getURL().toString(),
+				query,
+				endpoint.getDefaultGraphURIs(),
+				endpoint.getNamedGraphURIs());
 		Model all = ModelFactory.createDefaultModel();
-		try {
-			Model model = cache.executeConstructQuery(endpoint, query);
-			logger.debug("Got " + model.size() + " new triple in " + queryMonitor.getLastValue() + "ms.");
+		Model model = qexec.execConstruct();
+		logger.debug("Got " + model.size() + " new triple");
+		all.add(model);
+		queryMonitor.stop();
+		qexec.close();
+		int i = 1;
+		while(model.size() != 0){
+			query = makeConstructQuery(resource, CHUNK_SIZE, i * CHUNK_SIZE);
+			logger.debug("Sending SPARQL query ...");
+			logger.debug("Query:\n" + query.toString());
+			queryMonitor.start();
+			qexec = QueryExecutionFactory.sparqlService(
+					endpoint.getURL().toString(),
+					query,
+					endpoint.getDefaultGraphURIs(),
+					endpoint.getNamedGraphURIs());
+			model = qexec.execConstruct();
+			logger.debug("Got " + model.size() + " new triple");
 			all.add(model);
 			queryMonitor.stop();
-			int i = 1;
-			while(model.size() != 0){
-				query = makeConstructQueryOptional(resource, CHUNK_SIZE, i * CHUNK_SIZE, predicateFilters);
+			qexec.close();
+			i++;
+		}
+		return all;
+	}
+	
+	private Model getModelOptional(String resource){
+		logger.debug("Resource: " + resource);
+		Query query = makeConstructQueryOptional(resource, CHUNK_SIZE, 0);
+		logger.debug("Sending SPARQL query ...");
+		logger.debug("Query:\n" + query.toString());
+		queryMonitor.start();
+		QueryExecution qexec = QueryExecutionFactory.sparqlService(
+				endpoint.getURL().toString(),
+				query,
+				endpoint.getDefaultGraphURIs(),
+				endpoint.getNamedGraphURIs());
+		Model all = ModelFactory.createDefaultModel();
+		Model model = qexec.execConstruct();
+		logger.debug("Got " + model.size() + " new triple");
+		all.add(model);
+		queryMonitor.stop();
+		qexec.close();
+		int i = 1;
+		while(model.size() != 0){
+			query = makeConstructQueryOptional(resource, CHUNK_SIZE, i * CHUNK_SIZE);
+			logger.debug("Sending SPARQL query ...");
+			logger.debug("Query:\n" + query.toString());
+			queryMonitor.start();
+			qexec = QueryExecutionFactory.sparqlService(
+					endpoint.getURL().toString(),
+					query,
+					endpoint.getDefaultGraphURIs(),
+					endpoint.getNamedGraphURIs());
+			model = qexec.execConstruct();
+			logger.debug("Got " + model.size() + " new triple");
+			all.add(model);
+			queryMonitor.stop();
+			qexec.close();
+			i++;
+		}
+		return all;
+	}
+	
+	private Model getModelIncrementally(String resource){
+		logger.debug("Resource: " + resource);
+		Query query = makeConstructQuery(resource);
+		logger.debug("Sending SPARQL query ...");
+		logger.debug("Query:\n" + query.toString());
+		queryMonitor.start();
+		QueryExecution qexec = QueryExecutionFactory.sparqlService(
+				endpoint.getURL().toString(),
+				query,
+				endpoint.getDefaultGraphURIs(),
+				endpoint.getNamedGraphURIs());
+		Model all = qexec.execConstruct();
+		logger.debug("Got " + all.size() + " new triples:");
+		Statement st = null;
+		for(Iterator<Statement> i = all.listStatements();i.hasNext(); st = i.next()){
+			logger.debug(st);
+		}
+		Model tmp = ModelFactory.createDefaultModel();
+		Model model;
+		for(Iterator<Statement> i = all.listStatements(); i.hasNext();){
+			st = i.next();
+			if(st.getObject().isURIResource()){
+				logger.debug("Resource: " + st.getObject().toString());
+				query = makeConstructQuery(st.getObject().toString());
 				logger.debug("Sending SPARQL query ...");
 				logger.debug("Query:\n" + query.toString());
-				queryMonitor.start();
-				model = cache.executeConstructQuery(endpoint, query);
-				queryMonitor.stop();
-				logger.debug("Got " + model.size() + " new triple in " + queryMonitor.getLastValue() + "ms.");
-				all.add(model);
-				i++;
+				qexec = QueryExecutionFactory.sparqlService(
+						endpoint.getURL().toString(),
+						query,
+						endpoint.getDefaultGraphURIs(),
+						endpoint.getNamedGraphURIs());
+				model = qexec.execConstruct();
+				logger.debug("Got " + model.size() + " new triple");
+				Statement s = null;
+				for(Iterator<Statement> it = model.listStatements();it.hasNext(); s = it.next()){
+					logger.debug(st);
+				}
+				tmp.add(model);
 			}
-		} catch (UnsupportedEncodingException e) {
-			logger.error(e);
-		} catch (SQLException e) {
-			logger.error(e);
 		}
+		all.add(tmp);
 		return all;
 	}
 	
 	private Model getModelIncrementallyRec(String resource, int depth){
 		logger.debug("Resource: " + resource);
-		String query = makeConstructQuery(resource, predicateFilters);
+		Query query = makeConstructQuery(resource);
 		logger.debug("Sending SPARQL query ...");
-		logger.debug("Query:\n" + query);
+		logger.debug("Query:\n" + query.toString());
 		queryMonitor.start();
-		Model model = null;
-		try {
-			model = cache.executeConstructQuery(endpoint, query);
-		} catch (UnsupportedEncodingException e) {
-			logger.error(e);
-		} catch (SQLException e) {
-			logger.error(e);
-		}
-		queryMonitor.stop();
-		logger.debug("Got " + model.size() + " new triples in " + queryMonitor.getLastValue() + "ms:");
+		QueryExecution qexec = QueryExecutionFactory.sparqlService(
+				endpoint.getURL().toString(),
+				query,
+				endpoint.getDefaultGraphURIs(),
+				endpoint.getNamedGraphURIs());
+		Model model = qexec.execConstruct();
+		logger.debug("Got " + model.size() + " new triples:");
 		Statement st = null;
 		for(Iterator<Statement> i = model.listStatements();i.hasNext(); st = i.next()){
 			logger.debug(st);
@@ -207,7 +302,7 @@ public class ModelGenerator {
 			for(Iterator<Statement> i = model.listStatements(); i.hasNext();){
 				st = i.next();
 				if(st.getObject().isURIResource()){
-					tmp.add(getModelIncrementallyRec(st.getObject().toString(), depth + 1));
+					tmp.add(getModelIncrementallyRec(st.getObject().toString(), depth++));
 				}
 			}
 			model.add(tmp);
@@ -215,6 +310,5 @@ public class ModelGenerator {
 		
 		return model;
 	}
-	
 
 }

@@ -66,6 +66,7 @@ import org.dllearner.core.owl.TypedConstant;
 import org.dllearner.core.owl.UntypedConstant;
 import org.dllearner.kb.OWLAPIOntology;
 import org.dllearner.kb.OWLFile;
+import org.dllearner.kb.OWLOntologyKnowledgeSource;
 import org.dllearner.kb.sparql.SparqlKnowledgeSource;
 import org.dllearner.utilities.owl.ConceptComparator;
 import org.dllearner.utilities.owl.DLLearnerDescriptionConvertVisitor;
@@ -115,9 +116,11 @@ import org.semanticweb.owlapi.reasoner.SimpleConfiguration;
 import org.semanticweb.owlapi.util.SimpleIRIMapper;
 import org.semanticweb.owlapi.vocab.PrefixOWLOntologyFormat;
 
+import org.springframework.core.io.Resource;
 import uk.ac.manchester.cs.factplusplus.owlapiv3.FaCTPlusPlusReasonerFactory;
 
 import com.clarkparsia.pellet.owlapiv3.PelletReasonerFactory;
+import uk.ac.manchester.cs.owl.owlapi.OWLDataFactoryImpl;
 
 /**
  * Mapping to OWL API reasoner interface. The OWL API currently 
@@ -134,12 +137,11 @@ public class OWLAPIReasoner extends ReasonerComponent {
 //	.getLogger(OWLAPIReasoner.class);	
 	
 	//private String reasonerType = "pellet";
-	private OWLAPIReasonerConfigurator configurator;
 	@Override
 	public OWLAPIReasonerConfigurator getConfigurator(){
-		return configurator;
+		throw new RuntimeException("Use Dependency injection rather than rely on a configurator.");
 	}
-	
+
 	private OWLReasoner reasoner;
 	private OWLOntologyManager manager;
 
@@ -175,7 +177,6 @@ public class OWLAPIReasoner extends ReasonerComponent {
 	
 	public OWLAPIReasoner(Set<KnowledgeSource> sources) {
 		super(sources);
-		this.configurator = new OWLAPIReasonerConfigurator(this);
 	}
 	
 	public static String getName() {
@@ -222,8 +223,25 @@ public class OWLAPIReasoner extends ReasonerComponent {
 		individuals = new TreeSet<Individual>();	
 				
 		// create OWL API ontology manager
-		manager = OWLManager.createOWLOntologyManager();
-		
+        /** This line is very important - if we don't use a new Data Factory for each instance, we get weird behavior especially in Multi Threaded mode */
+        factory = new OWLDataFactoryImpl();
+		manager = OWLManager.createOWLOntologyManager(factory);
+
+         /** BEGIN ISS CODE */
+        /** Create the URI->Resource Mappings for items that are disconnected */
+        if (ontologyResources != null) {
+            try {
+                for (String ontologyKey : ontologyResources.keySet()) {
+                    SimpleIRIMapper mapper = new SimpleIRIMapper(IRI.create(ontologyKey),IRI.create(ontologyResources.get(ontologyKey).getURI()));
+                    manager.addIRIMapper(mapper);
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        /** END ISS CODE */
+
 		// it is a bit cumbersome to obtain all classes, because there
 		// are no reasoner queries to obtain them => hence we query them
 		// for each ontology and add them to a set; a comparator avoids
@@ -243,7 +261,7 @@ public class OWLAPIReasoner extends ReasonerComponent {
 		
 		for(KnowledgeSource source : sources) {
 			
-			if(source instanceof OWLFile || source instanceof SparqlKnowledgeSource || source instanceof OWLAPIOntology) {
+			if(source instanceof OWLFile || source instanceof SparqlKnowledgeSource || source instanceof OWLAPIOntology || source instanceof OWLOntologyKnowledgeSource) {
 				URL url=null;
 				if(source instanceof OWLFile){
 					 url = ((OWLFile)source).getURL();
@@ -256,7 +274,11 @@ public class OWLAPIReasoner extends ReasonerComponent {
 					} else if (source instanceof SparqlKnowledgeSource) { 
 						ontology = ((SparqlKnowledgeSource)source).getOWLAPIOntology();
 						manager = ontology.getOWLOntologyManager();
-					} else {
+					}else if(source instanceof OWLOntologyKnowledgeSource){
+                        OWLOntologyKnowledgeSource knowledgeSource = (OWLOntologyKnowledgeSource)source;
+                        ontology = knowledgeSource.getOntology();
+                        manager = ontology.getOWLOntologyManager();
+                    } else {
 						ontology = manager.loadOntologyFromOntologyDocument(IRI.create(url.toURI()));
 					}
 					
@@ -324,17 +346,17 @@ public class OWLAPIReasoner extends ReasonerComponent {
 		OWLReasonerConfiguration conf = new SimpleConfiguration(progressMonitor, freshEntityPolicy, timeOut, individualNodeSetPolicy);
 		
 		// create actual reasoner
-		if(configurator.getReasonerType().equals("fact")) {
+		if(getConfigReasonerType().equals("fact")) {
 			try {
 				reasoner = new FaCTPlusPlusReasonerFactory().createNonBufferingReasoner(ontology, conf);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}		
 			System.out.println("Using FaCT++.");
-		} else if(configurator.getReasonerType().equals("hermit")){
+		} else if(getConfigReasonerType().equals("hermit")){
 			// instantiate HermiT reasoner
 			reasoner = new ReasonerFactory().createNonBufferingReasoner(ontology, conf);
-		} else if(configurator.getReasonerType().equals("pellet")){
+		} else if(getConfigReasonerType().equals("pellet")){
 			// instantiate Pellet reasoner
 			reasoner = PelletReasonerFactory.getInstance().createNonBufferingReasoner(ontology, conf);
 			
@@ -379,7 +401,7 @@ public class OWLAPIReasoner extends ReasonerComponent {
 			throw new ComponentInitException("Inconsistent ontologies.");
 		}
 			
-		factory = manager.getOWLDataFactory();
+
 		
 //		try {
 //			if(reasoner.isDefined(factory.getOWLIndividual(URI.create("http://example.com/father#female"))))
@@ -458,9 +480,9 @@ public class OWLAPIReasoner extends ReasonerComponent {
 	 */
 	@Override
 	public ReasonerType getReasonerType() {
-		if(configurator.getReasonerType().equals("fact")){
+		if(getConfigReasonerType().equals("fact")){
 			return ReasonerType.OWLAPI_FACT;
-		} else if(configurator.getReasonerType().equals("hermit")){
+		} else if(getConfigReasonerType().equals("hermit")){
 			return ReasonerType.OWLAPI_HERMIT;
 		} else{
 			return ReasonerType.OWLAPI_PELLET;
@@ -1108,5 +1130,25 @@ public class OWLAPIReasoner extends ReasonerComponent {
 	public OWLReasoner getReasoner() {
 		return reasoner;
 	}
-	
+
+
+    /** Begin ISS code */
+    private String configReasonerType;
+    private Map<String, Resource> ontologyResources;
+
+    public String getConfigReasonerType() {
+        return configReasonerType;
+    }
+
+    public void setConfigReasonerType(String reasonerType) {
+        this.configReasonerType = reasonerType;
+    }
+
+    public Map<String, Resource> getOntologyResources() {
+        return ontologyResources;
+    }
+
+    public void setOntologyResources(Map<String, Resource> ontologyResources) {
+        this.ontologyResources = ontologyResources;
+    }
 }

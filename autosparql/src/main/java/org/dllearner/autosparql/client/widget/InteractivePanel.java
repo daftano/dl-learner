@@ -133,7 +133,6 @@ public class InteractivePanel extends ContentPanel {
 				VerticalPanel p = new VerticalPanel();
 				p.setSize(25, 50);
 				Button addPosButton = new Button("+");
-                                addPosButton.addStyleName("button-positive");
 				addPosButton.setSize(20, 20);
 				addPosButton.addSelectionListener(new SelectionListener<ButtonEvent>() {
 					@Override
@@ -145,8 +144,7 @@ public class InteractivePanel extends ContentPanel {
 						examplesStore.remove(model);
 					}
 				});
-				Button addNegButton = new Button("&ndash;");
-                                addNegButton.addStyleName("button-negative");
+				Button addNegButton = new Button("-");
 				addNegButton.setSize(20, 20);
 				addNegButton.addSelectionListener(new SelectionListener<ButtonEvent>() {
 					@Override
@@ -178,20 +176,14 @@ public class InteractivePanel extends ContentPanel {
 		grid.setAutoExpandColumn("label");
 		grid.setLoadMask(true);
 		grid.addPlugin(expander);
-		grid.getView().setEmptyText("");
+		grid.getView().setEmptyText("DUMMY TEXT");
 //		grid.getView().setShowDirtyCells(showDirtyCells)
 		
 		add(grid, new RowData(1, 1));
 	}
 	
 	public void setExample(Example example){
-		examplesStore.removeAll();
 		examplesStore.add(example);
-	}
-	
-	public void setExamples(List<Example> examples){
-		examplesStore.removeAll();
-		examplesStore.add(examples);
 	}
 	
 	public void showNextSimilarExample(List<String> posExamples, List<String> negExamples){
@@ -200,7 +192,6 @@ public class InteractivePanel extends ContentPanel {
 		
 		loader.load();
 	}
-	
 	
 
 }

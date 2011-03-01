@@ -23,8 +23,6 @@ import static org.junit.Assert.*;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Set;
-import java.util.TreeSet;
 
 import org.dllearner.core.ComponentInitException;
 import org.dllearner.core.ComponentManager;
@@ -39,12 +37,8 @@ import org.dllearner.core.owl.Thing;
 import org.dllearner.kb.KBFile;
 import org.dllearner.learningproblems.ClassLearningProblem;
 import org.dllearner.learningproblems.Heuristics;
-import org.dllearner.learningproblems.PosNegLPStandard;
 import org.dllearner.reasoning.OWLAPIReasoner;
-import org.dllearner.utilities.Helper;
 import org.junit.Test;
-
-import scala.actors.threadpool.Arrays;
 
 /**
  * Tests for various heuristics employed in learning problems.
@@ -165,62 +159,6 @@ public class HeuristicTests {
 	}
 	
 	@Test
-	public void posNegLPLearningTests() throws ComponentInitException {
-		// create artificial ontology
-		KB kb = new KB();
-		String ns = "http://dl-learner.org/junit/";
-		NamedClass[] nc = new NamedClass[5];
-		for(int i=0; i<5; i++) {
-			nc[i] = new NamedClass(ns + "A" + i);
-		}
-		Individual[] ind = new Individual[100];
-		for(int i=0; i<100; i++) {
-			ind[i] = new Individual(ns + "i" + i);
-		}
-		
-		// assert individuals to owl:Thing (such that they exist in the knowledge base)
-		for(int i=0; i<100; i++) {
-			kb.addAxiom(new ClassAssertionAxiom(Thing.instance,ind[i]));
-		}
-		
-		// A0
-		kb.addAxiom(new ClassAssertionAxiom(nc[0],ind[0]));
-		kb.addAxiom(new ClassAssertionAxiom(nc[0],ind[1]));
-		kb.addAxiom(new ClassAssertionAxiom(nc[0],ind[5]));
-		
-		// A1
-		kb.addAxiom(new ClassAssertionAxiom(nc[1],ind[0]));
-		kb.addAxiom(new ClassAssertionAxiom(nc[1],ind[1]));
-		kb.addAxiom(new ClassAssertionAxiom(nc[1],ind[2]));
-		kb.addAxiom(new ClassAssertionAxiom(nc[1],ind[5]));
-		
-		ComponentManager cm = ComponentManager.getInstance();
-		KnowledgeSource ks = new KBFile(kb);
-		ReasonerComponent reasoner = cm.reasoner(OWLAPIReasoner.class, ks);
-		PosNegLPStandard problem = cm.learningProblem(PosNegLPStandard.class, reasoner);
-		ks.init();
-		reasoner.init();		
-		
-		Individual[] pos1 = new Individual[] {ind[0], ind[1], ind[2], ind[3], ind[4]};
-		Individual[] neg1 = new Individual[] {ind[5], ind[6], ind[7], ind[8], ind[9]};
-		
-		// F-Measure and no approximations
-		HeuristicTests.configurePosNegStandardLP(problem, pos1, neg1, "fmeasure", false);
-		
-		assertEqualsPosNegLPStandard(problem, nc[0], 0.5); // precision 2/3, recall 2/5
-		assertEqualsPosNegLPStandard(problem, nc[1], 2/3d); // precision 3/4, recall 3/5
-//		System.out.println(problem.getFMeasureOrTooWeakExact(nc[0], 1));
-//		System.out.println(problem.getFMeasureOrTooWeakExact(nc[1], 1));
-		
-		// F-Measure and approximations
-		HeuristicTests.configurePosNegStandardLP(problem, pos1, neg1, "fmeasure", true);
-		
-		assertEqualsPosNegLPStandard(problem, nc[0], 0.5); // precision 2/3, recall 2/5
-		assertEqualsPosNegLPStandard(problem, nc[1], 2/3d); // precision 3/4, recall 3/5
-	}
-	
-	
-	@Test
 	public void approximationTests() {
 		// perform F-Measure example in ontology engineering paper, which was computed on paper
 		double[] approx1 = Heuristics.getFScoreApproximation(800, 0.8, 1, 10000, 41, 31);
@@ -262,13 +200,6 @@ public class HeuristicTests {
 		assertEquals(accuracy, problem.evaluate(description).getAccuracy(), delta);
 	}
 	
-	private static void assertEqualsPosNegLPStandard(PosNegLPStandard problem, Description description, double accuracy) {
-		assertEquals(accuracy, problem.getAccuracy(description), delta);
-		assertEquals(accuracy, problem.getAccuracyOrTooWeak(description, 1.0), delta);
-		assertEquals(accuracy, problem.computeScore(description).getAccuracy(), delta);
-		assertEquals(accuracy, problem.evaluate(description).getAccuracy(), delta);
-	}
-	
 	// convencience method to set the learning problem to a desired configuration (approximations disabled)
 	private static void configureClassLP(ClassLearningProblem problem, NamedClass classToDescribe, String accuracyMethod) throws ComponentInitException {
 		try {
@@ -295,19 +226,4 @@ public class HeuristicTests {
 		problem.init();		
 	}
 	
-	@SuppressWarnings("unchecked")
-	private static void configurePosNegStandardLP(PosNegLPStandard problem, Individual[] positiveExamples, Individual[] negativeExamples, String accuracyMethod, boolean useApproximations) throws ComponentInitException {
-		Set<Individual> s1 = new TreeSet<Individual>(Arrays.asList(positiveExamples));
-		Set<Individual> s2 = new TreeSet<Individual>(Arrays.asList(negativeExamples));
-		HeuristicTests.configurePosNegStandardLP(problem, s1, s2, accuracyMethod, useApproximations);
-	}
-	
-	// convencience method to set the learning problem to a desired configuration (approximations disabled)
-	private static void configurePosNegStandardLP(PosNegLPStandard problem, Set<Individual> positiveExamples, Set<Individual> negativeExamples, String accuracyMethod, boolean useApproximations) throws ComponentInitException {
-		problem.getConfigurator().setPositiveExamples(Helper.getStringSet(positiveExamples)); 
-		problem.getConfigurator().setNegativeExamples(Helper.getStringSet(negativeExamples));
-		problem.getConfigurator().setAccuracyMethod(accuracyMethod);
-		problem.getConfigurator().setUseApproximations(useApproximations);
-		problem.init();		
-	}	
 }

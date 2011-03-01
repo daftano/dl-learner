@@ -32,7 +32,6 @@ import org.dllearner.sparqlquerygenerator.operations.lgg.LGGGenerator;
 import org.dllearner.sparqlquerygenerator.operations.lgg.LGGGeneratorImpl;
 import org.dllearner.sparqlquerygenerator.operations.nbr.NBRGenerator;
 import org.dllearner.sparqlquerygenerator.operations.nbr.NBRGeneratorImpl;
-import org.dllearner.sparqlquerygenerator.operations.nbr.strategy.NBRStrategy;
 import org.dllearner.sparqlquerygenerator.util.ModelGenerator;
 
 import com.hp.hpl.jena.rdf.model.Model;
@@ -56,8 +55,8 @@ public class SPARQLQueryGeneratorImpl implements SPARQLQueryGenerator{
 	private Set<String> posExamples;
 	private Set<String> negExamples;
 	
-	private List<QueryTree<String>> posQueryTrees;
-	private List<QueryTree<String>> negQueryTrees;
+	private Set<QueryTree<String>> posQueryTrees;
+	private Set<QueryTree<String>> negQueryTrees;
 	
 	private List<String> resultQueries = new ArrayList<String>();
 	
@@ -67,16 +66,12 @@ public class SPARQLQueryGeneratorImpl implements SPARQLQueryGenerator{
 	
 	private QueryTree<String> lgg;
 	
-	private NBRStrategy nbrStrategy;
+	
 	
 	
 	public SPARQLQueryGeneratorImpl(String endpointURL){
 		this.endpointURL = endpointURL;
 		modelGen = new ModelGenerator(endpointURL);
-	}
-	
-	public SPARQLQueryGeneratorImpl(NBRStrategy nbrStrategy){
-		this.nbrStrategy = nbrStrategy;
 	}
 
 	@Override
@@ -126,10 +121,10 @@ public class SPARQLQueryGeneratorImpl implements SPARQLQueryGenerator{
 		if(negExamples.isEmpty()){
 			return getSPARQLQueries(posExamples, learnFilters);
 		}
-		this.posQueryTrees = posExamples;
-		this.negQueryTrees = new ArrayList<QueryTree<String>>();
+		this.posQueryTrees = new HashSet<QueryTree<String>>(posExamples);
+		this.negExamples = new HashSet<String>();
 		
-		learnPosOnly();
+		learnPosNeg();
 		
 		return resultQueries;
 	}
@@ -146,8 +141,8 @@ public class SPARQLQueryGeneratorImpl implements SPARQLQueryGenerator{
 		if(negExamples.isEmpty()){
 			return getSPARQLQueries(posExamples, learnFilters);
 		}
-		this.posQueryTrees = posExamples;
-		this.negQueryTrees = negExamples;
+		this.posQueryTrees = new HashSet<QueryTree<String>>(posExamples);
+		this.negQueryTrees = new HashSet<QueryTree<String>>(negExamples);
 		
 		learnPosNeg();
 		
@@ -200,8 +195,8 @@ public class SPARQLQueryGeneratorImpl implements SPARQLQueryGenerator{
 	@Override
 	public List<QueryTree<String>> getSPARQLQueryTrees(
 			List<QueryTree<String>> posExamples, boolean learnFilters) {
-		this.posQueryTrees = posExamples;
-		negQueryTrees = new ArrayList<QueryTree<String>>();
+		this.posQueryTrees = new HashSet<QueryTree<String>>(posExamples);
+		negExamples = new HashSet<String>();
 		
 		learnPosOnly();
 		
@@ -222,8 +217,8 @@ public class SPARQLQueryGeneratorImpl implements SPARQLQueryGenerator{
 		if(negExamples.isEmpty()){
 			return getSPARQLQueryTrees(posExamples, learnFilters);
 		}
-		this.posQueryTrees = posExamples;
-		this.negQueryTrees = negExamples;
+		this.posQueryTrees = new HashSet<QueryTree<String>>(posExamples);
+		this.negQueryTrees = new HashSet<QueryTree<String>>(negExamples);
 		
 		learnPosNeg();
 		
@@ -239,8 +234,8 @@ public class SPARQLQueryGeneratorImpl implements SPARQLQueryGenerator{
 	 * Here we build the initial Query graphs for the positive and negative examples.
 	 */
 	private void buildQueryTrees(){
-		posQueryTrees = new ArrayList<QueryTree<String>>();
-		negQueryTrees = new ArrayList<QueryTree<String>>();
+		posQueryTrees = new HashSet<QueryTree<String>>();
+		negQueryTrees = new HashSet<QueryTree<String>>();
 		
 		QueryTree<String> tree;
 		//build the query graphs for the positive examples
@@ -289,7 +284,7 @@ public class SPARQLQueryGeneratorImpl implements SPARQLQueryGenerator{
 		lggMonitor.start();
 		
 		LGGGenerator<String> lggGenerator = new LGGGeneratorImpl<String>();
-		lgg = lggGenerator.getLGG(posQueryTrees);
+		QueryTree<String> lgg = lggGenerator.getLGG(posQueryTrees);
 		
 		lggMonitor.stop();
 		
@@ -302,7 +297,7 @@ public class SPARQLQueryGeneratorImpl implements SPARQLQueryGenerator{
 		
 		nbrMonitor.start();
 		
-		NBRGenerator<String> nbrGenerator = new NBRGeneratorImpl<String>(nbrStrategy);
+		NBRGenerator<String> nbrGenerator = new NBRGeneratorImpl<String>();
 //		QueryTree<String> nbr = nbrGenerator.getNBR(lgg, negQueryTrees);
 		
 		

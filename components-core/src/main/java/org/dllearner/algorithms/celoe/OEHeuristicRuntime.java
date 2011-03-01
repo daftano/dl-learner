@@ -21,7 +21,6 @@ package org.dllearner.algorithms.celoe;
 
 import java.util.Comparator;
 
-import org.dllearner.core.configurators.CELOEConfigurator;
 import org.dllearner.utilities.owl.ConceptComparator;
 
 /**
@@ -43,10 +42,6 @@ public class OEHeuristicRuntime implements Comparator<OENode>{
 	private double nodeRefinementPenalty = 0.0001;
 	// syntactic comparison as final comparison criterion
 	private ConceptComparator conceptComparator = new ConceptComparator();
-	
-	public OEHeuristicRuntime(CELOEConfigurator configurator) {
-		expansionPenaltyFactor = configurator.getExpansionPenaltyFactor();
-	}
 	
 	@Override
 	public int compare(OENode node1, OENode node2) {

@@ -50,7 +50,7 @@ public class ExamplesPanel extends ContentPanel {
 	
 	private void createPosExamplesGrid(){
 		LayoutContainer container = new LayoutContainer(new RowLayout());
-		container.add(new Text("<strong class=\"is-headline add-padding\">Should belong to query result:</strong>"), new RowData(1, -1));
+		container.add(new Text("Should belong to query result:"), new RowData(1, -1));
 		posExamplesStore = new ListStore<Example>();
 		
 		ArrayList<ColumnConfig> columns = new ArrayList<ColumnConfig>();
@@ -100,27 +100,25 @@ public class ExamplesPanel extends ContentPanel {
 					ListStore<Example> store, Grid<Example> grid) {
 				VerticalPanel p = new VerticalPanel();
 				p.setSize(25, 50);
-				Button move2NegButton = new Button("&ndash;");
-                                move2NegButton.addStyleName("button-negative");
-				move2NegButton.setSize(20, 20);
-				move2NegButton.addSelectionListener(new SelectionListener<ButtonEvent>() {
+				Button addPosButton = new Button("-");
+				addPosButton.setSize(20, 20);
+				addPosButton.addSelectionListener(new SelectionListener<ButtonEvent>() {
 					@Override
 					public void componentSelected(ButtonEvent ce) {
 						posExamplesStore.remove(model);
 						negExamplesStore.add(model);
 					}
 				});
-				Button removeButton = new Button("x");
-                                removeButton.addStyleName("button-negative");
-				removeButton.setSize(20, 20);
-				removeButton.addSelectionListener(new SelectionListener<ButtonEvent>() {
+				Button addNegButton = new Button("x");
+				addNegButton.setSize(20, 20);
+				addNegButton.addSelectionListener(new SelectionListener<ButtonEvent>() {
 					@Override
 					public void componentSelected(ButtonEvent ce) {
 						posExamplesStore.remove(model);
 					}
 				});
-				p.add(move2NegButton);
-				p.add(removeButton);
+				p.add(addPosButton);
+				p.add(addNegButton);
 				return p;
 			}
 		
@@ -139,7 +137,7 @@ public class ExamplesPanel extends ContentPanel {
 		grid.setAutoExpandColumn("label");
 		grid.setLoadMask(true);
 		grid.addPlugin(expander);
-		grid.getView().setEmptyText("<p class=\"message-box message-box-info\">No examples selected.</p>");
+		grid.getView().setEmptyText("DUMMY TEXT");
 //		grid.getView().setShowDirtyCells(showDirtyCells)
 		grid.getView().setViewConfig(new GridViewConfig(){
 			@Override
@@ -159,7 +157,7 @@ public class ExamplesPanel extends ContentPanel {
 	
 	private void createNegExamplesGrid(){
 		LayoutContainer container = new LayoutContainer(new RowLayout());
-		container.add(new Text("<strong class=\"is-headline add-padding\">Should not belong to query result:</strong>"), new RowData(1, -1));
+		container.add(new Text("Should not belong to query result:"), new RowData(1, -1));
 		negExamplesStore = new ListStore<Example>();
 		
 		ArrayList<ColumnConfig> columns = new ArrayList<ColumnConfig>();
@@ -209,27 +207,25 @@ public class ExamplesPanel extends ContentPanel {
 					ListStore<Example> store, Grid<Example> grid) {
 				VerticalPanel p = new VerticalPanel();
 				p.setSize(25, 50);
-				Button move2PosButton = new Button("+");
-                                move2PosButton.addStyleName("button-positive");
-				move2PosButton.setSize(20, 20);
-				move2PosButton.addSelectionListener(new SelectionListener<ButtonEvent>() {
+				Button addPosButton = new Button("+");
+				addPosButton.setSize(20, 20);
+				addPosButton.addSelectionListener(new SelectionListener<ButtonEvent>() {
 					@Override
 					public void componentSelected(ButtonEvent ce) {
 						negExamplesStore.remove(model);
 						posExamplesStore.add(model);
 					}
 				});
-				Button removeButton = new Button("x");
-                                removeButton.addStyleName("button-negative");
-				removeButton.setSize(20, 20);
-				removeButton.addSelectionListener(new SelectionListener<ButtonEvent>() {
+				Button addNegButton = new Button("x");
+				addNegButton.setSize(20, 20);
+				addNegButton.addSelectionListener(new SelectionListener<ButtonEvent>() {
 					@Override
 					public void componentSelected(ButtonEvent ce) {
 						negExamplesStore.remove(model);
 					}
 				});
-				p.add(move2PosButton);
-				p.add(removeButton);
+				p.add(addPosButton);
+				p.add(addNegButton);
 				return p;
 			}
 		
@@ -248,7 +244,7 @@ public class ExamplesPanel extends ContentPanel {
 		grid.setAutoExpandColumn("label");
 		grid.setLoadMask(true);
 		grid.addPlugin(expander);
-		grid.getView().setEmptyText("<p class=\"message-box message-box-info\">No examples selected.</p>");
+		grid.getView().setEmptyText("DUMMY TEXT");
 		grid.getView().setViewConfig(new GridViewConfig(){
 			@Override
 			public String getRowStyle(ModelData model, int rowIndex,
@@ -270,16 +266,8 @@ public class ExamplesPanel extends ContentPanel {
 		posExamplesStore.add(example);
 	}
 	
-	public void removePositiveExample(Example example){
-		posExamplesStore.remove(example);
-	}
-	
 	public void addNegativeExample(Example example){
 		negExamplesStore.add(example);
-	}
-	
-	public void removeNegativeExample(Example example){
-		negExamplesStore.remove(example);
 	}
 	
 	public List<Example> getPositiveExamples(){

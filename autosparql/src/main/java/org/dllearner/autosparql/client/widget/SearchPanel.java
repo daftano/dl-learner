@@ -72,7 +72,6 @@ public class SearchPanel extends ContentPanel {
 	
 	private void createInputPanel(){
 		LayoutContainer c = new LayoutContainer(new HBoxLayout());
-                c.addStyleName("add-padding");
 		
 		inputField = new TextField<String>();
 		inputField.setTitle("");
@@ -170,11 +169,10 @@ public class SearchPanel extends ContentPanel {
 			@Override
 			public Object render(final Example model, String property,
 					ColumnData config, int rowIndex, int colIndex,
-					final ListStore<Example> store, Grid<Example> grid) {
+					ListStore<Example> store, Grid<Example> grid) {
 				VerticalPanel p = new VerticalPanel();
 				p.setSize(25, 50);
 				Button addPosButton = new Button("+");
-                                addPosButton.addStyleName("button-positive");
 				addPosButton.setSize(20, 20);
 				addPosButton.addSelectionListener(new SelectionListener<ButtonEvent>() {
 					@Override
@@ -183,11 +181,9 @@ public class SearchPanel extends ContentPanel {
 						event.setData("example", model);
 						event.setData("type", Example.Type.POSITIVE);
 						Dispatcher.forwardEvent(event);
-//						store.remove(model);
 					}
 				});
-				Button addNegButton = new Button("&ndash;");
-                                addNegButton.addStyleName("button-negative");
+				Button addNegButton = new Button("-");
 				addNegButton.setSize(20, 20);
 				addNegButton.addSelectionListener(new SelectionListener<ButtonEvent>() {
 					@Override
@@ -196,7 +192,6 @@ public class SearchPanel extends ContentPanel {
 						event.setData("example", model);
 						event.setData("type", Example.Type.NEGATIVE);
 						Dispatcher.forwardEvent(event);
-//						store.remove(model);
 					}
 				});
 				p.add(addPosButton);
@@ -219,7 +214,7 @@ public class SearchPanel extends ContentPanel {
 		grid.setAutoExpandColumn("label");
 //		grid.setLoadMask(true);
 		grid.addPlugin(expander);
-		grid.getView().setEmptyText("<p class=\"message-box message-box-info\">No resources found.</p>");
+		grid.getView().setEmptyText("DUMMY TEXT");
 		grid.getView().setViewConfig(new GridViewConfig(){
 			@Override
 			public String getRowStyle(ModelData model, int rowIndex,
@@ -232,23 +227,17 @@ public class SearchPanel extends ContentPanel {
 			}
 		});
 		
-		grid.setAutoExpandMax(1000);
 		add(grid, new RowData(1, 1));
-		
 		add(toolbar, new RowData(1, -1));
 	}
 	
 	private void onSearch(){
 		showLoadingMessage(true);
 		loader.load();
-//		if(firstSearch){
-//			firstSearch = false;
-//			Dispatcher.forwardEvent(AppEvents.ShowInteractiveMode);
-//		}
-	}
-	
-	public void search(){
-		
+		if(firstSearch){
+			firstSearch = false;
+			Dispatcher.forwardEvent(AppEvents.ShowInteractiveMode);
+		}
 	}
 	
 	private void showLoadingMessage(boolean show){

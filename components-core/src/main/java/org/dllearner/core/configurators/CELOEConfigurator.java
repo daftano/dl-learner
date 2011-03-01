@@ -164,15 +164,6 @@ public double getNoisePercentage() {
 return (Double) ComponentManager.getInstance().getConfigOptionValue(cELOE,  "noisePercentage") ;
 }
 /**
-* terminateOnNoiseReached specifies whether to terminate when noise criterion is met.
-* mandatory: false| reinit necessary: true
-* default value: false
-* @return boolean 
-**/
-public boolean getTerminateOnNoiseReached() {
-return (Boolean) ComponentManager.getInstance().getConfigOptionValue(cELOE,  "terminateOnNoiseReached") ;
-}
-/**
 * maxDepth maximum depth of description.
 * mandatory: false| reinit necessary: true
 * default value: 7
@@ -261,15 +252,6 @@ return (String) ComponentManager.getInstance().getConfigOptionValue(cELOE,  "sea
 **/
 public boolean getReplaceSearchTree() {
 return (Boolean) ComponentManager.getInstance().getConfigOptionValue(cELOE,  "replaceSearchTree") ;
-}
-/**
-* expansionPenaltyFactor heuristic penalty per syntactic construct used (lower = finds more complex expression, but might miss simple ones).
-* mandatory: false| reinit necessary: true
-* default value: 0.1
-* @return double 
-**/
-public double getExpansionPenaltyFactor() {
-return (Double) ComponentManager.getInstance().getConfigOptionValue(cELOE,  "expansionPenaltyFactor") ;
 }
 
 /**
@@ -381,15 +363,6 @@ ComponentManager.getInstance().applyConfigEntry(cELOE, "noisePercentage", noiseP
 reinitNecessary = true;
 }
 /**
-* @param terminateOnNoiseReached specifies whether to terminate when noise criterion is met.
-* mandatory: false| reinit necessary: true
-* default value: false
-**/
-public void setTerminateOnNoiseReached(boolean terminateOnNoiseReached) {
-ComponentManager.getInstance().applyConfigEntry(cELOE, "terminateOnNoiseReached", terminateOnNoiseReached);
-reinitNecessary = true;
-}
-/**
 * @param maxDepth maximum depth of description.
 * mandatory: false| reinit necessary: true
 * default value: 7
@@ -477,15 +450,6 @@ reinitNecessary = true;
 **/
 public void setReplaceSearchTree(boolean replaceSearchTree) {
 ComponentManager.getInstance().applyConfigEntry(cELOE, "replaceSearchTree", replaceSearchTree);
-reinitNecessary = true;
-}
-/**
-* @param expansionPenaltyFactor heuristic penalty per syntactic construct used (lower = finds more complex expression, but might miss simple ones).
-* mandatory: false| reinit necessary: true
-* default value: 0.1
-**/
-public void setExpansionPenaltyFactor(double expansionPenaltyFactor) {
-ComponentManager.getInstance().applyConfigEntry(cELOE, "expansionPenaltyFactor", expansionPenaltyFactor);
 reinitNecessary = true;
 }
 

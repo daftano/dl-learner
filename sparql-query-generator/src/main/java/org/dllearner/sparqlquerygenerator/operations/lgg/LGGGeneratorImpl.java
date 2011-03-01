@@ -23,14 +23,10 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
 
 import org.apache.log4j.Logger;
 import org.dllearner.sparqlquerygenerator.datastructures.QueryTree;
 import org.dllearner.sparqlquerygenerator.datastructures.impl.QueryTreeImpl;
-
-import com.jamonapi.Monitor;
-import com.jamonapi.MonitorFactory;
 
 /**
  * 
@@ -40,7 +36,6 @@ import com.jamonapi.MonitorFactory;
 public class LGGGeneratorImpl<N> implements LGGGenerator<N>{
 	
 	private Logger logger = Logger.getLogger(LGGGeneratorImpl.class);
-	private int nodeId;
 
 	@Override
 	public QueryTree<N> getLGG(QueryTree<N> tree1, QueryTree<N> tree2) {
@@ -50,75 +45,45 @@ public class LGGGeneratorImpl<N> implements LGGGenerator<N>{
 	@Override
 	public QueryTree<N> getLGG(QueryTree<N> tree1, QueryTree<N> tree2,
 			boolean learnFilters) {
-		nodeId = 0;
-		Monitor mon = MonitorFactory.getTimeMonitor("LGG");
-		mon.start();
-		QueryTree<N> lgg = computeLGG(tree1, tree2, learnFilters);
-		mon.stop();
-		addNumbering(lgg);
-		return lgg;
+		return computeLGG(tree1, tree2, learnFilters);
 	}
 
 	@Override
-	public QueryTree<N> getLGG(List<QueryTree<N>> trees) {
+	public QueryTree<N> getLGG(Set<QueryTree<N>> trees) {
 		return getLGG(trees, false);
 	}
 	
 	@Override
-	public QueryTree<N> getLGG(List<QueryTree<N>> trees, boolean learnFilters) {
-		nodeId = 0;
+	public QueryTree<N> getLGG(Set<QueryTree<N>> trees, boolean learnFilters) {
 		List<QueryTree<N>> treeList = new ArrayList<QueryTree<N>>(trees);
 		
-		if(logger.isInfoEnabled()){
-			logger.info("Computing LGG for");
-		}
-		
+		logger.info("Computing LGG for");
 		for(int i = 0; i < treeList.size(); i++){
-			if(logger.isInfoEnabled()){
-				logger.info(treeList.get(i).getStringRepresentation());
-			}
-			
+			logger.info(treeList.get(i).getStringRepresentation());
 			if(i != treeList.size() - 1){
-				if(logger.isInfoEnabled()){
-					logger.info("and");
-				}
+				logger.info("and");
 			}
 		}
 		
 		if(trees.size() == 1){
 			return trees.iterator().next();
 		}
-		Monitor mon = MonitorFactory.getTimeMonitor("LGG");
-		mon.start();
 		QueryTree<N> lgg = computeLGG(treeList.get(0), treeList.get(1), learnFilters);
-		if(logger.isInfoEnabled()){
-			logger.info("LGG for 1 and 2:\n" + lgg.getStringRepresentation());
-		}
-		
 		for(int i = 2; i < treeList.size(); i++){
 			lgg = computeLGG(lgg, treeList.get(i), learnFilters);
-			if(logger.isInfoEnabled()){
-				logger.info("LGG for 1-" + (i+1) + ":\n" + lgg.getStringRepresentation());
-			}
 		}
 		
-		if(logger.isInfoEnabled()){
-			logger.info("LGG = ");
-			logger.info(lgg.getStringRepresentation());
-		}
-		mon.stop();
-		addNumbering(lgg);
+		logger.info("LGG = ");
+		logger.info(lgg.getStringRepresentation());
+		
 		return lgg;
 	}
 	
 	private QueryTree<N> computeLGG(QueryTree<N> tree1, QueryTree<N> tree2, boolean learnFilters){
-		if(logger.isDebugEnabled()){
-			logger.debug("Computing LGG for");
-			logger.debug(tree1.getStringRepresentation());
-			logger.debug("and");
-			logger.debug(tree2.getStringRepresentation());
-		}
-		
+		logger.debug("Computing LGG for");
+		logger.debug(tree1.getStringRepresentation());
+		logger.debug("and");
+		logger.debug(tree2.getStringRepresentation());
 		QueryTree<N> lgg = new QueryTreeImpl<N>(tree1.getUserObject());
 		
 //		if(!lgg.getUserObject().equals(tree2.getUserObject())){
@@ -146,63 +111,44 @@ public class LGGGeneratorImpl<N> implements LGGGenerator<N>{
 		
 		Set<QueryTreeImpl<N>> addedChildren;
 		QueryTreeImpl<N> lggChild;
-		for(Object edge : new TreeSet<Object>(tree1.getEdges())){
-			if(logger.isDebugEnabled()){
-				logger.debug("Regarding egde: " + edge);
-			}
+		for(Object edge : tree1.getEdges()){
+			logger.debug("Regarding egde: " + edge);
 			addedChildren = new HashSet<QueryTreeImpl<N>>();
 			for(QueryTree<N> child1 : tree1.getChildren(edge)){
 				for(QueryTree<N> child2 : tree2.getChildren(edge)){
 					lggChild = (QueryTreeImpl<N>) computeLGG(child1, child2, learnFilters);
 					boolean add = true;
 					for(QueryTreeImpl<N> addedChild : addedChildren){
-						if(logger.isDebugEnabled()){
-							logger.debug("Subsumption test");
-						}
+						logger.debug("Subsumption test");
 						if(addedChild.isSubsumedBy(lggChild)){
-							if(logger.isDebugEnabled()){
-								logger.debug("Previously added child");
-								logger.debug(addedChild.getStringRepresentation());
-								logger.debug("is subsumed by");
-								logger.debug(lggChild.getStringRepresentation());
-								logger.debug("so we can skip adding the LGG");
-							}
+							logger.debug("Previously added child");
+							logger.debug(addedChild.getStringRepresentation());
+							logger.debug("is subsumed by");
+							logger.debug(lggChild.getStringRepresentation());
+							logger.debug("so we can skip adding the LGG");
 							add = false;
 							break;
 						} else if(lggChild.isSubsumedBy(addedChild)){
-							if(logger.isDebugEnabled()){
-								logger.debug("Computed LGG");
-								logger.debug(lggChild.getStringRepresentation());
-								logger.debug("is subsumed by previously added child");
-								logger.debug(addedChild.getStringRepresentation());
-								logger.debug("so we can remove it");
-							}
+							logger.debug("Computed LGG");
+							logger.debug(lggChild.getStringRepresentation());
+							logger.debug("is subsumed by previously added child");
+							logger.debug(addedChild.getStringRepresentation());
+							logger.debug("so we can remove it");
 							lgg.removeChild(addedChild);
 						} 
 					}
 					if(add){
 						lgg.addChild(lggChild, edge);
 						addedChildren.add(lggChild);
-						if(logger.isDebugEnabled()){
-							logger.debug("Adding child");
-							logger.debug(lggChild.getStringRepresentation());
-						}
+						logger.debug("Adding child");
+						logger.debug(lggChild.getStringRepresentation());
 					} 
 				}
 			}
 		}
-		if(logger.isDebugEnabled()){
-			logger.debug("Computed LGG:");
-			logger.debug(lgg.getStringRepresentation());
-		}
+		logger.debug("Computed LGG:");
+		logger.debug(lgg.getStringRepresentation());
 		return lgg;
-	}
-	
-	private void addNumbering(QueryTree<N> tree){
-		tree.setId(nodeId++);
-		for(QueryTree<N> child : tree.getChildren()){
-			addNumbering(child);
-		}
 	}
 
 }

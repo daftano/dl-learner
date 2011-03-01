@@ -11,7 +11,7 @@
     <parent>
         <groupId>org.dllearner</groupId>
         <artifactId>dllearner-parent</artifactId>
-        <version>1.0-SNAPSHOT</version>
+        <version>1.0.1-SNAPSHOT</version>
     </parent>
 
     <build>
@@ -31,6 +31,9 @@
                         <!--This line excludes inner classes-->
                         <exclude>**/*$*</exclude>
                     </excludes>
+                    <suiteXmlFiles>
+                        <suiteXmlFile>src/test/testng.xml</suiteXmlFile>
+                    </suiteXmlFiles>
                 </configuration>
             </plugin>
             <!--Jar the tests up into a separate jar so other components tests' can leverage them-->
@@ -49,6 +52,13 @@
     </build>
 
     <dependencies>
+
+
+        <!--Spring Dependencies-->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>org.springframework.core</artifactId>
+        </dependency>
 
         <!-- THIS IS FROM THE UNIBAS REPO-->
         <dependency>
@@ -154,6 +164,11 @@
             <artifactId>junit</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <scope>test</scope>
+        </dependency>
 
         <dependency>
             <groupId>net.sourceforge.dig</groupId>
@@ -164,11 +179,6 @@
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
         </dependency>
-        
-        <dependency>
-			<groupId>org.aksw.commons</groupId>
-			<artifactId>commons</artifactId>
-		</dependency>
 
     </dependencies>
 </project>

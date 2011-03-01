@@ -97,7 +97,7 @@ public class ResultPanel extends ContentPanel {
 //		grid.setHideHeaders(true);
 		grid.setAutoExpandColumn("label");
 		grid.setLoadMask(true);
-		grid.getView().setEmptyText("");
+		grid.getView().setEmptyText("DUMMY TEXT");
 		grid.getView().setViewConfig(new GridViewConfig(){
 			@Override
 			public String getRowStyle(ModelData model, int rowIndex,
@@ -165,9 +165,8 @@ public class ResultPanel extends ContentPanel {
 
 			@Override
 			public void onSuccess(String result) {
-				queryTab.removeAll();System.out.println("Current query:\n" + result);
-				queryTab.addText("<pre class=\"resultquery add-padding\"><code>"+result+"</code></pre>");
-				queryTab.layout();
+				queryTab.removeAll();
+				queryTab.addText(result);
 			}
 		});
 		

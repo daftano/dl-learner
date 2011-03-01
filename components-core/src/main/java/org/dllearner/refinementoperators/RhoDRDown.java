@@ -35,7 +35,7 @@ import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 import org.dllearner.core.ReasonerComponent;
-import org.dllearner.core.configurators.OCELConfigurator;
+import org.dllearner.core.configurators.ROLComponent2Configurator;
 import org.dllearner.core.configurators.RefinementOperatorConfigurator;
 import org.dllearner.core.options.CommonConfigOptions;
 import org.dllearner.core.owl.BooleanValueRestriction;
@@ -221,8 +221,8 @@ public class RhoDRDown extends RefinementOperatorAdapter {
 	// this should be an interface implemented e.g. by ExampleBasedROLComponentConfigurator;
 	// the goal is to use the configurator system while still being flexible enough to
 	// use one refinement operator in several learning algorithms
-	public RhoDRDown(ReasonerComponent reasoningService, ClassHierarchy subHierarchy, OCELConfigurator configurator, boolean applyAllFilter, boolean applyExistsFilter, boolean useAllConstructor,
-			boolean useExistsConstructor, boolean useHasValueConstructor, int valueFrequencyThreshold, boolean useCardinalityRestrictions,boolean useNegation, boolean useBooleanDatatypes, boolean useDoubleDatatypes, NamedClass startClass) {
+	public RhoDRDown(ReasonerComponent reasoningService, ClassHierarchy subHierarchy,boolean applyAllFilter, boolean applyExistsFilter, boolean useAllConstructor,
+			boolean useExistsConstructor, boolean useHasValueConstructor, int valueFrequencyThreshold, boolean useCardinalityRestrictions,boolean useNegation, boolean useBooleanDatatypes, boolean useDoubleDatatypes, NamedClass startClass,int cardinalityLimit, boolean useDataHasValueConstructor, boolean useStringDatatypes, boolean instanceBasedDisjoints) {
 		this.rs = reasoningService;
 		this.subHierarchy = subHierarchy;
 		this.applyAllFilter = applyAllFilter;
@@ -232,13 +232,13 @@ public class RhoDRDown extends RefinementOperatorAdapter {
 		this.useHasValueConstructor = useHasValueConstructor;
 		this.frequencyThreshold = valueFrequencyThreshold;
 		this.useCardinalityRestrictions = useCardinalityRestrictions;
-		cardinalityLimit = configurator.getCardinalityLimit();
-		this.useDataHasValueConstructor = configurator.getUseDataHasValueConstructor();
+		this.cardinalityLimit = cardinalityLimit;
+		this.useDataHasValueConstructor = useDataHasValueConstructor;
 		this.useNegation = useNegation;
 		this.useBooleanDatatypes = useBooleanDatatypes;
 		this.useDoubleDatatypes = useDoubleDatatypes;
-		useStringDatatypes = configurator.getUseStringDatatypes();
-		instanceBasedDisjoints = configurator.getInstanceBasedDisjoints();
+		this.useStringDatatypes = useStringDatatypes;
+		this.instanceBasedDisjoints = instanceBasedDisjoints;
 		if(startClass != null) {
 			this.startClass = startClass;
 		}
@@ -1057,7 +1057,7 @@ public class RhoDRDown extends RefinementOperatorAdapter {
 		mA.get(nc).put(1,m1);
 		
 		// most specific negated classes, which are not disjoint with nc
-		SortedSet<Description> m2 = new TreeSet<Description>();
+		SortedSet<Description> m2 = new TreeSet<Description>(conceptComparator);
 		if(useNegation) {
 			m2 = getNegClassCandidates(nc);
 			mA.get(nc).put(2,m2);

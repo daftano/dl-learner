@@ -20,6 +20,7 @@
 package org.dllearner.sparqlquerygenerator;
 
 import java.util.List;
+import java.util.Set;
 
 import org.dllearner.sparqlquerygenerator.datastructures.QueryTree;
 import org.dllearner.sparqlquerygenerator.examples.DBpediaExample;
@@ -42,8 +43,8 @@ public class NBRTest {
 	@Test
 	public void computeSingleNBRBruteForce(){
 		
-		List<QueryTree<String>> posExampleTrees = DBpediaExample.getPosExampleTrees();
-		List<QueryTree<String>> negExampleTrees = DBpediaExample.getNegExampleTrees();
+		Set<QueryTree<String>> posExampleTrees = DBpediaExample.getPosExampleTrees();
+		Set<QueryTree<String>> negExampleTrees = DBpediaExample.getNegExampleTrees();
 		
 		LGGGenerator<String> lggGenerator = new LGGGeneratorImpl<String>();
 		NBRGenerator<String> nbrGenerator = new NBRGeneratorImpl<String>(new BruteForceNBRStrategy<String>());
@@ -80,8 +81,8 @@ public class NBRTest {
 	
 	@Test
 	public void computeAllNBRsBruteForce(){
-		List<QueryTree<String>> posExampleTrees = DBpediaExample.getPosExampleTrees();
-		List<QueryTree<String>> negExampleTrees = DBpediaExample.getNegExampleTrees();
+		Set<QueryTree<String>> posExampleTrees = DBpediaExample.getPosExampleTrees();
+		Set<QueryTree<String>> negExampleTrees = DBpediaExample.getNegExampleTrees();
 		
 		LGGGenerator<String> lggGenerator = new LGGGeneratorImpl<String>();
 		NBRGenerator<String> nbrGenerator = new NBRGeneratorImpl<String>(new BruteForceNBRStrategy<String>());
@@ -121,8 +122,8 @@ public class NBRTest {
 	
 	@Test
 	public void computeSingleNBRWithTaggingNonSubsumingParts(){
-		List<QueryTree<String>> posExampleTrees = DBpediaExample.getPosExampleTrees();
-		List<QueryTree<String>> negExampleTrees = DBpediaExample.getNegExampleTrees();
+		Set<QueryTree<String>> posExampleTrees = DBpediaExample.getPosExampleTrees();
+		Set<QueryTree<String>> negExampleTrees = DBpediaExample.getNegExampleTrees();
 		
 		LGGGenerator<String> lggGenerator = new LGGGeneratorImpl<String>();
 		NBRGenerator<String> nbrGenerator = new NBRGeneratorImpl<String>(new TagNonSubsumingPartsNBRStrategy<String>());
@@ -158,8 +159,8 @@ public class NBRTest {
 	
 	@Test
 	public void computeSingleNBRGreedy(){
-		List<QueryTree<String>> posExampleTrees = DBpediaExample.getPosExampleTrees();
-		List<QueryTree<String>> negExampleTrees = DBpediaExample.getNegExampleTrees();
+		Set<QueryTree<String>> posExampleTrees = DBpediaExample.getPosExampleTrees();
+		Set<QueryTree<String>> negExampleTrees = DBpediaExample.getNegExampleTrees();
 		
 		LGGGenerator<String> lggGenerator = new LGGGeneratorImpl<String>();
 		NBRGenerator<String> nbrGenerator = new NBRGeneratorImpl<String>(new GreedyNBRStrategy<String>());

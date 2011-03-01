@@ -40,52 +40,26 @@ public interface QueryTree<N> {
     N getUserObject();
     
     void setUserObject(N userObject);
-    
-    void setId(int id);
-    
-    int getId();
-    
-    QueryTree<N> getNodeById(int nodeId);
-    
-    boolean isLiteralNode();
-    
-    void setLiteralNode(boolean isLiteralNode);
-    
-    boolean isResourceNode();
-    
-    void setResourceNode(boolean isResourceNode);
-    
-    boolean isVarNode();
-    
-    void setVarNode(boolean isVarNode);
 
     QueryTree<N> getParent();
     
     List<QueryTree<N>> getChildren();
     
     List<QueryTree<N>> getChildren(Object edge);
-    
-    List<QueryTree<N>> getChildrenClosure();
 
     Object getEdge(QueryTree<N> child);
     
     void addChild(QueryTreeImpl<N> child);
     
-    void addChild(QueryTreeImpl<N> child, int position);
-    
     void addChild(QueryTreeImpl<N> child, Object edge);
     
-    void addChild(QueryTreeImpl<N> child, Object edge, int position);
-    
-    int removeChild(QueryTreeImpl<N> child);
+    void removeChild(QueryTreeImpl<N> child);
     
     Set<Object> getEdges();
     
     void sortChildren(Comparator<QueryTree<N>> comparator);
 
     int getChildCount();
-    
-    int getMaxDepth();
 
     boolean isRoot();
 

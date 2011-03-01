@@ -40,7 +40,6 @@ import org.dllearner.core.configurators.CELOEConfigurator;
 import org.dllearner.core.options.BooleanConfigOption;
 import org.dllearner.core.options.CommonConfigOptions;
 import org.dllearner.core.options.ConfigOption;
-import org.dllearner.core.options.DoubleConfigOption;
 import org.dllearner.core.options.StringConfigOption;
 import org.dllearner.core.owl.ClassHierarchy;
 import org.dllearner.core.owl.Description;
@@ -91,7 +90,7 @@ public class CELOE extends LearningAlgorithm {
 	
 	// all nodes in the search tree (used for selecting most promising node)
 	private TreeSet<OENode> nodes;
-	private OEHeuristicRuntime heuristic; // = new OEHeuristicRuntime();
+	private OEHeuristicRuntime heuristic = new OEHeuristicRuntime();
 	// root of search tree
 	private OENode startNode;
 	// the class with which we start the refinement process
@@ -172,7 +171,6 @@ public class CELOE extends LearningAlgorithm {
 		options.add(CommonConfigOptions.useDoubleDatatypes());
 		options.add(CommonConfigOptions.maxExecutionTimeInSeconds(10));
 		options.add(CommonConfigOptions.getNoisePercentage());
-		options.add(CommonConfigOptions.getTerminateOnNoiseReached(false));
 		options.add(CommonConfigOptions.getMaxDepth(7));
 		options.add(CommonConfigOptions.maxNrOfResults(10));
 		options.add(CommonConfigOptions.maxClassDescriptionTests());
@@ -182,8 +180,7 @@ public class CELOE extends LearningAlgorithm {
 		options.add(new BooleanConfigOption("reuseExistingDescription", "If true, the algorithm tries to find a good starting point close to an existing definition/super class of the given class in the knowledge base.", false));
 		options.add(new BooleanConfigOption("writeSearchTree", "specifies whether to write a search tree", false));
 		options.add(new StringConfigOption("searchTreeFile","file to use for the search tree", "log/searchTree.txt"));
-		options.add(new BooleanConfigOption("replaceSearchTree","specifies whether to replace the search tree in the log file after each run or append the new search tree", false));
-		options.add(new DoubleConfigOption("expansionPenaltyFactor","heuristic penalty per syntactic construct used (lower = finds more complex expression, but might miss simple ones)", 0.1));	
+		options.add(new BooleanConfigOption("replaceSearchTree","specifies whether to replace the search tree in the log file after each run or append the new search tree", false));		
 		return options;
 	}
 	
@@ -197,8 +194,6 @@ public class CELOE extends LearningAlgorithm {
 		// reachable via a single path
 		ClassHierarchy classHierarchy = reasoner.getClassHierarchy().clone();
 		classHierarchy.thinOutSubsumptionHierarchy();
-		
-		heuristic = new OEHeuristicRuntime(configurator);
 		
 		minimizer = new DescriptionMinimizer(reasoner);
 		
@@ -331,10 +326,6 @@ public class CELOE extends LearningAlgorithm {
 	public TreeSet<? extends EvaluatedDescription> getCurrentlyBestEvaluatedDescriptions() {
 		return bestEvaluatedDescriptions.getSet();
 	}	
-	
-	public double getCurrentlyBestAccuracy() {
-		return bestEvaluatedDescriptions.getBest().getAccuracy();
-	}
 	
 	@Override
 	public void start() {
@@ -686,8 +677,7 @@ public class CELOE extends LearningAlgorithm {
 		return 
 		stop || 
 		(configurator.getMaxClassDescriptionTests() != 0 && (expressionTests >= configurator.getMaxClassDescriptionTests())) ||
-		(configurator.getMaxExecutionTimeInSeconds() != 0 && ((System.nanoTime() - nanoStartTime) >= (configurator.getMaxExecutionTimeInSeconds()*1000000000l))) ||
-		(configurator.getTerminateOnNoiseReached() && (100*getCurrentlyBestAccuracy()>100-configurator.getNoisePercentage()));
+		(configurator.getMaxExecutionTimeInSeconds() != 0 && ((System.nanoTime() - nanoStartTime) >= (configurator.getMaxExecutionTimeInSeconds()*1000000000l)));
 	}
 	
 	private void reset() {
@@ -791,5 +781,4 @@ public class CELOE extends LearningAlgorithm {
 	public int getClassExpressionTests() {
 		return expressionTests;
 	}	
-	
 }
