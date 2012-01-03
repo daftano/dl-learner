@@ -1,22 +1,3 @@
-/**
- * Copyright (C) 2007-2011, Jens Lehmann
- *
- * This file is part of DL-Learner.
- *
- * DL-Learner is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * DL-Learner is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
 package org.dllearner.test;
 
 import java.net.URL;
@@ -27,6 +8,7 @@ import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.SimpleLayout;
+import org.dllearner.kb.sparql.EndpointBasedSPARQLTasks;
 import org.dllearner.kb.sparql.SPARQLTasks;
 import org.dllearner.kb.sparql.SparqlEndpoint;
 import org.dllearner.utilities.examples.AutomaticNegativeExampleFinderSPARQL;
@@ -57,7 +39,7 @@ public class TestGetExampleBug {
 				positiveSet.add("http://3ba.se/conferences/ThomasRiechert");
 				//positiveSet.add("http://3ba.se/conferences/FMILeipzig");
 
-				SPARQLTasks st = new SPARQLTasks(new SparqlEndpoint(new URL(OntowikiUrl)));
+				SPARQLTasks st = new EndpointBasedSPARQLTasks(new SparqlEndpoint(new URL(OntowikiUrl)));
 				AutomaticNegativeExampleFinderSPARQL ane = 
 					new AutomaticNegativeExampleFinderSPARQL(positiveSet,st, new TreeSet<String>());
 				SortedSet<String> negExamples = new TreeSet<String>();

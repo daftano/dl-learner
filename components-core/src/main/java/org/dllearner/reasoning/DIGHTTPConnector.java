@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,6 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
 
 package org.dllearner.reasoning;
@@ -176,7 +177,7 @@ public class DIGHTTPConnector {
 			osw.close();
 			
 			if(protocolFile != null)
-				Files.appendToFile(protocolFile, "DIG code send to reasoner:\n\n"+send+"\n\n");
+				Files.appendFile(protocolFile, "DIG code send to reasoner:\n\n"+send+"\n\n");
 			
 			// receive answer
 			InputStream is = connection.getInputStream();
@@ -198,7 +199,7 @@ public class DIGHTTPConnector {
 //		}	
 		
 		if(protocolFile != null)
-			Files.appendToFile(protocolFile, "DIG code received from reasoner:\n\n"+answer+"\n\n");
+			Files.appendFile(protocolFile, "DIG code received from reasoner:\n\n"+answer+"\n\n");
 		
 		return answer.toString();
 	}

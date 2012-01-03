@@ -13,7 +13,7 @@ import java.util.Random;
 import org.dllearner.algorithms.gp.GP;
 import org.dllearner.cli.QuickStart;
 import org.dllearner.cli.Start;
-import org.dllearner.core.AbstractReasonerComponent;
+import org.dllearner.core.ReasonerComponent;
 import org.dllearner.kb.sparql.SparqlKnowledgeSource;
 import org.dllearner.reasoning.FastInstanceChecker;
 import org.dllearner.reasoning.OWLAPIReasoner;
@@ -50,7 +50,7 @@ public class OWLlinkTest {
 			
 			int cnt = 0;
 			Start start;
-			AbstractReasonerComponent rc;
+			ReasonerComponent rc;
 			for(String conf : examples) {
 				if(cnt == EXAMPLE_COUNT){
 					break;
@@ -61,11 +61,11 @@ public class OWLlinkTest {
 				}
 				rc = start.getReasonerComponent();
 				if(rc instanceof OWLAPIReasoner){
-					((OWLAPIReasoner)rc).setReasonerTypeString("owllink");
-					((OWLAPIReasoner)rc).setOwlLinkURL(OWL_LINK_URL);
+					((OWLAPIReasoner)rc).getConfigurator().setReasonerType("owllink");
+					((OWLAPIReasoner)rc).getConfigurator().setOwlLinkURL(new URL(OWL_LINK_URL));
 				} else if(rc instanceof FastInstanceChecker){
-					((FastInstanceChecker)rc).getReasonerComponent().setReasonerTypeString("owllink");
-					((FastInstanceChecker)rc).getReasonerComponent().setOwlLinkURL(OWL_LINK_URL);
+					((FastInstanceChecker)rc).getConfigurator().setReasonerType("owllink");
+					((FastInstanceChecker)rc).getConfigurator().setOwlLinkURL(new URL(OWL_LINK_URL));
 				} else {
 					continue;
 				}

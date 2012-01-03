@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.algorithms;
 
 import java.util.Collection;
@@ -24,7 +24,12 @@ import java.util.LinkedList;
 
 import org.apache.log4j.Logger;
 import org.dllearner.algorithms.gp.GPUtilities;
-import org.dllearner.core.*;
+import org.dllearner.core.EvaluatedDescription;
+import org.dllearner.core.LearningAlgorithm;
+import org.dllearner.core.LearningProblem;
+import org.dllearner.core.ReasonerComponent;
+import org.dllearner.core.Score;
+import org.dllearner.core.configurators.RandomGuesserConfigurator;
 import org.dllearner.core.options.ConfigEntry;
 import org.dllearner.core.options.ConfigOption;
 import org.dllearner.core.options.IntegerConfigOption;
@@ -43,14 +48,13 @@ import org.dllearner.core.owl.Description;
  * @author Jens Lehmann
  *
  */
-@ComponentAnn(name = "Random Guesser", shortName = "randomGuesser", version = 0.8)
-public class RandomGuesser extends AbstractCELA {
+public class RandomGuesser extends LearningAlgorithm {
 
-//	private RandomGuesserConfigurator configurator;
-//	@Override
-//	public RandomGuesserConfigurator getConfigurator(){
-//		return configurator;
-//	}
+	private RandomGuesserConfigurator configurator;
+	@Override
+	public RandomGuesserConfigurator getConfigurator(){
+		return configurator;
+	}
 	
     private Description bestDefinition = null;
     private Score bestScore;
@@ -63,18 +67,18 @@ public class RandomGuesser extends AbstractCELA {
     
 	private static Logger logger = Logger.getLogger(RandomGuesser.class);
 	
-	public RandomGuesser(AbstractLearningProblem learningProblem, AbstractReasonerComponent rs) {
+	public RandomGuesser(LearningProblem learningProblem, ReasonerComponent rs) {
 	   	super(learningProblem, rs);
-//		this.configurator = new RandomGuesserConfigurator(this);
+		this.configurator = new RandomGuesserConfigurator(this);
 	}
 	
 	public static String getName() {
 		return "random guesser learning algorithm";
 	} 	
 	
-	public static Collection<Class<? extends AbstractLearningProblem>> supportedLearningProblems() {
-		Collection<Class<? extends AbstractLearningProblem>> problems = new LinkedList<Class<? extends AbstractLearningProblem>>();
-		problems.add(AbstractLearningProblem.class);
+	public static Collection<Class<? extends LearningProblem>> supportedLearningProblems() {
+		Collection<Class<? extends LearningProblem>> problems = new LinkedList<Class<? extends LearningProblem>>();
+		problems.add(LearningProblem.class);
 		return problems;
 	}
 	

@@ -41,11 +41,14 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.apache.log4j.SimpleLayout;
 import org.dllearner.algorithms.ocel.OCEL;
-import org.dllearner.core.AbstractCELA;
-import org.dllearner.core.AbstractComponent;
-import org.dllearner.core.AbstractKnowledgeSource;
-import org.dllearner.core.AbstractReasonerComponent;
+import org.dllearner.core.Component;
 import org.dllearner.core.ComponentManager;
+import org.dllearner.core.KnowledgeSource;
+import org.dllearner.core.LearningAlgorithm;
+import org.dllearner.core.ReasonerComponent;
+import org.dllearner.core.configurators.ComponentFactory;
+import org.dllearner.core.configurators.ROLComponent2Configurator;
+import org.dllearner.core.configurators.SparqlKnowledgeSourceConfigurator;
 import org.dllearner.core.owl.Description;
 import org.dllearner.core.owl.Individual;
 import org.dllearner.gui.Config;
@@ -58,7 +61,6 @@ import org.dllearner.learningproblems.PosNegLPStandard;
 import org.dllearner.reasoning.FastInstanceChecker;
 import org.dllearner.reasoning.OWLAPIReasoner;
 import org.dllearner.reasoning.ReasonerType;
-import org.dllearner.refinementoperators.RhoDRDown;
 import org.dllearner.utilities.Files;
 import org.dllearner.utilities.JamonMonitorLogger;
 import org.dllearner.utilities.StringFormatter;
@@ -77,7 +79,7 @@ public class SemanticBibleComparison {
 	private static int nrOfFilesInExperiment = 200;
 	
 	
-	private static AbstractReasonerComponent reasoningService;
+	private static ReasonerComponent reasoningService;
 
 	private static Logger logger = Logger.getRootLogger();
 	private static boolean flawInExperiment = false;
@@ -237,7 +239,7 @@ public class SemanticBibleComparison {
 	public static void writeJamonLog(String filename){
 		File jamonlog = new File(filename);
 		Files.createFile(jamonlog, MonitorFactory.getReport());
-		Files.appendToFile(jamonlog, "<xmp>\n"+JamonMonitorLogger.getStringForAllSortedByLabel());
+		Files.appendFile(jamonlog, "<xmp>\n"+JamonMonitorLogger.getStringForAllSortedByLabel());
 	}
 	
 	
@@ -311,7 +313,7 @@ public class SemanticBibleComparison {
 				double n = (double) (5-onOnto.getCoveredNegatives().size());
 				accNegExOnOnto.addNumber(n/5.0);
 				SparqlKnowledgeSource s=null;
-				for(AbstractKnowledgeSource ks : cm.getLiveKnowledgeSources()){
+				for(KnowledgeSource ks : cm.getLiveKnowledgeSources()){
 					if (ks instanceof SparqlKnowledgeSource) {
 						s = (SparqlKnowledgeSource) ks;
 					}
@@ -379,17 +381,14 @@ public class SemanticBibleComparison {
 	
 	public static OCEL experimentalSetup(Experiments exp,SortedSet<Individual> posExamples, SortedSet<Individual> negExamples ){
 		OCEL la = null;
-		RhoDRDown op = null;
-		if(exp.toString().contains("SPARQL")) {
+		if(exp.toString().contains("SPARQL"))
 			la = prepareSparqlExperiment(exp, posExamples, negExamples);
-			op = (RhoDRDown) la.getOperator();
-		} else if(exp.toString().contains("NORMAL")){
+		else if(exp.toString().contains("NORMAL")){
 			if(exp.equals(Experiments.NORMAL_10000_CTESTS_FASTINST)){
 				la = prepareNormalExperiment(true, posExamples, negExamples);
-				op = (RhoDRDown) la.getOperator();
-				op.setUseAllConstructor(false);
-				op.setUseNegation(false);
-				op.setUseCardinalityRestrictions(false);
+				la.getConfigurator().setUseAllConstructor(false);
+				la.getConfigurator().setUseNegation(false);
+				la.getConfigurator().setUseCardinalityRestrictions(false);
 			}else{
 				la = prepareNormalExperiment(false, posExamples, negExamples);
 			}
@@ -398,31 +397,31 @@ public class SemanticBibleComparison {
 			System.exit(0);
 			}
 		
-//		OCELConfigurator c = la.getConfigurator();
+		ROLComponent2Configurator c = la.getConfigurator();
 		
 		//defaultSettings:
-		op.setUseHasValueConstructor(false);
-		op.setUseBooleanDatatypes(false);
-		op.setUseDoubleDatatypes(false);
+		c.setUseHasValueConstructor(false);
+		c.setUseBooleanDatatypes(false);
+		c.setUseDoubleDatatypes(false);
 		
 
 		if(exp.toString().contains("HASVALUE")){
-			op.setUseHasValueConstructor(true);
+			c.setUseHasValueConstructor(true);
 		}
 		
 		
 		if(exp.toString().contains("10s")){
-			la.setMaxExecutionTimeInSeconds(10);
-			la.setMinExecutionTimeInSeconds(10);
+			c.setMaxExecutionTimeInSeconds(10);
+			c.setMinExecutionTimeInSeconds(10);
 			
 		}else if(exp.toString().contains("100s")){
-			la.setMaxExecutionTimeInSeconds(100);
-			la.setMinExecutionTimeInSeconds(100);
+			c.setMaxExecutionTimeInSeconds(100);
+			c.setMinExecutionTimeInSeconds(100);
 			
 		}else if(exp.toString().contains("1000_CTESTS")){
-			la.setMaxClassDescriptionTests(1000);
+			c.setMaxClassDescriptionTests(1000);
 		}else if(exp.toString().contains("10000_CTESTS")){
-			la.setMaxClassDescriptionTests(10000);
+			c.setMaxClassDescriptionTests(10000);
 			
 		}
 		//la.getConfigurator();
@@ -441,42 +440,46 @@ public class SemanticBibleComparison {
 			instances.addAll(posExamples);
 			instances.addAll(negExamples);
 	
-			SparqlKnowledgeSource ks = new SparqlKnowledgeSource(URI.create(
+			SparqlKnowledgeSource ks = ComponentFactory
+					.getSparqlKnowledgeSource(URI.create(
 							"http://localhost:2020/bible").toURL(), SetManipulation
 							.indToString(instances));
 	
-//			SparqlKnowledgeSourceConfigurator c = ks.getConfigurator();
+			SparqlKnowledgeSourceConfigurator c = ks.getConfigurator();
 			
-			ks.setCloseAfterRecursion(true);
-			ks.setRecursionDepth(2);
-			ks.setPredefinedEndpoint("LOCALJOSEKIBIBLE");
-			ks.setUseLits(true);
-			ks.setGetAllSuperClasses(true);
-			ks.setPropertyInformation(true);
-//			ks.setVerbosity("warning");
+			c.setCloseAfterRecursion(true);
+			c.setRecursionDepth(2);
+			c.setPredefinedEndpoint("LOCALJOSEKIBIBLE");
+			c.setUseLits(true);
+			c.setGetAllSuperClasses(true);
+			c.setGetPropertyInformation(true);
+			c.setVerbosity("warning");
 			
 			if(exp.equals(Experiments.SPARQL_10000_CTESTS_SPECIAL_REC2_NOPROP)){
-				ks.setPropertyInformation(false);
+				c.setGetPropertyInformation(false);
 			}else if(exp.equals(Experiments.SPARQL_10000_CTESTS_SPECIAL_REC2_NOCLOSE_NOPROP)){
-				ks.setCloseAfterRecursion(false);
-				ks.setPropertyInformation(false);
+				c.setCloseAfterRecursion(false);
+				c.setGetPropertyInformation(false);
 			}else if(exp.equals(Experiments.SPARQL_10000_CTESTS_SPECIAL_REC1)){
-				ks.setRecursionDepth(1);
+				c.setRecursionDepth(1);
 			}else if(exp.equals(Experiments.SPARQL_10000_CTESTS_SPECIAL_REC3)){
-				ks.setRecursionDepth(3);
+				c.setRecursionDepth(3);
 			}
 			
-			Set<AbstractKnowledgeSource> tmp = new HashSet<AbstractKnowledgeSource>();
+			Set<KnowledgeSource> tmp = new HashSet<KnowledgeSource>();
 			tmp.add(ks);
 			// reasoner
-			OWLAPIReasoner f = new OWLAPIReasoner(tmp);
+			OWLAPIReasoner f = ComponentFactory
+					.getOWLAPIReasoner(tmp);
 	
 			// learning problem
-			PosNegLPStandard lp = new PosNegLPStandard(f, posExamples, negExamples);
+			PosNegLPStandard lp = ComponentFactory.getPosNegLPStandard(f,
+					SetManipulation.indToString(posExamples), SetManipulation
+							.indToString(negExamples));
 	
 			// learning algorithm
-			la = ComponentManager.getInstance().learningAlgorithm(OCEL.class, lp, f);
-			la.setGuaranteeXgoodDescriptions(1);
+			la = ComponentFactory.getROLComponent2(lp, f);
+			la.getConfigurator().setGuaranteeXgoodDescriptions(1);
 			Config conf = new Config(ComponentManager.getInstance(), ks, f, lp, la);
 			new ConfigSave(conf).saveFile(new File(tmpFilename));
 			
@@ -503,29 +506,31 @@ public class SemanticBibleComparison {
 				e.printStackTrace();
 				flawInExperiment = true;
 			}
-			OWLFile ks = new OWLFile( fileURL);
+			OWLFile ks = ComponentFactory.getOWLFile( fileURL);
 					
-			Set<AbstractKnowledgeSource> tmp = new HashSet<AbstractKnowledgeSource>();
+			Set<KnowledgeSource> tmp = new HashSet<KnowledgeSource>();
 			tmp.add(ks);
 			
-			AbstractReasonerComponent f = null;
+			ReasonerComponent f = null;
 			
 			// reasoner
 			if(fic){
-				f = new FastInstanceChecker(tmp);
-				((FastInstanceChecker)f).setDefaultNegation(true);
+				f = ComponentFactory.getFastInstanceChecker(tmp);
+				((FastInstanceChecker)f).getConfigurator().setDefaultNegation(true);
 				
 			}else{
-				f = new OWLAPIReasoner(tmp);
+				f = ComponentFactory.getOWLAPIReasoner(tmp);
 			}
 //			ReasonerComponent rs = ComponentManager.getInstance().reasoningService(f);
 	
 //			 learning problem
-			PosNegLPStandard lp = new PosNegLPStandard(f, posExamples, negExamples);
+			PosNegLPStandard lp = ComponentFactory.getPosNegLPStandard(f,
+					SetManipulation.indToString(posExamples), SetManipulation
+							.indToString(negExamples));
 	
 			// learning algorithm
-			la = ComponentManager.getInstance().learningAlgorithm(OCEL.class, lp, f);
-			la.setGuaranteeXgoodDescriptions(1);
+			la = ComponentFactory.getROLComponent2(lp, f);
+			la.getConfigurator().setGuaranteeXgoodDescriptions(1);
 			Config c = new Config(ComponentManager.getInstance(), ks, f, lp, la);
 			new ConfigSave(c).saveFile(new File(tmpFilename));
 			
@@ -541,10 +546,10 @@ public class SemanticBibleComparison {
 	public static void initAllComponents(){
 		ComponentManager cm = ComponentManager.getInstance();
 		
-		List<AbstractComponent> l = new ArrayList<AbstractComponent>();
+		List<Component> l = new ArrayList<Component>();
 		l.addAll(cm.getLiveComponents());
 		
-		for(AbstractComponent c : l){
+		for(Component c : l){
 			
 			try{
 			SimpleClock time = new SimpleClock();
@@ -669,13 +674,13 @@ public class SemanticBibleComparison {
 		
 	}
 	
-	public static AbstractCELA getLearningAlgorithm(){
+	public static LearningAlgorithm getLearningAlgorithm(){
 		ComponentManager cm =ComponentManager.getInstance();
 		
-		List<AbstractComponent> comp = cm.getLiveComponents();
-		for (AbstractComponent component : comp) {
-			if(component instanceof AbstractCELA){
-				return (AbstractCELA) component;
+		List<Component> comp = cm.getLiveComponents();
+		for (Component component : comp) {
+			if(component instanceof LearningAlgorithm){
+				return (LearningAlgorithm) component;
 			}
 			
 		}

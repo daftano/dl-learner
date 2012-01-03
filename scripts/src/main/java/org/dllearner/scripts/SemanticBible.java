@@ -29,8 +29,8 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.SimpleLayout;
 import org.dllearner.algorithms.ocel.OCEL;
-import org.dllearner.core.AbstractKnowledgeSource;
-import org.dllearner.core.AbstractReasonerComponent;
+import org.dllearner.core.KnowledgeSource;
+import org.dllearner.core.ReasonerComponent;
 import org.dllearner.core.owl.Individual;
 import org.dllearner.core.owl.NamedClass;
 import org.dllearner.kb.extraction.ExtractionAlgorithm;
@@ -52,7 +52,7 @@ import org.dllearner.utilities.statistics.SimpleClock;
 
 public class SemanticBible {
 
-	private static AbstractReasonerComponent reasoningService;
+	private static ReasonerComponent reasoningService;
 
 	private static Logger logger = Logger.getRootLogger();
 
@@ -79,8 +79,8 @@ public class SemanticBible {
 		initLogger();
 		logger.info("Start");
 		Files.clearFile(file);
-		Files.appendToFile(file, "neg Ex random: "+RANDOMNEGATIVES+"\n");
-		Files.appendToFile(file, "negfactor : "+NEGFACTOR+"\n");
+		Files.appendFile(file, "neg Ex random: "+RANDOMNEGATIVES+"\n");
+		Files.appendFile(file, "negfactor : "+NEGFACTOR+"\n");
 			
 		
 		//String fileURL = new File(ontologyFile).toURI().toString();
@@ -113,7 +113,7 @@ public class SemanticBible {
 		
 		
 		for (NamedClass target : classesToRelearn) {
-			Files.appendToFile(file,"now learning: "+target+"\n");
+			Files.appendFile(file,"now learning: "+target+"\n");
 			waitForInput();
 			
 			positiveEx.clear();
@@ -138,7 +138,7 @@ public class SemanticBible {
 			if(negativeEx.size()<0) {
 				System.out.println(target);
 				waitForInput();
-				Files.appendToFile(file, "\tSKIPPED negEX "+negativeEx+"\n");
+				Files.appendFile(file, "\tSKIPPED negEX "+negativeEx+"\n");
 				continue;
 			}
 			// reasoningService.prepareSubsumptionHierarchy();
@@ -151,7 +151,7 @@ public class SemanticBible {
 				e.printStackTrace();
 			}
 			waitForInput();
-			Files.appendToFile(file, "*************\n");
+			Files.appendFile(file, "*************\n");
 			
 		}
 
@@ -259,7 +259,7 @@ public class SemanticBible {
 		logger.setLevel(Level.DEBUG);
 		Logger.getLogger(Manager.class).setLevel(Level.INFO);
 		Level lwarn = Level.DEBUG;
-		Logger.getLogger(AbstractKnowledgeSource.class).setLevel(lwarn);
+		Logger.getLogger(KnowledgeSource.class).setLevel(lwarn);
 		Logger.getLogger(SparqlKnowledgeSource.class).setLevel(lwarn);
 
 		Logger.getLogger(ExtractionAlgorithm.class).setLevel(lwarn);

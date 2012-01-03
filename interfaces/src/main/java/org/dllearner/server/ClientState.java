@@ -26,11 +26,11 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-import org.dllearner.core.AbstractComponent;
-import org.dllearner.core.AbstractKnowledgeSource;
-import org.dllearner.core.AbstractCELA;
-import org.dllearner.core.AbstractLearningProblem;
-import org.dllearner.core.AbstractReasonerComponent;
+import org.dllearner.core.Component;
+import org.dllearner.core.KnowledgeSource;
+import org.dllearner.core.LearningAlgorithm;
+import org.dllearner.core.LearningProblem;
+import org.dllearner.core.ReasonerComponent;
 import org.dllearner.kb.OWLFile;
 import org.dllearner.kb.sparql.SparqlKnowledgeSource;
 import org.dllearner.kb.sparql.SparqlQuery;
@@ -46,23 +46,23 @@ public class ClientState {
 	// stores the mapping between component IDs and component
 	// (note that this allows us to keep all references to components even
 	// if they are not used anymore e.g. a deleted knowledge source)
-	private Map<Integer,AbstractComponent> componentIDs = new HashMap<Integer,AbstractComponent>(); 
+	private Map<Integer,Component> componentIDs = new HashMap<Integer,Component>(); 
 	
-	private Set<AbstractKnowledgeSource> knowledgeSources = new HashSet<AbstractKnowledgeSource>();
+	private Set<KnowledgeSource> knowledgeSources = new HashSet<KnowledgeSource>();
 	
 	private Map<Integer, SparqlQuery> queryIDs = new HashMap<Integer, SparqlQuery>();
 	
-	private AbstractLearningProblem learningProblem;
+	private LearningProblem learningProblem;
 	
-	private AbstractReasonerComponent reasonerComponent;
+	private ReasonerComponent reasonerComponent;
 	
-	private AbstractCELA learningAlgorithm;
+	private LearningAlgorithm learningAlgorithm;
 
 	private Random rand=new Random();
 	
 	private boolean isAlgorithmRunning = false;
 	
-	private int generateComponentID(AbstractComponent component) {
+	private int generateComponentID(Component component) {
 		int id;
 		do {
 			id = rand.nextInt();
@@ -130,9 +130,9 @@ public class ClientState {
 	 * @return True if a knowledge source was deleted, false otherwise.
 	 */
 	public boolean removeKnowledgeSource(String url) {
-		Iterator<AbstractKnowledgeSource> it = knowledgeSources.iterator(); 
+		Iterator<KnowledgeSource> it = knowledgeSources.iterator(); 
 		while(it.hasNext()) {
-			AbstractKnowledgeSource source = it.next();
+			KnowledgeSource source = it.next();
 			if((source instanceof OWLFile && ((OWLFile)source).getURL().toString().equals(url))
 				|| (source instanceof SparqlKnowledgeSource && ((SparqlKnowledgeSource)source).getURL().toString().equals(url)) ) {
 				it.remove();
@@ -145,14 +145,14 @@ public class ClientState {
 	/**
 	 * @return the learningProblem
 	 */
-	public AbstractLearningProblem getLearningProblem() {
+	public LearningProblem getLearningProblem() {
 		return learningProblem;
 	}
 
 	/**
 	 * @param learningProblem the learningProblem to set
 	 */
-	public int setLearningProblem(AbstractLearningProblem learningProblem) {
+	public int setLearningProblem(LearningProblem learningProblem) {
 		this.learningProblem = learningProblem;
 		return generateComponentID(learningProblem);
 	}
@@ -160,7 +160,7 @@ public class ClientState {
 	/**
 	 * @return the reasonerComponent
 	 */
-	public AbstractReasonerComponent getReasonerComponent() {
+	public ReasonerComponent getReasonerComponent() {
 		return reasonerComponent;
 	}
 
@@ -170,7 +170,7 @@ public class ClientState {
 	 * 
 	 * @param reasonerComponent the reasonerComponent to set
 	 */
-	public int setReasonerComponent(AbstractReasonerComponent reasonerComponent) {
+	public int setReasonerComponent(ReasonerComponent reasonerComponent) {
 		this.reasonerComponent = reasonerComponent;
 //		reasoningService = new ReasonerComponent(reasonerComponent);
 		return generateComponentID(reasonerComponent);
@@ -179,14 +179,14 @@ public class ClientState {
 	/**
 	 * @return the learningAlgorithm
 	 */
-	public AbstractCELA getLearningAlgorithm() {
+	public LearningAlgorithm getLearningAlgorithm() {
 		return learningAlgorithm;
 	}
 
 	/**
 	 * @param learningAlgorithm the learningAlgorithm to set
 	 */
-	public int setLearningAlgorithm(AbstractCELA learningAlgorithm) {
+	public int setLearningAlgorithm(LearningAlgorithm learningAlgorithm) {
 		this.learningAlgorithm = learningAlgorithm;
 		return generateComponentID(learningAlgorithm);
 	}
@@ -196,7 +196,7 @@ public class ClientState {
 	 * @return The component associated with this ID.
 	 * @see java.util.Map#get(java.lang.Object)
 	 */
-	public AbstractComponent getComponent(int id) {
+	public Component getComponent(int id) {
 		return componentIDs.get(id);
 	}
 
@@ -206,7 +206,7 @@ public class ClientState {
 	 * @param ks The knowledge source to add.
 	 * @return The component ID for the newly added knowledge source.
 	 */
-	public int addKnowledgeSource(AbstractKnowledgeSource ks) {
+	public int addKnowledgeSource(KnowledgeSource ks) {
 		knowledgeSources.add(ks);
 		return generateComponentID(ks);
 		
@@ -219,7 +219,7 @@ public class ClientState {
 	/**
 	 * @return the knowledgeSources
 	 */
-	public Set<AbstractKnowledgeSource> getKnowledgeSources() {
+	public Set<KnowledgeSource> getKnowledgeSources() {
 		return knowledgeSources;
 	}
 }

@@ -40,27 +40,21 @@ import javax.jws.soap.SOAPBinding;
 import org.apache.log4j.Logger;
 import org.dllearner.Info;
 import org.dllearner.cli.ConfMapper;
-import org.dllearner.core.AbstractComponent;
+import org.dllearner.core.Component;
 import org.dllearner.core.ComponentInitException;
 import org.dllearner.core.ComponentManager;
 import org.dllearner.core.EvaluatedDescription;
-import org.dllearner.core.AbstractKnowledgeSource;
-import org.dllearner.core.AbstractCELA;
-import org.dllearner.core.AbstractLearningProblem;
+import org.dllearner.core.KnowledgeSource;
+import org.dllearner.core.LearningAlgorithm;
+import org.dllearner.core.LearningProblem;
 import org.dllearner.core.LearningProblemUnsupportedException;
-import org.dllearner.core.AbstractReasonerComponent;
+import org.dllearner.core.ReasonerComponent;
 import org.dllearner.core.options.ConfigOption;
 import org.dllearner.core.owl.Description;
 import org.dllearner.core.owl.Individual;
 import org.dllearner.core.owl.NamedClass;
 import org.dllearner.core.owl.ObjectProperty;
-import org.dllearner.kb.sparql.Cache;
-import org.dllearner.kb.sparql.NaturalLanguageDescriptionConvertVisitor;
-import org.dllearner.kb.sparql.SPARQLTasks;
-import org.dllearner.kb.sparql.SparqlEndpoint;
-import org.dllearner.kb.sparql.SparqlKnowledgeSource;
-import org.dllearner.kb.sparql.SparqlQueryDescriptionConvertVisitor;
-import org.dllearner.kb.sparql.SparqlQueryException;
+import org.dllearner.kb.sparql.*;
 import org.dllearner.parser.KBParser;
 import org.dllearner.parser.ParseException;
 import org.dllearner.utilities.datastructures.Datastructures;
@@ -189,7 +183,7 @@ public class DLLearnerWS {
 	 */
 	@WebMethod
 	public String[] getConfigOptions(String component, boolean allInfo) throws UnknownComponentException {
-		Class<? extends AbstractComponent> componentClass = confMapper.getComponentClass(component);
+		Class<? extends Component> componentClass = confMapper.getComponentClass(component);
 		List<ConfigOption<?>> options = ComponentManager.getConfigOptions(componentClass);
 		String[] optionsString = new String[options.size()];
 		for(int i=0; i<options.size(); i++) {
@@ -218,10 +212,10 @@ public class DLLearnerWS {
 	@WebMethod
 	public int addKnowledgeSource(int id, String component, String url) throws ClientNotKnownException, UnknownComponentException, MalformedURLException {
 		ClientState state = getState(id);
-		Class<? extends AbstractKnowledgeSource> ksClass = confMapper.getKnowledgeSourceClass(component);
+		Class<? extends KnowledgeSource> ksClass = confMapper.getKnowledgeSourceClass(component);
 		if(ksClass == null)
 			throw new UnknownComponentException(component);
-		AbstractKnowledgeSource ks = cm.knowledgeSource(ksClass);
+		KnowledgeSource ks = cm.knowledgeSource(ksClass);
 		cm.applyConfigEntry(ks, "url", new URL(url));
 		return state.addKnowledgeSource(ks);
 	}
@@ -250,11 +244,11 @@ public class DLLearnerWS {
 	@WebMethod
 	public int setReasoner(int id, String component) throws ClientNotKnownException, UnknownComponentException {
 		ClientState state = getState(id);
-		Class<? extends AbstractReasonerComponent> rcClass = confMapper.getReasonerComponentClass(component);
+		Class<? extends ReasonerComponent> rcClass = confMapper.getReasonerComponentClass(component);
 		if(rcClass == null)
 			throw new UnknownComponentException(component);
 		
-		AbstractReasonerComponent rc = cm.reasoner(rcClass, state.getKnowledgeSources());
+		ReasonerComponent rc = cm.reasoner(rcClass, state.getKnowledgeSources());
 		return state.setReasonerComponent(rc);
 	}
 	
@@ -270,11 +264,11 @@ public class DLLearnerWS {
 	@WebMethod
 	public int setLearningProblem(int id, String component) throws ClientNotKnownException, UnknownComponentException {
 		ClientState state = getState(id);
-		Class<? extends AbstractLearningProblem> lpClass = confMapper.getLearningProblemClass(component);
+		Class<? extends LearningProblem> lpClass = confMapper.getLearningProblemClass(component);
 		if(lpClass == null)
 			throw new UnknownComponentException(component);
 		
-		AbstractLearningProblem lp = cm.learningProblem(lpClass, state.getReasonerComponent());
+		LearningProblem lp = cm.learningProblem(lpClass, state.getReasonerComponent());
 		return state.setLearningProblem(lp);
 	}
 	
@@ -291,11 +285,11 @@ public class DLLearnerWS {
 	@WebMethod
 	public int setLearningAlgorithm(int id, String component) throws ClientNotKnownException, UnknownComponentException, LearningProblemUnsupportedException {
 		ClientState state = getState(id);
-		Class<? extends AbstractCELA> laClass = confMapper.getLearningAlgorithmClass(component);
+		Class<? extends LearningAlgorithm> laClass = confMapper.getLearningAlgorithmClass(component);
 		if(laClass == null)
 			throw new UnknownComponentException(component);
 		
-		AbstractCELA la = cm.learningAlgorithm(laClass, state.getLearningProblem(), state.getReasonerComponent());
+		LearningAlgorithm la = cm.learningAlgorithm(laClass, state.getLearningProblem(), state.getReasonerComponent());
 		return state.setLearningAlgorithm(la);
 	}
 	
@@ -307,7 +301,7 @@ public class DLLearnerWS {
 	@WebMethod
 	public void initAll(int id) throws ClientNotKnownException, ComponentInitException {
 		ClientState state = getState(id);
-		for(AbstractKnowledgeSource ks : state.getKnowledgeSources())
+		for(KnowledgeSource ks : state.getKnowledgeSources())
 			ks.init();
 		state.getReasonerComponent().init();
 		state.getLearningProblem().init();
@@ -325,7 +319,7 @@ public class DLLearnerWS {
 	@WebMethod
 	public void init(int id, int componentID) throws ClientNotKnownException, UnknownComponentException, ComponentInitException {
 		ClientState state = getState(id);
-		AbstractComponent component = state.getComponent(componentID);
+		Component component = state.getComponent(componentID);
 		component.init();
 	}
 	
@@ -670,7 +664,7 @@ public class DLLearnerWS {
 	 */
 	private void applyConfigEntry(int sessionID, int componentID, String optionName, Object value) throws ClientNotKnownException, UnknownComponentException {
 		ClientState state = getState(sessionID);
-		AbstractComponent component = state.getComponent(componentID);
+		Component component = state.getComponent(componentID);
 		cm.applyConfigEntry(component, optionName, value);
 	}
 	
@@ -867,7 +861,7 @@ public class DLLearnerWS {
 	public int sparqlQueryThreaded(int sessionID, int componentID, String query) throws ClientNotKnownException
 	{
 		final ClientState state = getState(sessionID);
-		AbstractComponent component = state.getComponent(componentID);
+		Component component = state.getComponent(componentID);
 		final SparqlKnowledgeSource ks=(SparqlKnowledgeSource)component;
 		final int id=state.addQuery(ks.sparqlQuery(query));
 		Thread sparqlThread = new Thread() {
@@ -890,7 +884,7 @@ public class DLLearnerWS {
 	public String sparqlQuery(int sessionID, int componentID, String query) throws ClientNotKnownException
 	{
 		ClientState state = getState(sessionID);
-		AbstractComponent component = state.getComponent(componentID);
+		Component component = state.getComponent(componentID);
 		SparqlKnowledgeSource ks=(SparqlKnowledgeSource)component;
 		return ks.getSPARQLTasks().query(query);
 		/*SparqlQuery sparql=ks.sparqlQuery(query);
@@ -907,16 +901,16 @@ public class DLLearnerWS {
 	 * @param query The SPARQL query.
 	 * @param useCache Specify whether to use a cache for queries.
 	 * @return The result of the SPARQL query in JSON format or null if the endpoint does not exist.
-	 * @see SPARQLEndpoint#getEndpointByName;
+	 * @see SparqlEndpoint#getEndpointByName;
 	 */
 	@WebMethod
 	public String sparqlQueryPredefinedEndpoint(String predefinedEndpoint, String query, boolean useCache) {
 		SparqlEndpoint endpoint = SparqlEndpoint.getEndpointByName(predefinedEndpoint);
 		SPARQLTasks st;
 		if(useCache) {
-			st = new SPARQLTasks(endpoint);
+			st = new EndpointBasedSPARQLTasks(endpoint);
 		} else {
-			st = new SPARQLTasks(Cache.getDefaultCache(), endpoint);
+			st = new EndpointBasedSPARQLTasks(Cache.getDefaultCache(), endpoint);
 		}
 		return st.query(query);
 	}
@@ -973,7 +967,7 @@ public class DLLearnerWS {
 	public String getNaturalDescription(int id, String conceptString, String endpoint) throws ParseException, ClientNotKnownException {
 		// call parser to parse concept
 		ClientState state = getState(id);
-		AbstractReasonerComponent service = state.getReasonerComponent();
+		ReasonerComponent service = state.getReasonerComponent();
 		return NaturalLanguageDescriptionConvertVisitor.getNaturalLanguageDescription(conceptString, service);
 	}
 	
@@ -984,7 +978,7 @@ public class DLLearnerWS {
 		SortedSet<String> positiveSet = new TreeSet<String>(Arrays.asList(positives));
 		SortedSet<String> filterSet = new TreeSet<String>(Arrays.asList(filterClasses));
 		ClientState state = getState(sessionID);
-		AbstractComponent component = state.getComponent(componentID);
+		Component component = state.getComponent(componentID);
 		SparqlKnowledgeSource ks=(SparqlKnowledgeSource)component;
 		SPARQLTasks task=ks.getSPARQLTasks();
 		AutomaticNegativeExampleFinderSPARQL finder=new AutomaticNegativeExampleFinderSPARQL(positiveSet,task,filterSet);
@@ -1034,7 +1028,7 @@ public class DLLearnerWS {
 	
 	private Object getConfigOptionValue(int sessionID, int componentID, String optionName) throws ClientNotKnownException, UnknownComponentException {
 		ClientState state = getState(sessionID);
-		AbstractComponent component = state.getComponent(componentID);
+		Component component = state.getComponent(componentID);
 		return cm.getConfigOptionValue(component, optionName);
 	}	
 	

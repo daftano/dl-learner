@@ -30,7 +30,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 /**
  * A tool to quickly start a learning example. It detects all conf files in the
@@ -132,10 +131,9 @@ public class QuickStart {
 							if(cmd.length()==0){
 								writeit(one);
 								if(!query) {
-
-									CLI.main(new String[] { one });
+									Start.main(new String[] { one });
 								}else {
-									CLI.main(new String[] {"-q",one});
+									Start.main(new String[] {"-q",one});
 								}
 								return;
 							}else {break;}
@@ -162,9 +160,9 @@ public class QuickStart {
 
 			// DLLearner.main(new String[] { Selected });
 			if(!query) {
-				CLI.main(new String[] { selected });
+				Start.main(new String[] { selected });
 			}else {
-				CLI.main(new String[] {"-q",selected});
+				Start.main(new String[] {"-q",selected});
 			}
 
 		} catch (Exception e) {
@@ -174,10 +172,10 @@ public class QuickStart {
 		// System.out.println(f.isDirectory()+f.getAbsolutePath());
 	}
 
-	public static void getAllConfs(File f, String path, Map<String, ArrayList<String>> confs) {
+	public static void getAllConfs(File f, String path, HashMap<String, ArrayList<String>> confs) {
 		path = path + File.separator;
 		// System.out.println(path);
-		String[] act = f.list();System.out.println(f);
+		String[] act = f.list();
 		for (int i = 0; i < act.length; i++) {
 			// System.out.println(act[i]);
 

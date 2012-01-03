@@ -27,12 +27,12 @@ import java.net.URL;
 import java.util.List;
 
 import org.dllearner.cli.ConfMapper;
-import org.dllearner.core.AbstractComponent;
+import org.dllearner.core.Component;
 import org.dllearner.core.ComponentManager;
-import org.dllearner.core.AbstractKnowledgeSource;
-import org.dllearner.core.AbstractCELA;
-import org.dllearner.core.AbstractLearningProblem;
-import org.dllearner.core.AbstractReasonerComponent;
+import org.dllearner.core.KnowledgeSource;
+import org.dllearner.core.LearningAlgorithm;
+import org.dllearner.core.LearningProblem;
+import org.dllearner.core.ReasonerComponent;
 import org.dllearner.core.options.ConfigEntry;
 import org.dllearner.core.options.ConfigOption;
 import org.dllearner.core.options.InvalidConfigOptionValueException;
@@ -76,7 +76,7 @@ public class ConfigSave {
 		
 		// knowledge source
 		out.println("\n// knowledge source");
-		AbstractKnowledgeSource ks = config.getKnowledgeSource();
+		KnowledgeSource ks = config.getKnowledgeSource();
 		if (ks != null) {
 //			String ksString = confMapper.getComponentString(config.getKnowledgeSource().getClass());
 			URL url = (URL) cm.getConfigOptionValue(ks, "url");
@@ -90,9 +90,9 @@ public class ConfigSave {
 		
 		// reasoner
 		out.println("\n// reasoner");
-		AbstractReasonerComponent rc = config.getReasoner();
+		ReasonerComponent rc = config.getReasoner();
 		if (rc != null) {
-			String typeString = confMapper.getComponentTypeString(AbstractReasonerComponent.class);
+			String typeString = confMapper.getComponentTypeString(ReasonerComponent.class);
 			String componentString = confMapper.getComponentString(rc.getClass());
 			out.println(typeString + " = " + componentString + ";");
 			
@@ -101,9 +101,9 @@ public class ConfigSave {
 		
 		// learning problem
 		out.println("\n// learning problem");
-		AbstractLearningProblem lp = config.getLearningProblem();
+		LearningProblem lp = config.getLearningProblem();
 		if (lp != null) {
-			String typeString = confMapper.getComponentTypeString(AbstractLearningProblem.class);
+			String typeString = confMapper.getComponentTypeString(LearningProblem.class);
 			String componentString = confMapper.getComponentString(lp.getClass());
 			out.println(typeString + " = " + componentString + ";");			
 			
@@ -112,9 +112,9 @@ public class ConfigSave {
 		
 		// learning algorithm
 		out.println("\n// learning algorithm");
-		AbstractCELA la = config.getLearningAlgorithm();
+		LearningAlgorithm la = config.getLearningAlgorithm();
 		if (la != null) {
-			String typeString = confMapper.getComponentTypeString(AbstractCELA.class);
+			String typeString = confMapper.getComponentTypeString(LearningAlgorithm.class);
 			String componentString = confMapper.getComponentString(la.getClass());
 			out.println(typeString + " = " + componentString + ";");			
 			
@@ -132,11 +132,11 @@ public class ConfigSave {
 	 *            i.e. config.getKnowledgeSource(), config.getResaoner(), ...
 	 */
 	@SuppressWarnings("unchecked")
-	private void writeConfigEntries(AbstractComponent component, PrintWriter out) {
+	private void writeConfigEntries(Component component, PrintWriter out) {
 
 		// prefix (left hand side of all entries except special cases)
 		String prefix = confMapper.getComponentString(component.getClass());
-		Class<? extends AbstractComponent> componentClass = component.getClass();
+		Class<? extends Component> componentClass = component.getClass();
 		
 		List<ConfigOption<?>> optionList = ComponentManager.getConfigOptions(componentClass);
 		for (int i = 0; i < optionList.size(); i++) {

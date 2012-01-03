@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2008, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.refinementoperators;
 
 import java.util.Collection;
@@ -34,8 +34,7 @@ import java.util.TreeSet;
 import org.dllearner.algorithms.el.ELDescriptionEdge;
 import org.dllearner.algorithms.el.ELDescriptionNode;
 import org.dllearner.algorithms.el.ELDescriptionTree;
-import org.dllearner.core.AbstractReasonerComponent;
-import org.dllearner.core.ComponentInitException;
+import org.dllearner.core.ReasonerComponent;
 import org.dllearner.core.owl.Description;
 import org.dllearner.core.owl.Intersection;
 import org.dllearner.core.owl.NamedClass;
@@ -67,7 +66,7 @@ public class ELDown extends RefinementOperatorAdapter {
 
 //	private static Logger logger = Logger.getLogger(ELDown.class);	
 	
-	private AbstractReasonerComponent rs;
+	private ReasonerComponent rs;
 	
 	// hierarchies
 	private ClassHierarchy subsumptionHierarchy;
@@ -86,7 +85,7 @@ public class ELDown extends RefinementOperatorAdapter {
 	// utility class
 	private Utility utility;
 	
-	public ELDown(AbstractReasonerComponent rs) {
+	public ELDown(ReasonerComponent rs) {
 		this.rs = rs;
 		utility = new Utility(rs);
 		subsumptionHierarchy = rs.getClassHierarchy();
@@ -293,12 +292,6 @@ public class ELDown extends RefinementOperatorAdapter {
 		}
 		
 		return i;
-	}
-
-	@Override
-	public void init() throws ComponentInitException {
-		// TODO Auto-generated method stub
-		
 	}
 	
 //	private void computeMg(Description index) {

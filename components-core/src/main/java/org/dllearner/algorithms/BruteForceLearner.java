@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,6 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
 
 package org.dllearner.algorithms;
@@ -25,10 +26,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.dllearner.core.AbstractCELA;
-import org.dllearner.core.AbstractLearningProblem;
-import org.dllearner.core.AbstractReasonerComponent;
-import org.dllearner.core.ComponentAnn;
+import org.dllearner.core.LearningAlgorithm;
+import org.dllearner.core.LearningProblem;
+import org.dllearner.core.ReasonerComponent;
+import org.dllearner.core.configurators.BruteForceLearnerConfigurator;
 import org.dllearner.core.options.CommonConfigOptions;
 import org.dllearner.core.options.ConfigEntry;
 import org.dllearner.core.options.ConfigOption;
@@ -56,18 +57,17 @@ import org.dllearner.learningproblems.ScorePosNeg;
  * @author Jens Lehmann
  *
  */
-@ComponentAnn(name = "Brute Force Learner", shortName = "bruteForce", version = 0.8)
-public class BruteForceLearner extends AbstractCELA {
+public class BruteForceLearner extends LearningAlgorithm {
 	
-//	private BruteForceLearnerConfigurator configurator;
-//	@Override
-//	public BruteForceLearnerConfigurator getConfigurator(){
-//		return configurator;
-//	}
+	private BruteForceLearnerConfigurator configurator;
+	@Override
+	public BruteForceLearnerConfigurator getConfigurator(){
+		return configurator;
+	}
 	
     
-	private AbstractLearningProblem learningProblem;
-	private AbstractReasonerComponent rs;
+	private LearningProblem learningProblem;
+	private ReasonerComponent rs;
 	
     private Description bestDefinition;
     private ScorePosNeg bestScore;
@@ -82,20 +82,20 @@ public class BruteForceLearner extends AbstractCELA {
     // list of all generated concepts sorted by length
     private Map<Integer,List<Description>> generatedDefinitions = new HashMap<Integer,List<Description>>();
     
-    public BruteForceLearner(AbstractLearningProblem learningProblem, AbstractReasonerComponent rs) {
+    public BruteForceLearner(LearningProblem learningProblem, ReasonerComponent rs) {
     	super(learningProblem, rs);
     	this.learningProblem = learningProblem;
     	this.rs = rs;
-//    	this.configurator = new BruteForceLearnerConfigurator(this);
+    	this.configurator = new BruteForceLearnerConfigurator(this);
     }
     
 	public static String getName() {
 		return "brute force learning algorithm";
 	}    
     
-	public static Collection<Class<? extends AbstractLearningProblem>> supportedLearningProblems() {
-		Collection<Class<? extends AbstractLearningProblem>> problems = new LinkedList<Class<? extends AbstractLearningProblem>>();
-		problems.add(AbstractLearningProblem.class);
+	public static Collection<Class<? extends LearningProblem>> supportedLearningProblems() {
+		Collection<Class<? extends LearningProblem>> problems = new LinkedList<Class<? extends LearningProblem>>();
+		problems.add(LearningProblem.class);
 		return problems;
 	}
 	
@@ -305,6 +305,24 @@ public class BruteForceLearner extends AbstractCELA {
 	@Override
 	public void stop() {
 		stop = true;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.dllearner.core.LearningAlgorithm#pause()
+	 */
+	@Override
+	public void pause() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/* (non-Javadoc)
+	 * @see org.dllearner.core.LearningAlgorithm#resume()
+	 */
+	@Override
+	public void resume() {
+		// TODO Auto-generated method stub
+		
 	}
 
 	/* (non-Javadoc)

@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2008, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,11 +15,10 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.core.owl;
 
-import java.util.HashSet;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeMap;
@@ -75,29 +74,6 @@ public class ClassHierarchy {
 		if(result == null) {
 			logger.error("Query for sub class of " + concept + " in subsumption hierarchy, but the class is not contained in the (downward) hierarchy, e.g. because the class does not exist or is ignored. Returning empty result instead.");
 			return new TreeSet<Description>();
-		}
-		
-		return new TreeSet<Description>(result);		
-		
-		// commented out, because these hacks just worked around a problem
-//		if (subsumptionHierarchyDown == null) {
-//			return new TreeSet<Description>();
-//		} else if (subsumptionHierarchyDown.get(concept) == null) {
-//			return new TreeSet<Description>();
-//		} else {
-//			return (TreeSet<Description>) subsumptionHierarchyDown.get(concept).clone();
-//		}
-	}
-	
-	public SortedSet<Description> getSubClasses(Description concept, boolean direct) {
-		SortedSet<Description> result =  subsumptionHierarchyDown.get(concept);
-		if(result == null) {
-			logger.error("Query for sub class of " + concept + " in subsumption hierarchy, but the class is not contained in the (downward) hierarchy, e.g. because the class does not exist or is ignored. Returning empty result instead.");
-			return new TreeSet<Description>();
-		}
-		result.remove(concept);
-		for(Description sub : new HashSet<Description>(result)){
-			result.addAll(getSubClasses(sub, false));
 		}
 		
 		return new TreeSet<Description>(result);		
@@ -201,44 +177,6 @@ public class ClassHierarchy {
 					// class, then no other upper classes can exist)
 				} else {
 					return false;
-				}
-			}
-			// we cannot reach the class via any of the upper classes,
-			// so it is not a super class
-			return false;
-		}
-	}
-	
-	/**
-	 * Implements a subsumption check using the hierarchy (no further reasoning
-	 * checks are used).
-	 * 
-	 * @param subClass
-	 *            The (supposedly) more special class.
-	 * @param superClass
-	 *            The (supposedly) more general class.
-	 * @return True if <code>subClass</code> is a subclass of
-	 *         <code>superclass</code>.
-	 */
-	public boolean isSubclassOf(Description subClass, Description superClass) {
-		if (subClass.equals(superClass)) {
-			return true;
-		} else {
-			SortedSet<Description> superClasses = subsumptionHierarchyUp.get(subClass);
-			if(superClasses != null){
-				for (Description moreGeneralClass : superClasses) {
-					
-					// search the upper classes of the subclass
-					if (moreGeneralClass instanceof NamedClass) {
-						if (isSubclassOf(moreGeneralClass, superClass)) {
-							return true;
-						}
-						// we reached top, so we can return false (if top is a
-						// direct upper
-						// class, then no other upper classes can exist)
-					} else {
-						return false;
-					}
 				}
 			}
 			// we cannot reach the class via any of the upper classes,
@@ -358,43 +296,5 @@ public class ClassHierarchy {
 		}		
 		
 		return new ClassHierarchy(subsumptionHierarchyUpNew, subsumptionHierarchyDownNew);
-	}
-	
-	/**
-	 * Checks whether the description is contained in the hierarchy.
-	 * @param description
-	 * @return
-	 */
-	public boolean contains(Description description){
-		return subsumptionHierarchyUp.containsKey(description);
-	}
-	
-	public int getDepth2Root(Description description){
-		SortedSet<Description> superClasses = subsumptionHierarchyUp.get(description);
-		int depth = 0;
-		if(superClasses != null){
-			depth = 1;
-			for(Description superClass : superClasses){
-				depth += getDepth2Root(superClass);
-			}
-		}
-		return depth;
-	}
-	
-	public SortedSet<Description> getMostGeneralClasses(){
-		SortedSet<Description> generalClasses = new TreeSet<Description>(conceptComparator);
-		boolean add = false;
-		SortedSet<Description> superClasses;
-		for(Description sub : getSubClasses(Thing.instance)){
-			superClasses = getSuperClasses(sub);
-			superClasses = new TreeSet<Description>(conceptComparator);superClasses.remove(Thing.instance);
-			if(superClasses.isEmpty()){
-				add = true;
-			}
-			if(add){
-				generalClasses.add(sub);
-			}
-		}
-		return generalClasses;
 	}
 }

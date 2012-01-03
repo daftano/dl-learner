@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2008, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.kb.sparql;
 
 import java.net.URL;
@@ -49,6 +49,7 @@ public class SparqlEndpoint {
 		this.namedGraphURIs=namedGraphURIs;
 	}
 	
+
 	public URL getURL() {
 		return this.url;
 	}
@@ -176,8 +177,7 @@ public class SparqlEndpoint {
 	public static SparqlEndpoint getEndpointDBpediaLiveAKSW() {
 		URL u = null;
 		try { 
-//			u = new URL("http://dbpedia.aksw.org:8899/sparql");
-			u = new URL("http://live.dbpedia.org/sparql");
+			u = new URL("http://dbpedia.aksw.org:8899/sparql");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -198,7 +198,7 @@ public class SparqlEndpoint {
 		return new SparqlEndpoint(u, defaultGraphURIs, new LinkedList<String>());
 	}
 	
-	public static SparqlEndpoint getEndpointDBpediaLiveOpenLink() {
+	public static SparqlEndpoint getEndpointDBpediaLive() {
 		URL u = null;
 		try { 
 			u = new URL("http://dbpedia-live.openlinksw.com/sparql");

@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2010, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,15 +15,14 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.refinementoperators;
 
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.dllearner.core.ComponentInitException;
 import org.dllearner.core.owl.Description;
 import org.dllearner.core.owl.Negation;
 import org.dllearner.utilities.owl.ConceptComparator;
@@ -92,12 +91,6 @@ public class OperatorInverter implements RefinementOperator {
 			negatedDescription = ConceptTransformation.transformToNegationNormalForm(negatedDescription);
 		}
 		return negatedDescription;
-	}
-
-	@Override
-	public void init() throws ComponentInitException {
-		// TODO Auto-generated method stub
-		
 	}
 	
 }

@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2008, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,25 +15,23 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.test;
 
 import java.io.File;
 import java.net.MalformedURLException;
-import java.util.Collections;
 import java.util.Set;
 import java.util.TreeSet;
 
 import org.dllearner.algorithms.ocel.OCEL;
 import org.dllearner.core.ComponentInitException;
 import org.dllearner.core.ComponentManager;
-import org.dllearner.core.AbstractKnowledgeSource;
-import org.dllearner.core.AbstractCELA;
-import org.dllearner.core.AbstractLearningProblem;
+import org.dllearner.core.KnowledgeSource;
+import org.dllearner.core.LearningAlgorithm;
+import org.dllearner.core.LearningProblem;
 import org.dllearner.core.LearningProblemUnsupportedException;
-import org.dllearner.core.AbstractReasonerComponent;
-import org.dllearner.core.owl.Individual;
+import org.dllearner.core.ReasonerComponent;
 import org.dllearner.kb.OWLFile;
 import org.dllearner.learningproblems.PosNegLPStandard;
 import org.dllearner.reasoning.OWLAPIReasoner;
@@ -53,30 +51,40 @@ public class ComponentTest {
 	 */
 	public static void main(String[] args) throws ComponentInitException, MalformedURLException {
 		
+		// get singleton instance of component manager
+		ComponentManager cm = ComponentManager.getInstance();
+		
 		// create knowledge source
-		String example = "../examples/family/uncle.owl";
-		AbstractKnowledgeSource source = new OWLFile(example);
+		KnowledgeSource source = cm.knowledgeSource(OWLFile.class);
+		String example = "examples/family/uncle.owl";
+		cm.applyConfigEntry(source, "url", new File(example).toURI().toURL());
+		source.init();
 		
 		// create OWL API reasoning service with standard settings
-		AbstractReasonerComponent reasoner = new OWLAPIReasoner(Collections.singleton(source));
+		ReasonerComponent reasoner = cm.reasoner(OWLAPIReasoner.class, source);
 		reasoner.init();
 		
 		// create a learning problem and set positive and negative examples
-		PosNegLPStandard lp = new PosNegLPStandard(reasoner);
-		Set<Individual> positiveExamples = new TreeSet<Individual>();
-		positiveExamples.add(new Individual("http://localhost/foo#heinz"));
-		positiveExamples.add(new Individual("http://localhost/foo#alex"));
-		Set<Individual> negativeExamples = new TreeSet<Individual>();
-		negativeExamples.add(new Individual("http://localhost/foo#jan"));
-		negativeExamples.add(new Individual("http://localhost/foo#anna"));
-		negativeExamples.add(new Individual("http://localhost/foo#hanna"));
-		lp.setPositiveExamples(positiveExamples);
-		lp.setNegativeExamples(negativeExamples);
+		LearningProblem lp = cm.learningProblem(PosNegLPStandard.class, reasoner);
+		Set<String> positiveExamples = new TreeSet<String>();
+		positiveExamples.add("http://localhost/foo#heinz");
+		positiveExamples.add("http://localhost/foo#alex");
+		Set<String> negativeExamples = new TreeSet<String>();
+		negativeExamples.add("http://localhost/foo#jan");
+		negativeExamples.add("http://localhost/foo#anna");
+		negativeExamples.add("http://localhost/foo#hanna");
+		cm.applyConfigEntry(lp, "positiveExamples", positiveExamples);
+		cm.applyConfigEntry(lp, "negativeExamples", negativeExamples);
 		lp.init();
 		
 		// create the learning algorithm
-		AbstractCELA la = new OCEL(lp, reasoner);
-		la.init();
+		LearningAlgorithm la = null;
+		try {
+			la = cm.learningAlgorithm(OCEL.class, lp, reasoner);
+			la.init();
+		} catch (LearningProblemUnsupportedException e) {
+			e.printStackTrace();
+		}
 	
 		// start the algorithm and print the best concept found
 		la.start();

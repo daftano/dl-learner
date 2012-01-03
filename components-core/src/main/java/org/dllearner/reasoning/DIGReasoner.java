@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.reasoning;
 
 import java.io.File;
@@ -37,10 +37,11 @@ import java.util.TreeSet;
 import javax.xml.namespace.QName;
 
 import org.apache.xmlbeans.XmlCursor;
-import org.dllearner.core.AbstractKnowledgeSource;
-import org.dllearner.core.AbstractReasonerComponent;
 import org.dllearner.core.ComponentInitException;
+import org.dllearner.core.KnowledgeSource;
 import org.dllearner.core.OntologyFormat;
+import org.dllearner.core.ReasonerComponent;
+import org.dllearner.core.configurators.DIGReasonerConfigurator;
 import org.dllearner.core.options.BooleanConfigOption;
 import org.dllearner.core.options.ConfigEntry;
 import org.dllearner.core.options.ConfigOption;
@@ -61,12 +62,12 @@ import org.dllearner.utilities.owl.RoleComparator;
 import org.kr.dl.dig.v1_1.Concepts;
 import org.kr.dl.dig.v1_1.Csynonyms;
 import org.kr.dl.dig.v1_1.IdType;
-import org.kr.dl.dig.v1_1.IndividualSetDocument.IndividualSet;
 import org.kr.dl.dig.v1_1.Named;
 import org.kr.dl.dig.v1_1.ResponseDocument;
 import org.kr.dl.dig.v1_1.ResponsesDocument;
 import org.kr.dl.dig.v1_1.Roles;
 import org.kr.dl.dig.v1_1.Rsynonyms;
+import org.kr.dl.dig.v1_1.IndividualSetDocument.IndividualSet;
 
 /**
  * DIG 1.1 implementation of the reasoner interface.
@@ -74,7 +75,14 @@ import org.kr.dl.dig.v1_1.Rsynonyms;
  * @author Jens Lehmann
  * 
  */
-public class DIGReasoner extends AbstractReasonerComponent {
+public class DIGReasoner extends ReasonerComponent {
+	
+	private DIGReasonerConfigurator configurator;
+	@Override
+	public DIGReasonerConfigurator getConfigurator(){
+		return configurator;
+	}
+	
 
 	URL reasonerURL;
 
@@ -106,8 +114,9 @@ public class DIGReasoner extends AbstractReasonerComponent {
 	
 	
 	
-	public DIGReasoner(Set<AbstractKnowledgeSource> sources) {
+	public DIGReasoner(Set<KnowledgeSource> sources) {
 		super(sources);
+		this.configurator =  new DIGReasonerConfigurator(this);
 		try {
 			reasonerURL = new URL("http://localhost:8081");
 		} catch (MalformedURLException e) {
@@ -148,7 +157,7 @@ public class DIGReasoner extends AbstractReasonerComponent {
 		// "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" " +
 		// "xsi:schemaLocation=\"http://dl.kr.org/dig/2003/02/lang\n" +
 		// "http://dl-web.man.ac.uk/dig/2003/02/dig.xsd\" uri=\""+kbURI+"\">");
-		for (AbstractKnowledgeSource source : sources) {
+		for (KnowledgeSource source : sources) {
 			sb.append(source.toDIG(kbURI));
 
 			ResponseDocument rd = null;

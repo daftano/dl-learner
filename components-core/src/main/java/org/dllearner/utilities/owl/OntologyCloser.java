@@ -1,22 +1,3 @@
-/**
- * Copyright (C) 2007-2011, Jens Lehmann
- *
- * This file is part of DL-Learner.
- *
- * DL-Learner is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * DL-Learner is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
 package org.dllearner.utilities.owl;
 
 import java.util.HashMap;
@@ -28,8 +9,8 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 import org.dllearner.core.ComponentInitException;
-import org.dllearner.core.AbstractKnowledgeSource;
-import org.dllearner.core.AbstractReasonerComponent;
+import org.dllearner.core.KnowledgeSource;
+import org.dllearner.core.ReasonerComponent;
 import org.dllearner.core.owl.ClassAssertionAxiom;
 import org.dllearner.core.owl.Description;
 import org.dllearner.core.owl.EquivalentClassesAxiom;
@@ -55,7 +36,7 @@ public class OntologyCloser {
 	boolean isKB = true;
 
 	// Set<KnowledgeSource> ks;
-	AbstractReasonerComponent rs;
+	ReasonerComponent rs;
 	HashMap<Individual, Set<ObjectExactCardinalityRestriction>> indToRestr;
 	HashMap<Individual, Set<Description>> indToNamedClass;
 	HashSet<Description> classes;
@@ -64,10 +45,9 @@ public class OntologyCloser {
 		super();
 		this.kb = kb;
 		this.kbFile = new KBFile(this.kb);
-		Set<AbstractKnowledgeSource> ks = new HashSet<AbstractKnowledgeSource>();
+		Set<KnowledgeSource> ks = new HashSet<KnowledgeSource>();
 		ks.add(this.kbFile);
-		OWLAPIReasoner owlapi = new OWLAPIReasoner();
-        owlapi.setSources(ks);
+		OWLAPIReasoner owlapi = new OWLAPIReasoner(ks);
 		try {
 			owlapi.init();
 		} catch (ComponentInitException e) {
@@ -85,12 +65,11 @@ public class OntologyCloser {
 		SimpleClock sc = new SimpleClock();
 		sc.printAndSet();
 		this.kbFile = new KBFile(this.kb);
-		Set<AbstractKnowledgeSource> ks = new HashSet<AbstractKnowledgeSource>();
+		Set<KnowledgeSource> ks = new HashSet<KnowledgeSource>();
 		ks.add(this.kbFile);
 		
 		sc.printAndSet("updating reasoner");
-		OWLAPIReasoner owlapi = new OWLAPIReasoner();
-        owlapi.setSources(ks);
+		OWLAPIReasoner owlapi = new OWLAPIReasoner(ks);
 		sc.printAndSet("init");
 		try {
 			owlapi.init();

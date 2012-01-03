@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2009, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.reasoning;
 
 import java.util.HashSet;
@@ -25,10 +25,12 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import org.dllearner.core.AbstractKnowledgeSource;
-import org.dllearner.core.AbstractReasonerComponent;
 import org.dllearner.core.ComponentInitException;
+import org.dllearner.core.KnowledgeSource;
+import org.dllearner.core.ReasonerComponent;
 import org.dllearner.core.ReasoningMethodUnsupportedException;
+import org.dllearner.core.configurators.ComponentFactory;
+import org.dllearner.core.configurators.FastRetrievalReasonerConfigurator;
 import org.dllearner.core.options.ConfigEntry;
 import org.dllearner.core.options.InvalidConfigOptionValueException;
 import org.dllearner.core.owl.Description;
@@ -46,7 +48,13 @@ import org.dllearner.utilities.datastructures.SortedSetTuple;
  * @author Jens Lehmann
  *
  */
-public class FastRetrievalReasoner extends AbstractReasonerComponent {
+public class FastRetrievalReasoner extends ReasonerComponent {
+
+	private FastRetrievalReasonerConfigurator configurator;
+	@Override
+	public FastRetrievalReasonerConfigurator getConfigurator(){
+		return configurator;
+	}
 	
 	FlatABox abox;
 	FastRetrieval fastRetrieval;
@@ -54,12 +62,13 @@ public class FastRetrievalReasoner extends AbstractReasonerComponent {
 	Set<ObjectProperty> atomicRoles;
 	SortedSet<Individual> individuals;
 	
-	AbstractReasonerComponent rc;
+	ReasonerComponent rc;
 	
-	public FastRetrievalReasoner(Set<AbstractKnowledgeSource> sources) {
+	public FastRetrievalReasoner(Set<KnowledgeSource> sources) {
 		super(sources);
+		this.configurator = new FastRetrievalReasonerConfigurator(this);
 		
-		rc = new OWLAPIReasoner(sources);
+		rc = ComponentFactory.getOWLAPIReasoner(sources);
 		try {
 			rc.init();
 		} catch (ComponentInitException e1) {
@@ -81,6 +90,7 @@ public class FastRetrievalReasoner extends AbstractReasonerComponent {
 	
 	public FastRetrievalReasoner(FlatABox abox) {
 		super(null);
+		this.configurator = new FastRetrievalReasonerConfigurator(this);
 		this.abox = abox;
 		fastRetrieval = new FastRetrieval(abox);
 

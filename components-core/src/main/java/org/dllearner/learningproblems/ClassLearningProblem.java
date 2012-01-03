@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2010, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.learningproblems;
 
 import java.util.Collection;
@@ -29,11 +29,11 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import org.apache.log4j.Logger;
-import org.dllearner.core.AbstractLearningProblem;
-import org.dllearner.core.AbstractReasonerComponent;
-import org.dllearner.core.ComponentAnn;
 import org.dllearner.core.ComponentInitException;
 import org.dllearner.core.ComponentManager;
+import org.dllearner.core.LearningProblem;
+import org.dllearner.core.ReasonerComponent;
+import org.dllearner.core.configurators.ClassLearningProblemConfigurator;
 import org.dllearner.core.options.BooleanConfigOption;
 import org.dllearner.core.options.CommonConfigOptions;
 import org.dllearner.core.options.ConfigOption;
@@ -57,20 +57,17 @@ import org.dllearner.utilities.Helper;
  * @author Jens Lehmann
  *
  */
-@ComponentAnn(name = "ClassLearningProblem", shortName = "clp", version = 0.6)
-public class ClassLearningProblem extends AbstractLearningProblem {
+public class ClassLearningProblem extends LearningProblem {
 	
 	private static Logger logger = Logger.getLogger(ClassLearningProblem.class);
     private long nanoStartTime;
-	private int maxExecutionTimeInSeconds = 10;
+	private static int maxExecutionTimeInSeconds = 10;
 	
-	// TODO: config option
 	private NamedClass classToDescribe;
-	
 	private List<Individual> classInstances;
 	private TreeSet<Individual> classInstancesSet;
 	private boolean equivalence = true;
-//	private ClassLearningProblemConfigurator configurator;
+	private ClassLearningProblemConfigurator configurator;
 	// approximation of accuracy
 	private double approxDelta = 0.05;
 	
@@ -78,9 +75,6 @@ public class ClassLearningProblem extends AbstractLearningProblem {
 	
 	// factor for higher weight on recall (needed for subclass learning)
 	private double coverageFactor;
-	
-	private double betaSC = 3.0;
-	private double betaEq = 1.0;
 	
 	// instances of super classes excluding instances of the class itself
 	private List<Individual> superClassInstances;
@@ -91,19 +85,14 @@ public class ClassLearningProblem extends AbstractLearningProblem {
 	
 	private HeuristicType heuristic = HeuristicType.AMEASURE;
 	
-	private boolean checkConsistency = true;
+	@Override
+	public ClassLearningProblemConfigurator getConfigurator(){
+		return configurator;
+	}	
 	
-	public ClassLearningProblem() {
-		
-	}
-	
-//	public ClassLearningProblemConfigurator getConfigurator(){
-//		return configurator;
-//	}	
-	
-	public ClassLearningProblem(AbstractReasonerComponent reasoner) {
+	public ClassLearningProblem(ReasonerComponent reasoner) {
 		super(reasoner);
-//		configurator = new ClassLearningProblemConfigurator(this);
+		configurator = new ClassLearningProblemConfigurator(this);
 	}
 	
 	public static Collection<ConfigOption<?>> createConfigOptions() {
@@ -137,59 +126,59 @@ public class ClassLearningProblem extends AbstractLearningProblem {
 	
 	@Override
 	public void init() throws ComponentInitException {
-//		classToDescribe = new NamedClass(configurator.getClassToDescribe().toString());
-//		useApproximations = configurator.getUseApproximations();
+		classToDescribe = new NamedClass(configurator.getClassToDescribe().toString());
+		useApproximations = configurator.getUseApproximations();
 		
-//		String accM = configurator.getAccuracyMethod();
-//		if(accM.equals("standard")) {
-//			heuristic = HeuristicType.AMEASURE;
-//		} else if(accM.equals("fmeasure")) {
-//			heuristic = HeuristicType.FMEASURE;
-//		} else if(accM.equals("generalised_fmeasure")) {
-//			heuristic = HeuristicType.GEN_FMEASURE;
-//		} else if(accM.equals("jaccard")) {
-//			heuristic = HeuristicType.JACCARD;
-//		} else if(accM.equals("pred_acc")) {
-//			heuristic = HeuristicType.PRED_ACC;
-//		}
+		String accM = configurator.getAccuracyMethod();
+		if(accM.equals("standard")) {
+			heuristic = HeuristicType.AMEASURE;
+		} else if(accM.equals("fmeasure")) {
+			heuristic = HeuristicType.FMEASURE;
+		} else if(accM.equals("generalised_fmeasure")) {
+			heuristic = HeuristicType.GEN_FMEASURE;
+		} else if(accM.equals("jaccard")) {
+			heuristic = HeuristicType.JACCARD;
+		} else if(accM.equals("pred_acc")) {
+			heuristic = HeuristicType.PRED_ACC;
+		}
 		
 		if(useApproximations && heuristic.equals(HeuristicType.PRED_ACC)) {
 			System.err.println("Approximating predictive accuracy is an experimental feature. USE IT AT YOUR OWN RISK. If you consider to use it for anything serious, please extend the unit tests at org.dllearner.test.junit.HeuristicTests first to verify that it works.");
 		}		
 		
 		if(useApproximations && !(heuristic.equals(HeuristicType.PRED_ACC) || heuristic.equals(HeuristicType.AMEASURE) || heuristic.equals(HeuristicType.FMEASURE))) {
-			throw new ComponentInitException("Approximations only supported for F-Measure or Standard-Measure. It is unsupported for \"" + heuristic + ".\"");
+			throw new ComponentInitException("Approximations only supported for F-Measure or Standard-Measure. It is unsupported for \"" + accM + ".\"");
 		}
 		
 //		useFMeasure = configurator.getAccuracyMethod().equals("fmeasure");
-//		approxDelta = configurator.getApproxAccuracy();
+		approxDelta = configurator.getApproxAccuracy();
 		
-		if(!getReasoner().getNamedClasses().contains(classToDescribe)) {
-			throw new ComponentInitException("The class \"" + classToDescribe + "\" does not exist. Make sure you spelled it correctly.");
+		if(!reasoner.getNamedClasses().contains(classToDescribe)) {
+			throw new ComponentInitException("The class \"" + configurator.getClassToDescribe() + "\" does not exist. Make sure you spelled it correctly.");
 		}
 		
-		classInstances = new LinkedList<Individual>(getReasoner().getIndividuals(classToDescribe));
+		classInstances = new LinkedList<Individual>(reasoner.getIndividuals(classToDescribe));
 		// sanity check
 		if(classInstances.size() == 0) {
-			throw new ComponentInitException("Class " + classToDescribe + " has 0 instances according to \"" + ComponentManager.getInstance().getComponentName(getReasoner().getClass()) + "\". Cannot perform class learning with 0 instances.");
+			throw new ComponentInitException("Class " + classToDescribe + " has 0 instances according to \"" + ComponentManager.getInstance().getComponentName(reasoner.getClass()) + "\". Cannot perform class learning with 0 instances.");
 		}
 		
 		classInstancesSet = new TreeSet<Individual>(classInstances);
-//		equivalence = (configurator.getType().equals("equivalence"));
-//		maxExecutionTimeInSeconds = configurator.getMaxExecutionTimeInSeconds();
+		equivalence = (configurator.getType().equals("equivalence"));
+		maxExecutionTimeInSeconds = configurator.getMaxExecutionTimeInSeconds();
 		
 		if(equivalence) {
-			coverageFactor = betaEq;
+			coverageFactor = configurator.getBetaEq();
 		} else {
-			coverageFactor = betaSC;
+			coverageFactor = configurator.getBetaSC();
 		}
 		
 		// we compute the instances of the super class to perform
 		// optimisations later on
-		Set<Description> superClasses = getReasoner().getClassHierarchy().getSuperClasses(classToDescribe);
-		TreeSet<Individual> superClassInstancesTmp = new TreeSet<Individual>(getReasoner().getIndividuals());
+		Set<Description> superClasses = reasoner.getClassHierarchy().getSuperClasses(classToDescribe);
+		TreeSet<Individual> superClassInstancesTmp = new TreeSet<Individual>(reasoner.getIndividuals());
 		for(Description superClass : superClasses) {
-			superClassInstancesTmp.retainAll(getReasoner().getIndividuals(superClass));
+			superClassInstancesTmp.retainAll(reasoner.getIndividuals(superClass));
 		}
 		// we create one list, which includes instances of the class (an instance of the class is also instance of all super classes) ...
 		classAndSuperClassInstances = new LinkedList<Individual>(superClassInstancesTmp);
@@ -206,7 +195,7 @@ public class ClassLearningProblem extends AbstractLearningProblem {
 			Description classToDescribeNeg = new Negation(classToDescribe);
 			negatedClassInstances = new TreeSet<Individual>();
 			for(Individual ind : superClassInstances) {
-				if(getReasoner().hasType(classToDescribeNeg, ind)) {
+				if(reasoner.hasType(classToDescribeNeg, ind)) {
 					negatedClassInstances.add(ind);
 				}
 			}
@@ -225,7 +214,7 @@ public class ClassLearningProblem extends AbstractLearningProblem {
 		// overhang
 		Set<Individual> additionalInstances = new TreeSet<Individual>();
 		for(Individual ind : superClassInstances) {
-			if(getReasoner().hasType(description, ind)) {
+			if(reasoner.hasType(description, ind)) {
 				additionalInstances.add(ind);
 			}
 		}
@@ -233,7 +222,7 @@ public class ClassLearningProblem extends AbstractLearningProblem {
 		// coverage
 		Set<Individual> coveredInstances = new TreeSet<Individual>();
 		for(Individual ind : classInstances) {
-			if(getReasoner().hasType(description, ind)) {
+			if(reasoner.hasType(description, ind)) {
 				coveredInstances.add(ind);
 			}
 		}
@@ -254,7 +243,7 @@ public class ClassLearningProblem extends AbstractLearningProblem {
 			acc = getAccuracyOrTooWeakExact(description, 1);
 		}
 		
-		if(checkConsistency) {
+		if(configurator.getCheckConsistency()) {
 			
 			// we check whether the axiom already follows from the knowledge base
 //			boolean followsFromKB = reasoner.isSuperClassOf(description, classToDescribe);			
@@ -304,7 +293,7 @@ public class ClassLearningProblem extends AbstractLearningProblem {
 			int instancesNotCovered = 0;
 			
 			for(Individual ind : classInstances) {
-				if(getReasoner().hasType(description, ind)) {
+				if(reasoner.hasType(description, ind)) {
 					instancesCovered++;
 				} else {
 					instancesNotCovered ++;
@@ -321,7 +310,7 @@ public class ClassLearningProblem extends AbstractLearningProblem {
 			
 			for(Individual ind : superClassInstances) {
 
-				if(getReasoner().hasType(description, ind)) {
+				if(reasoner.hasType(description, ind)) {
 					instancesDescription++;
 				}
 				testsPerformed++;
@@ -358,7 +347,7 @@ public class ClassLearningProblem extends AbstractLearningProblem {
 			int upperEstimateA = classInstances.size();
 			
 			for(Individual ind : classInstances) {
-				if(getReasoner().hasType(description, ind)) {
+				if(reasoner.hasType(description, ind)) {
 					instancesCovered++;
 				} else {
 					instancesNotCovered ++;
@@ -428,7 +417,7 @@ public class ClassLearningProblem extends AbstractLearningProblem {
 			
 			for(Individual ind : superClassInstances) {
 
-				if(getReasoner().hasType(description, ind)) {
+				if(reasoner.hasType(description, ind)) {
 					instancesDescription++;
 				}
 				
@@ -499,7 +488,7 @@ public class ClassLearningProblem extends AbstractLearningProblem {
 					Individual posExample = itPos.next();
 //					System.out.println(posExample);
 					
-					if(getReasoner().hasType(description, posExample)) {
+					if(reasoner.hasType(description, posExample)) {
 						posClassifiedAsPos++;
 					} else {
 						notCoveredPos++;
@@ -514,7 +503,7 @@ public class ClassLearningProblem extends AbstractLearningProblem {
 				
 				if(itNeg.hasNext()) {
 					Individual negExample = itNeg.next();
-					if(!getReasoner().hasType(description, negExample)) {
+					if(!reasoner.hasType(description, negExample)) {
 						negClassifiedAsNeg++;
 					}
 					nrOfNegChecks++;
@@ -549,7 +538,7 @@ public class ClassLearningProblem extends AbstractLearningProblem {
 			// computing R(A)
 			TreeSet<Individual> coveredInstancesSet = new TreeSet<Individual>();
 			for(Individual ind : classInstances) {
-				if(getReasoner().hasType(description, ind)) {
+				if(reasoner.hasType(description, ind)) {
 					coveredInstancesSet.add(ind);
 				}
 				if(terminationTimeExpired()){
@@ -566,7 +555,7 @@ public class ClassLearningProblem extends AbstractLearningProblem {
 			// computing R(C) restricted to relevant instances
 			TreeSet<Individual> additionalInstancesSet = new TreeSet<Individual>();
 			for(Individual ind : superClassInstances) {
-				if(getReasoner().hasType(description, ind)) {
+				if(reasoner.hasType(description, ind)) {
 					additionalInstancesSet.add(ind);
 				}
 				if(terminationTimeExpired()){
@@ -582,7 +571,7 @@ public class ClassLearningProblem extends AbstractLearningProblem {
 			// computing R(C) restricted to relevant instances
 			int additionalInstances = 0;
 			for(Individual ind : superClassInstances) {
-				if(getReasoner().hasType(description, ind)) {
+				if(reasoner.hasType(description, ind)) {
 					additionalInstances++;
 				}
 				if(terminationTimeExpired()){
@@ -593,7 +582,7 @@ public class ClassLearningProblem extends AbstractLearningProblem {
 			// computing R(A)
 			int coveredInstances = 0;
 			for(Individual ind : classInstances) {
-				if(getReasoner().hasType(description, ind)) {
+				if(reasoner.hasType(description, ind)) {
 					coveredInstances++;
 				}
 				if(terminationTimeExpired()){
@@ -647,9 +636,9 @@ public class ClassLearningProblem extends AbstractLearningProblem {
 			Description descriptionNeg = new Negation(description);
 			// loop through all relevant instances
 			for(Individual ind : classAndSuperClassInstances) {
-				if(getReasoner().hasType(description, ind)) {
+				if(reasoner.hasType(description, ind)) {
 					icPos.add(ind);
-				} else if(getReasoner().hasType(descriptionNeg, ind)) {
+				} else if(reasoner.hasType(descriptionNeg, ind)) {
 					icNeg.add(ind);
 				}
 				if(terminationTimeExpired()){
@@ -724,7 +713,7 @@ public class ClassLearningProblem extends AbstractLearningProblem {
 	public double getRecall(Description description) {
 		int coveredInstances = 0;
 		for(Individual ind : classInstances) {
-			if(getReasoner().hasType(description, ind)) {
+			if(reasoner.hasType(description, ind)) {
 				coveredInstances++;
 			}
 		}		
@@ -735,14 +724,14 @@ public class ClassLearningProblem extends AbstractLearningProblem {
 
 		int additionalInstances = 0;
 		for(Individual ind : superClassInstances) {
-			if(getReasoner().hasType(description, ind)) {
+			if(reasoner.hasType(description, ind)) {
 				additionalInstances++;
 			}
 		}
 		
 		int coveredInstances = 0;
 		for(Individual ind : classInstances) {
-			if(getReasoner().hasType(description, ind)) {
+			if(reasoner.hasType(description, ind)) {
 				coveredInstances++;
 			}
 		}
@@ -827,10 +816,6 @@ public class ClassLearningProblem extends AbstractLearningProblem {
 		return classToDescribe;
 	}
 
-	public void setClassToDescribe(NamedClass classToDescribe) {
-		this.classToDescribe = classToDescribe;
-	}
-
 	/* (non-Javadoc)
 	 * @see org.dllearner.core.LearningProblem#evaluate(org.dllearner.core.owl.Description)
 	 */
@@ -850,74 +835,10 @@ public class ClassLearningProblem extends AbstractLearningProblem {
 		} else {
 			axiom = new SubClassAxiom(classToDescribe, description);
 		}
-		return getReasoner().remainsSatisfiable(axiom);
+		return reasoner.remainsSatisfiable(axiom);
 	}
 	
 	public boolean followsFromKB(Description description) {
-		return equivalence ? getReasoner().isEquivalentClass(description, classToDescribe) : getReasoner().isSuperClassOf(description, classToDescribe);
-	}
-
-	public int getMaxExecutionTimeInSeconds() {
-		return maxExecutionTimeInSeconds;
-	}
-
-	public void setMaxExecutionTimeInSeconds(int maxExecutionTimeInSeconds) {
-		this.maxExecutionTimeInSeconds = maxExecutionTimeInSeconds;
-	}
-
-	public boolean isEquivalence() {
-		return equivalence;
-	}
-
-	public void setEquivalence(boolean equivalence) {
-		this.equivalence = equivalence;
-	}
-
-	public boolean isUseApproximations() {
-		return useApproximations;
-	}
-
-	public void setUseApproximations(boolean useApproximations) {
-		this.useApproximations = useApproximations;
-	}
-
-	public HeuristicType getHeuristic() {
-		return heuristic;
-	}
-
-	public void setHeuristic(HeuristicType heuristic) {
-		this.heuristic = heuristic;
-	}
-
-	public double getApproxDelta() {
-		return approxDelta;
-	}
-
-	public void setApproxDelta(double approxDelta) {
-		this.approxDelta = approxDelta;
-	}
-
-	public double getBetaSC() {
-		return betaSC;
-	}
-
-	public void setBetaSC(double betaSC) {
-		this.betaSC = betaSC;
-	}
-
-	public double getBetaEq() {
-		return betaEq;
-	}
-
-	public void setBetaEq(double betaEq) {
-		this.betaEq = betaEq;
-	}
-
-	public boolean isCheckConsistency() {
-		return checkConsistency;
-	}
-
-	public void setCheckConsistency(boolean checkConsistency) {
-		this.checkConsistency = checkConsistency;
+		return equivalence ? reasoner.isEquivalentClass(description, classToDescribe) : reasoner.isSuperClassOf(description, classToDescribe);
 	}
 }

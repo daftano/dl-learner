@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2010, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.core.owl;
 
 import java.util.Map;
@@ -34,7 +34,7 @@ public class StringValueRestriction extends DatatypeValueRestriction {
 	
 	public StringValueRestriction(DatatypeProperty restrictedPropertyExpression, String value) {
 		// TODO: we pass it as typed property, although it could be untyped
-		super(restrictedPropertyExpression, new TypedConstant(value.toString(), OWL2Datatype.STRING.getDatatype()));
+		super(restrictedPropertyExpression, new TypedConstant(value.toString(), Datatype.STRING));
 		stringValue = value.toString();
 	}
 
@@ -42,7 +42,7 @@ public class StringValueRestriction extends DatatypeValueRestriction {
 	
 	@Override
 	public String toManchesterSyntaxString(String baseURI, Map<String,String> prefixes) {
-		return restrictedPropertyExpression.toString(baseURI, prefixes) + " value " + value.toManchesterSyntaxString(baseURI, prefixes);
+		return restrictedPropertyExpression.toString(baseURI, prefixes) + " value " +"\"" +value.toManchesterSyntaxString(baseURI, prefixes)+"\"";
 	}
 
 	@Override

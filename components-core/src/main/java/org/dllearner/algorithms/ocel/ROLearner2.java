@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2009, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.algorithms.ocel;
 
 import java.io.File;
@@ -33,13 +33,9 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 import org.apache.log4j.Logger;
-import org.dllearner.core.AbstractLearningProblem;
-import org.dllearner.core.AbstractReasonerComponent;
-import org.dllearner.core.owl.Description;
-import org.dllearner.core.owl.Individual;
-import org.dllearner.core.owl.Intersection;
-import org.dllearner.core.owl.Thing;
-import org.dllearner.core.owl.Union;
+import org.dllearner.core.LearningProblem;
+import org.dllearner.core.ReasonerComponent;
+import org.dllearner.core.owl.*;
 import org.dllearner.learningproblems.EvaluatedDescriptionPosNeg;
 import org.dllearner.learningproblems.PosNegLP;
 import org.dllearner.learningproblems.ScorePosNeg;
@@ -63,10 +59,9 @@ import com.jamonapi.Monitor;
 public class ROLearner2 {
 
 	private static Logger logger = Logger.getLogger(ROLearner2.class);
-//	private OCELConfigurator configurator;
 
 	// basic setup: learning problem and reasoning service
-	private AbstractReasonerComponent rs;
+	private ReasonerComponent rs;
 	// often the learning problems needn't be accessed directly; instead
 	// use the example sets below and the posonly variable
 	private PosNegLP learningProblem;
@@ -210,20 +205,9 @@ public class ROLearner2 {
 	private String baseURI;
 	private Map<String, String> prefixes;
 
-	private boolean terminateOnNoiseReached;
-
-	private double negativeWeight;
-
-	private double startNodeBonus;
-
-	private double expansionPenaltyFactor;
-
-	private int negationPenalty;
-
 	public ROLearner2(
-//			OCELConfigurator configurator,
-			AbstractLearningProblem learningProblem,
-			AbstractReasonerComponent rs,
+			LearningProblem learningProblem,
+			ReasonerComponent rs,
 			RefinementOperator operator,
 			ExampleBasedHeuristic heuristic,
 			Description startDescription,
@@ -233,9 +217,7 @@ public class ROLearner2 {
 			boolean useTooWeakList, boolean useOverlyGeneralList,
 			boolean useShortConceptConstruction, boolean usePropernessChecks,
 			int maxPosOnlyExpansion, int maxExecutionTimeInSeconds, int minExecutionTimeInSeconds,
-			int guaranteeXgoodDescriptions, int maxClassDescriptionTests, boolean forceRefinementLengthIncrease,
-			boolean terminateOnNoiseReached,
-			double negativeWeight, double startNodeBonus, double expansionPenaltyFactor, int negationPenalty) {
+			int guaranteeXgoodDescriptions, int maxClassDescriptionTests, boolean forceRefinementLengthIncrease) {
 
 		
 			PosNegLP lp = (PosNegLP) learningProblem;
@@ -245,17 +227,10 @@ public class ROLearner2 {
 			nrOfPositiveExamples = positiveExamples.size();
 			nrOfNegativeExamples = negativeExamples.size();
 
-			this.negativeWeight = negativeWeight;
-			this.startNodeBonus = startNodeBonus;
-			this.expansionPenaltyFactor = expansionPenaltyFactor;
-			this.negationPenalty = negationPenalty;
-			
 			// System.out.println(nrOfPositiveExamples);
 			// System.out.println(nrOfNegativeExamples);
 			// System.exit(0);
 
-//		this.configurator = configurator;
-		this.terminateOnNoiseReached = terminateOnNoiseReached;
 		nrOfExamples = nrOfPositiveExamples + nrOfNegativeExamples;
 		this.rs = rs;
 		this.operator = (RhoDRDown) operator;
@@ -370,10 +345,10 @@ public class ROLearner2 {
 
 		// start search with start class
 		if (startDescription == null) {
-			startNode = new ExampleBasedNode(Thing.instance, negativeWeight, startNodeBonus, expansionPenaltyFactor, negationPenalty);
+			startNode = new ExampleBasedNode(Thing.instance);
 			startNode.setCoveredExamples(positiveExamples, negativeExamples);
 		} else {
-			startNode = new ExampleBasedNode(startDescription,  negativeWeight, startNodeBonus, expansionPenaltyFactor, negationPenalty);
+			startNode = new ExampleBasedNode( startDescription);
 			Set<Individual> coveredNegatives = rs.hasType(startDescription, negativeExamples);
 			Set<Individual> coveredPositives = rs.hasType(startDescription, positiveExamples);
 			startNode.setCoveredExamples(coveredPositives, coveredNegatives);
@@ -475,13 +450,13 @@ public class ROLearner2 {
 				if (replaceSearchTree)
 					Files.createFile(searchTreeFile, treeString);
 				else
-					Files.appendToFile(searchTreeFile, treeString);
+					Files.appendFile(searchTreeFile, treeString);
 			}
 
 			// Anzahl Schleifendurchläufe
 			loop++;
 		}// end while
-		
+
 		if (solutions.size()>0) {
 		//if (solutionFound) {
 			int solutionLimit = 20;
@@ -505,8 +480,6 @@ public class ROLearner2 {
 			}
 			logger.debug(manchester);
 			logger.debug(kbSyntax);
-		} else {
-			logger.info("no appropriate solutions found (try increasing the noisePercentage parameter to what was reported as most accurate expression found above)");
 		}
 
 		logger.debug("size of candidate set: " + candidates.size());
@@ -520,7 +493,6 @@ public class ROLearner2 {
 			logger.info("Algorithm stopped ("+conceptTests+" descriptions tested).\n");
 		} else {
 			logger.info("Algorithm terminated successfully ("+conceptTests+" descriptions tested).\n");
-            logger.info(rs.toString());
 		}		
 
 		totalLearningTime.stop();
@@ -645,7 +617,7 @@ public class ROLearner2 {
 							properRefinements.add(refinement);
 							tooWeakList.add(refinement);
 
-							ExampleBasedNode newNode = new ExampleBasedNode(refinement, negativeWeight, startNodeBonus, expansionPenaltyFactor, negationPenalty);
+							ExampleBasedNode newNode = new ExampleBasedNode(refinement);
 							newNode.setHorizontalExpansion(refinement.getLength() - 1);
 							newNode.setTooWeak(true);
 							newNode
@@ -735,7 +707,7 @@ public class ROLearner2 {
 			if (nonRedundant) {
 
 				// newly created node
-				ExampleBasedNode newNode = new ExampleBasedNode(refinement, negativeWeight, startNodeBonus, expansionPenaltyFactor, negationPenalty);
+				ExampleBasedNode newNode = new ExampleBasedNode(refinement);
 				// die -1 ist wichtig, da sonst keine gleich langen Refinements
 				// für den neuen Knoten erlaubt wären z.B. person => male
 				newNode.setHorizontalExpansion(refinement.getLength() - 1);
@@ -1340,11 +1312,10 @@ public class ROLearner2 {
 			return true;
 		}
 		
-		// we stop if sufficiently many solutions (concepts fitting the noise parameter) have been 
-		// reached - unless this termination criterion is switched off using terminateOnNoiseReached = false
+		
 		if (guaranteeXgoodAlreadyReached){
 			result = true;
-		} else if(solutions.size() >= guaranteeXgoodDescriptions && terminateOnNoiseReached) {
+		} else if(solutions.size() >= guaranteeXgoodDescriptions) {
 				if(guaranteeXgoodDescriptions != 1) {
 				logger.info("Minimum number (" + guaranteeXgoodDescriptions
 						+ ") of good descriptions reached.");
@@ -1375,4 +1346,41 @@ public class ROLearner2 {
 		return isRunning;
 	}
 
+     /**
+     * Get the Max Execution Time In Seconds
+     *
+     * @return The Maximum Execution Time In Seconds
+     */
+    public long getMaxExecutionTimeInSeconds() {
+        return maxExecutionTimeInSeconds;
+    }
+
+    /**
+     * Set the Max Execution Time In Seconds.
+     *
+     * @param maxExecutionTimeInSeconds The max execution time in seconds.
+     */
+    public void setMaxExecutionTimeInSeconds(int maxExecutionTimeInSeconds) {
+        this.maxExecutionTimeInSeconds = maxExecutionTimeInSeconds;
+    }
+
+    public String getStartDescription() {
+        return startDescription.toString();
+    }
+
+    public void setStartDescription(String startClassString) {
+        if (startClassString != null) {
+            startDescription = new NamedClass(startClassString);
+        }else{
+            startDescription = null;
+        }
+    }
+
+    public boolean isWriteSearchTree() {
+        return writeSearchTree;
+    }
+
+    public void setWriteSearchTree(boolean writeSearchTree) {
+        this.writeSearchTree = writeSearchTree;
+    }
 }

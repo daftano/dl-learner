@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.utilities.examples;
 
 import java.util.Collection;
@@ -25,7 +25,7 @@ import java.util.TreeSet;
 
 import org.apache.log4j.Logger;
 import org.dllearner.core.ComponentManager;
-import org.dllearner.core.AbstractReasonerComponent;
+import org.dllearner.core.ReasonerComponent;
 import org.dllearner.core.owl.Description;
 import org.dllearner.core.owl.Individual;
 import org.dllearner.core.owl.NamedClass;
@@ -37,7 +37,7 @@ public class AutomaticNegativeExampleFinderOWL {
 	// LOGGER: ComponentManager
 	private static Logger logger = Logger.getLogger(ComponentManager.class);
 
-	private AbstractReasonerComponent reasoningService;
+	private ReasonerComponent reasoningService;
 	
 	private SortedSet<Individual> fullPositiveSet;
 
@@ -61,7 +61,7 @@ public class AutomaticNegativeExampleFinderOWL {
 	 */
 	public AutomaticNegativeExampleFinderOWL(
 			SortedSet<Individual> fullPositiveSet,
-			AbstractReasonerComponent reasoningService) {
+			ReasonerComponent reasoningService) {
 		super();
 		this.fullPositiveSet = new TreeSet<Individual>();
 		this.fullPositiveSet.addAll(fullPositiveSet);

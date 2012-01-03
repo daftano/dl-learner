@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2010, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.learningproblems;
 
 /**
@@ -128,22 +128,6 @@ public class Heuristics {
 		ret[0] = Math.max(0, p1 - p2);
 		ret[1] = Math.min(1, p1 + p2);
 		return ret;
-	}
-	
-	/**
-	 * Computes the 95% confidence interval average of an experiment with boolean outcomes,
-	 * e.g. heads or tails coin throws. It uses the very efficient, but still accurate
-	 * Wald method. 
-	 * @param success Number of successes, e.g. number of times the coin shows head.
-	 * @param total Total number of tries, e.g. total number of times the coin was thrown.
-	 * @return The average of the lower border and upper border of the 95% confidence interval.
-	 */
-	public static double getConfidenceInterval95WaldAverage(int total, int success) {
-		if(success > total || total < 1) {
-			throw new IllegalArgumentException("95% confidence interval for " + success + " out of " + total + " trials cannot be estimated.");
-		}
-		double[] interval = getConfidenceInterval95Wald(total, success);
-		return (interval[0] + interval[1]) / 2;
 	}
 	
 	/**

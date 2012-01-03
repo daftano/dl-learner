@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,12 +15,14 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
 
 package org.dllearner.learningproblems;
 
 import java.text.DecimalFormat;
 import java.util.Set;
+import java.util.SortedSet;
 
 import org.dllearner.core.owl.Individual;
 import org.dllearner.utilities.Helper;
@@ -54,12 +56,12 @@ public class ScoreThreeValued extends ScorePosNeg {
 	private boolean showCorrectClassifications = false;
 	private static ScoreMethod scoreMethod = ScoreMethod.POSITIVE;
 	
-	private Set<Individual> posClassified;
-	private Set<Individual> neutClassified;
-	private Set<Individual> negClassified;
-	private Set<Individual> posExamples;
-	private Set<Individual> neutExamples;
-	private Set<Individual> negExamples;
+	private SortedSet<Individual> posClassified;
+	private SortedSet<Individual> neutClassified;
+	private SortedSet<Individual> negClassified;
+	private SortedSet<Individual> posExamples;
+	private SortedSet<Individual> neutExamples;
+	private SortedSet<Individual> negExamples;
 	
     private Set<Individual> posAsNeg;
     private Set<Individual> negAsPos;
@@ -85,12 +87,12 @@ public class ScoreThreeValued extends ScorePosNeg {
     		double errorPenalty,
     		boolean penaliseNeutralExamples,
     		double percentPerLengthUnit,
-    		Set<Individual> posClassified,
-    		Set<Individual> neutClassified,
-    		Set<Individual> negClassified,
-    		Set<Individual> posExamples,
-    		Set<Individual> neutExamples,
-    		Set<Individual> negExamples) {
+    		SortedSet<Individual> posClassified,
+    		SortedSet<Individual> neutClassified,
+    		SortedSet<Individual> negClassified,
+    		SortedSet<Individual> posExamples,
+    		SortedSet<Individual> neutExamples,
+    		SortedSet<Individual> negExamples) {
     	this.conceptLength = conceptLength;
     	this.accuracyPenalty = accuracyPenalty;
     	this.errorPenalty = errorPenalty;
@@ -206,11 +208,11 @@ public class ScoreThreeValued extends ScorePosNeg {
         return str;
     }
 
-	public Set<Individual> getNegClassified() {
+	public SortedSet<Individual> getNegClassified() {
 		return negClassified;
 	}
 
-	public Set<Individual> getPosClassified() {
+	public SortedSet<Individual> getPosClassified() {
 		return posClassified;
 	}
 

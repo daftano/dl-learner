@@ -32,18 +32,13 @@ import org.dllearner.algorithms.celoe.CELOE;
 import org.dllearner.core.ComponentInitException;
 import org.dllearner.core.ComponentManager;
 import org.dllearner.core.LearningProblemUnsupportedException;
-import org.dllearner.core.AbstractReasonerComponent;
+import org.dllearner.core.ReasonerComponent;
 import org.dllearner.kb.manipulator.Manipulator;
 import org.dllearner.kb.manipulator.StringToResource;
 import org.dllearner.kb.manipulator.Rule.Months;
-import org.dllearner.kb.sparql.Cache;
-import org.dllearner.kb.sparql.SPARQLTasks;
-import org.dllearner.kb.sparql.SparqlEndpoint;
-import org.dllearner.kb.sparql.SparqlKnowledgeSource;
+import org.dllearner.kb.sparql.*;
 import org.dllearner.learningproblems.PosOnlyLP;
 import org.dllearner.reasoning.FastInstanceChecker;
-import org.dllearner.refinementoperators.RhoDRDown;
-import org.dllearner.utilities.Helper;
 
 /**
  * Uses learning algorithms to learn class definitions for DBpedia
@@ -62,7 +57,7 @@ public class LearnOSMClasses {
 		File matchesFile = new File("log/geodata/owlsameas_en.dat");
 		Map<URI,URI> matches = Utility.getMatches(matchesFile);
 		
-		SPARQLTasks dbpedia = new SPARQLTasks(new Cache("cache/matching"),dbpediaEndpoint);
+		SPARQLTasks dbpedia = new EndpointBasedSPARQLTasks(new Cache("cache/matching"),dbpediaEndpoint);
 		Set<String> positives = new TreeSet<String>();
 		Set<String> negatives = new TreeSet<String>();
 		
@@ -100,34 +95,33 @@ public class LearnOSMClasses {
 		ComponentManager cm = ComponentManager.getInstance();
 		
 		SparqlKnowledgeSource ks = cm.knowledgeSource(SparqlKnowledgeSource.class);
-		ks.setInstances(instances);
-		ks.setPredefinedEndpoint("LOCALGEODATA");
-		ks.setSaveExtractedFragment(true);
+		ks.getConfigurator().setInstances(instances);
+		ks.getConfigurator().setPredefinedEndpoint("LOCALGEODATA");
+		ks.getConfigurator().setSaveExtractedFragment(true);
 		Manipulator m = Manipulator.getDefaultManipulator();
 		m.addRule(new StringToResource(Months.DECEMBER,"http://linkedgeodata.org/vocabulary", 0));
 		ks.setManipulator(m);
 		ks.init();
 		
-		AbstractReasonerComponent reasoner = cm.reasoner(FastInstanceChecker.class, ks);
+		ReasonerComponent reasoner = cm.reasoner(FastInstanceChecker.class, ks);
 		reasoner.init();
 		
 		PosOnlyLP lp = cm.learningProblem(PosOnlyLP.class, reasoner);
-		lp.setPositiveExamples(Helper.getIndividualSet(positives));
+		lp.getConfigurator().setPositiveExamples(positives);
 		lp.init();
 		
 		CELOE celoe = cm.learningAlgorithm(CELOE.class, lp, reasoner);
-		RhoDRDown op = (RhoDRDown) celoe.getOperator();
 //		ROLComponent2 celoe = cm.learningAlgorithm(ROLComponent2.class, lp, reasoner);
-		op.setUseAllConstructor(false);
+		celoe.getConfigurator().setUseAllConstructor(false);
 //		celoe.getConfigurator().setUseExistsConstructor(false);
-		op.setUseCardinalityRestrictions(false);
-		op.setUseBooleanDatatypes(false);
-		op.setUseDoubleDatatypes(false);
-		op.setUseNegation(false);
-		op.setUseHasValueConstructor(true);
-		op.setFrequencyThreshold(3);
-		celoe.setMaxExecutionTimeInSeconds(100);
-		celoe.setNoisePercentage(0.2);
+		celoe.getConfigurator().setUseCardinalityRestrictions(false);
+		celoe.getConfigurator().setUseBooleanDatatypes(false);
+		celoe.getConfigurator().setUseDoubleDatatypes(false);
+		celoe.getConfigurator().setUseNegation(false);
+		celoe.getConfigurator().setUseHasValueConstructor(true);
+		celoe.getConfigurator().setValueFrequencyThreshold(3);
+		celoe.getConfigurator().setMaxExecutionTimeInSeconds(100);
+		celoe.getConfigurator().setNoisePercentage(0.2);
 		celoe.init();
 		
 		// debugging

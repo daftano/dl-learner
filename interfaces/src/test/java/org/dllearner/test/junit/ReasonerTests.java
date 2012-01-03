@@ -37,10 +37,10 @@ import org.dllearner.cli.Start;
 import org.dllearner.core.ComponentInitException;
 import org.dllearner.core.ComponentManager;
 import org.dllearner.core.EvaluatedDescription;
-import org.dllearner.core.AbstractKnowledgeSource;
-import org.dllearner.core.AbstractCELA;
-import org.dllearner.core.AbstractLearningProblem;
-import org.dllearner.core.AbstractReasonerComponent;
+import org.dllearner.core.KnowledgeSource;
+import org.dllearner.core.LearningAlgorithm;
+import org.dllearner.core.LearningProblem;
+import org.dllearner.core.ReasonerComponent;
 import org.dllearner.core.owl.Axiom;
 import org.dllearner.core.owl.DatatypeProperty;
 import org.dllearner.core.owl.Description;
@@ -110,14 +110,14 @@ public class ReasonerTests {
 		try {
 			ComponentManager cm = ComponentManager.getInstance();
 			KB kb = getSimpleKnowledgeBase();
-			AbstractKnowledgeSource ks = new KBFile(kb);
+			KnowledgeSource ks = new KBFile(kb);
 			ks.init();
 			Description d;
 			// d = KBParser.parseConcept("man");
 			d = KBParser.parseConcept("(person AND EXISTS hasChild.female)");
 			Individual i = new Individual(KBParser.getInternalURI("stephen"));
-			List<Class<? extends AbstractReasonerComponent>> reasonerClasses = cm.getReasonerComponents();
-			for (Class<? extends AbstractReasonerComponent> reasonerClass : reasonerClasses) {
+			List<Class<? extends ReasonerComponent>> reasonerClasses = cm.getReasonerComponents();
+			for (Class<? extends ReasonerComponent> reasonerClass : reasonerClasses) {
 				//we skip the ProtegeReasoner, because the underlying OWLReasoner is not available in this test
 				if(reasonerClass.equals(ProtegeReasoner.class)){
 					continue;
@@ -125,7 +125,7 @@ public class ReasonerTests {
 				if(excludeDIG && reasonerClass.equals(DIGReasoner.class)) {
 					continue;
 				}
-				AbstractReasonerComponent reasoner = cm.reasoner(reasonerClass, ks);
+				ReasonerComponent reasoner = cm.reasoner(reasonerClass, ks);
 				reasoner.init();
 				//if it is the PelletReasoner we have to call a separate method to make the CWA
 				if(reasonerClass.equals(PelletReasoner.class)){
@@ -158,7 +158,7 @@ public class ReasonerTests {
 	public void fastInstanceCheckTest() throws ComponentInitException, ParseException {
 		String file = "examples/carcinogenesis/carcinogenesis.owl";
 		ComponentManager cm = ComponentManager.getInstance();
-		AbstractKnowledgeSource ks = cm.knowledgeSource(OWLFile.class);
+		KnowledgeSource ks = cm.knowledgeSource(OWLFile.class);
 		try {
 			cm.applyConfigEntry(ks, "url", new File(file).toURI().toURL());
 		} catch (MalformedURLException e) {
@@ -166,7 +166,7 @@ public class ReasonerTests {
 			e.printStackTrace();
 		}
 		ks.init();
-		AbstractReasonerComponent reasoner = cm.reasoner(FastInstanceChecker.class, ks);
+		ReasonerComponent reasoner = cm.reasoner(FastInstanceChecker.class, ks);
 		reasoner.init();
 		baseURI = reasoner.getBaseURI();
 		
@@ -203,7 +203,7 @@ public class ReasonerTests {
 	public void fastInstanceCheck2() throws ComponentInitException, ParseException {
 		String file = "examples/epc/sap_epc.owl";
 		ComponentManager cm = ComponentManager.getInstance();
-		AbstractKnowledgeSource ks = cm.knowledgeSource(OWLFile.class);
+		KnowledgeSource ks = cm.knowledgeSource(OWLFile.class);
 		try {
 			cm.applyConfigEntry(ks, "url", new File(file).toURI().toURL());
 		} catch (MalformedURLException e) {
@@ -211,7 +211,7 @@ public class ReasonerTests {
 			e.printStackTrace();
 		}
 		ks.init();
-		AbstractReasonerComponent reasoner = cm.reasoner(FastInstanceChecker.class, ks);
+		ReasonerComponent reasoner = cm.reasoner(FastInstanceChecker.class, ks);
 		reasoner.init();
 		baseURI = reasoner.getBaseURI();
 		
@@ -226,10 +226,10 @@ public class ReasonerTests {
 	public void fastInstanceCheck3() throws MalformedURLException, ComponentInitException, ParseException {
 		String file = "examples/family/father_oe.owl";
 		ComponentManager cm = ComponentManager.getInstance();
-		AbstractKnowledgeSource ks = cm.knowledgeSource(OWLFile.class);
+		KnowledgeSource ks = cm.knowledgeSource(OWLFile.class);
 		cm.applyConfigEntry(ks, "url", new File(file).toURI().toURL());
 		ks.init();
-		AbstractReasonerComponent reasoner = cm.reasoner(FastInstanceChecker.class, ks);
+		ReasonerComponent reasoner = cm.reasoner(FastInstanceChecker.class, ks);
 		reasoner.init();
 		baseURI = reasoner.getBaseURI();
 		Description description = KBParser.parseConcept("(\"http://example.com/father#male\" AND EXISTS \"http://example.com/father#hasChild\".TOP)");
@@ -261,9 +261,9 @@ public class ReasonerTests {
 		
 		
 		KB kbf  = KBParser.parseKBFile(kb);
-		AbstractKnowledgeSource ks = new KBFile(kbf);
+		KnowledgeSource ks = new KBFile(kbf);
 		ks.init();
-		AbstractReasonerComponent reasoner = cm.reasoner(OWLAPIReasoner.class, ks);
+		ReasonerComponent reasoner = cm.reasoner(OWLAPIReasoner.class, ks);
 		reasoner.init();
 		ObjectProperty property = new ObjectProperty(KBParser.getInternalURI("hasChild"));
 		Description description = KBParser.parseConcept("man");
@@ -313,7 +313,7 @@ public class ReasonerTests {
 	
 	@Test
 	public void pelletSlowConsistencyCheck() throws ParseException {
-		AbstractReasonerComponent rs = TestOntologies.getTestOntology(TestOntology.SWORE);
+		ReasonerComponent rs = TestOntologies.getTestOntology(TestOntology.SWORE);
 		Description d = KBParser.parseConcept("<= 1 \"http://ns.softwiki.de/req/defines\".\"http://ns.softwiki.de/req/AbstractRequirement\"");
 		NamedClass nc = new NamedClass("http://ns.softwiki.de/req/AbstractComment");
 		Axiom axiom = new EquivalentClassesAxiom(nc, d);
@@ -326,8 +326,8 @@ public class ReasonerTests {
 		String file1 = "examples/father.owl";
 		String file2 = "examples/lymphography/lymphography.owl";
 		ComponentManager cm = ComponentManager.getInstance();
-		AbstractKnowledgeSource ks1 = cm.knowledgeSource(OWLFile.class);
-		AbstractKnowledgeSource ks2 = cm.knowledgeSource(OWLFile.class);
+		KnowledgeSource ks1 = cm.knowledgeSource(OWLFile.class);
+		KnowledgeSource ks2 = cm.knowledgeSource(OWLFile.class);
 		try {
 			cm.applyConfigEntry(ks1, "url", new File(file1).toURI().toURL());
 			cm.applyConfigEntry(ks2, "url", new File(file2).toURI().toURL());
@@ -337,7 +337,7 @@ public class ReasonerTests {
 		}
 		ks1.init();
 		ks2.init();
-		AbstractReasonerComponent reasoner = cm.reasoner(FastInstanceChecker.class, ks1, ks2);
+		ReasonerComponent reasoner = cm.reasoner(FastInstanceChecker.class, ks1, ks2);
 		reasoner.init();
 		baseURI = reasoner.getBaseURI();
 		System.out.println(reasoner.getSubClasses(Thing.instance));
@@ -350,9 +350,9 @@ public class ReasonerTests {
 		ComponentManager cm = ComponentManager.getInstance();
 		Start start;
 		FastInstanceChecker reasoner;
-		AbstractLearningProblem lp;
-		AbstractCELA la;
-		AbstractKnowledgeSource ks;
+		LearningProblem lp;
+		LearningAlgorithm la;
+		KnowledgeSource ks;
 		
 		for(File conf : getTestConfigFiles()){
 			System.out.println("Test file: " + conf.getName());
@@ -367,7 +367,7 @@ public class ReasonerTests {
 				System.out.println("Using " + type + " reasoner...");
 				try {
 					reasoner = cm.reasoner(FastInstanceChecker.class, ks);
-					reasoner.getReasonerComponent().setReasonerTypeString(type);
+					reasoner.getConfigurator().setReasonerType(type);
 					reasoner.init();
 					
 					lp.changeReasonerComponent(reasoner);

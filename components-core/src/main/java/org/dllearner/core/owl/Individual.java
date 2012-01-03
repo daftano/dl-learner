@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.core.owl;
 
 import java.io.Serializable;
@@ -39,8 +39,6 @@ public class Individual implements Entity, NamedKBElement, Comparable<Individual
 	private static final long serialVersionUID = 1831526393296388784L;
 	private String name;
 
-	
-
 	public String getName() {
 		return name;
 	}
@@ -58,7 +56,16 @@ public class Individual implements Entity, NamedKBElement, Comparable<Individual
 	}
 
 	public int compareTo(Individual o) {
+//		System.out.println(o);
 		return name.compareTo(o.name);
+	}
+    
+	@Override
+	public boolean equals(Object o) {
+		if(o==null) {
+			return false;
+		}
+		return (compareTo((Individual)o)==0);
 	}
 	
     @Override
@@ -81,30 +88,5 @@ public class Individual implements Entity, NamedKBElement, Comparable<Individual
 	public void accept(KBElementVisitor visitor) {
 		visitor.visit(this);
 	}    
-	
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		return result;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		Individual other = (Individual) obj;
-		if (name == null) {
-			if (other.name != null)
-				return false;
-		} else if (!name.equals(other.name))
-			return false;
-		return true;
-	}
 
 }

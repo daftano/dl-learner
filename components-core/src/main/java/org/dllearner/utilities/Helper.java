@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2008, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,11 +15,10 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.utilities;
 
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -32,7 +31,7 @@ import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 import org.dllearner.core.ReasoningMethodUnsupportedException;
-import org.dllearner.core.AbstractReasonerComponent;
+import org.dllearner.core.ReasonerComponent;
 import org.dllearner.core.owl.AssertionalAxiom;
 import org.dllearner.core.owl.NamedClass;
 import org.dllearner.core.owl.Description;
@@ -136,30 +135,6 @@ public class Helper {
 		}
 	}
 
-	/**
-	 * Transforms a list of URIs into their abbreviated version.
-	 * @see #getAbbreviatedString(String, String, Map)
-	 * @param list List of URIs.
-	 * @param baseURI The base uri (ignored if null).
-	 * @param prefixes A prefix map (ignored if null), where each entry contains a
-	 *            short string e.g. ns1 as key and the corresponding uri as
-	 *            value.
-	 * @return A list with shortened URIs.
-	 */
-	public static String getAbbreviatedCollection(Collection<String> list, String baseURI,
-			Map<String, String> prefixes) {
-		StringBuffer str = new StringBuffer("[");
-		Iterator<String> it = list.iterator(); // easier to implement using an iterator than foreach
-		while(it.hasNext()) {
-			str.append(getAbbreviatedString(it.next(),baseURI,prefixes));
-			if(it.hasNext()) {
-				str.append(", ");
-			}
-		}
-		str.append("]");
-		return str.toString();
-	}
-	
 	public static String prettyPrintNanoSeconds(long nanoSeconds) {
 		return prettyPrintNanoSeconds(nanoSeconds, false, false);
 	}
@@ -274,7 +249,7 @@ public class Helper {
 
 	}
 
-	public static <T> Set<T> intersection(Set<T> set1, Set<T> set2) {
+	public static <T> SortedSet<T> intersection(SortedSet<T> set1, SortedSet<T> set2) {
 		// TreeSet<T> intersection = (TreeSet<T>) set1.clone();
 		// TODO: effizienter implementieren d.h. lange Liste klonen und dann
 		// retainAll
@@ -284,8 +259,8 @@ public class Helper {
 		return intersection;
 	}
 
-	public static <T> Set<T> intersectionTuple(Set<T> set, SortedSetTuple<T> tuple) {
-		Set<T> ret = intersection(set, tuple.getPosSet());
+	public static <T> SortedSet<T> intersectionTuple(SortedSet<T> set, SortedSetTuple<T> tuple) {
+		SortedSet<T> ret = intersection(set, tuple.getPosSet());
 		ret.retainAll(tuple.getNegSet());
 		return ret;
 	}
@@ -507,7 +482,7 @@ public class Helper {
 	}
 	
 	// concepts case 1: no ignore or allowed list
-	public static Set<NamedClass> computeConcepts(AbstractReasonerComponent rs) {
+	public static Set<NamedClass> computeConcepts(ReasonerComponent rs) {
 		// if there is no ignore or allowed list, we just ignore the concepts
 		// of uninteresting namespaces
 		Set<NamedClass> concepts = rs.getNamedClasses();
@@ -516,7 +491,7 @@ public class Helper {
 	}
 	
 	// concepts case 2: ignore list
-	public static Set<NamedClass> computeConceptsUsingIgnoreList(AbstractReasonerComponent rs, Set<NamedClass> ignoredConcepts) {
+	public static Set<NamedClass> computeConceptsUsingIgnoreList(ReasonerComponent rs, Set<NamedClass> ignoredConcepts) {
 		Set<NamedClass> concepts = new TreeSet<NamedClass>(rs.getNamedClasses());
 //		Helper.removeUninterestingConcepts(concepts);
 		for (NamedClass ac : ignoredConcepts) {
@@ -550,7 +525,7 @@ public class Helper {
 	 * background knowledge.
 	 */
 	// 
-	public static ObjectProperty checkRoles(AbstractReasonerComponent rs, Set<ObjectProperty> roles) {
+	public static ObjectProperty checkRoles(ReasonerComponent rs, Set<ObjectProperty> roles) {
 		Set<ObjectProperty> existingRoles = rs.getObjectProperties();
 		for (ObjectProperty ar : roles) {
 			if(!existingRoles.contains(ar)) 
@@ -566,7 +541,7 @@ public class Helper {
 	 * background knowledge.
 	 */
 	// 
-	public static NamedClass checkConcepts(AbstractReasonerComponent rs, Set<NamedClass> concepts) {
+	public static NamedClass checkConcepts(ReasonerComponent rs, Set<NamedClass> concepts) {
 		Set<NamedClass> existingConcepts = rs.getNamedClasses();
 		for (NamedClass ar : concepts) {
 			if(!existingConcepts.contains(ar)) 
@@ -576,7 +551,7 @@ public class Helper {
 	}
 
 	// creates a flat ABox by querying a reasoner
-	public static FlatABox createFlatABox(AbstractReasonerComponent rs)
+	public static FlatABox createFlatABox(ReasonerComponent rs)
 			throws ReasoningMethodUnsupportedException {
 		long dematStartTime = System.currentTimeMillis();
 

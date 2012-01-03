@@ -40,9 +40,9 @@ import org.apache.log4j.SimpleLayout;
 import org.dllearner.cli.Start;
 import org.dllearner.core.ComponentInitException;
 import org.dllearner.core.ComponentManager;
-import org.dllearner.core.AbstractCELA;
-import org.dllearner.core.AbstractLearningProblem;
-import org.dllearner.core.AbstractReasonerComponent;
+import org.dllearner.core.LearningAlgorithm;
+import org.dllearner.core.LearningProblem;
+import org.dllearner.core.ReasonerComponent;
 import org.dllearner.core.owl.Description;
 import org.dllearner.core.owl.Individual;
 import org.dllearner.learningproblems.PosNegLP;
@@ -169,7 +169,7 @@ public class NestedCrossValidation {
 		ComponentManager cm = ComponentManager.getInstance();
 		
 		Start start = new Start(confFile);
-		AbstractLearningProblem lp = start.getLearningProblem();
+		LearningProblem lp = start.getLearningProblem();
 		
 		if(!(lp instanceof PosNegLP)) {
 			System.out.println("Positive only learning not supported yet.");
@@ -182,7 +182,7 @@ public class NestedCrossValidation {
 		LinkedList<Individual> negExamples = new LinkedList<Individual>(((PosNegLP)lp).getNegativeExamples());
 		Collections.shuffle(negExamples, new Random(2));	
 		
-		AbstractReasonerComponent rc = start.getReasonerComponent();
+		ReasonerComponent rc = start.getReasonerComponent();
 		String baseURI = rc.getBaseURI();
 		
 		List<TrainTestList> posLists = getFolds(posExamples, outerFolds);
@@ -227,10 +227,10 @@ public class NestedCrossValidation {
 					// read conf file and exchange options for pos/neg examples 
 					// and parameter to optimise
 					start = new Start(confFile);
-					AbstractLearningProblem lpIn = start.getLearningProblem();
+					LearningProblem lpIn = start.getLearningProblem();
 					cm.applyConfigEntry(lpIn, "positiveExamples", Datastructures.individualSetToStringSet(posEx));
 					cm.applyConfigEntry(lpIn, "negativeExamples", Datastructures.individualSetToStringSet(negEx));
-					AbstractCELA laIn = start.getLearningAlgorithm();
+					LearningAlgorithm laIn = start.getLearningAlgorithm();
 					cm.applyConfigEntry(laIn, parameter, (double)currParaValue);
 					
 					lpIn.init();
@@ -243,7 +243,7 @@ public class NestedCrossValidation {
 					TreeSet<Individual> posTest = new TreeSet<Individual>(innerPosLists.get(currInnerFold).getTestList());
 					TreeSet<Individual> negTest = new TreeSet<Individual>(innerNegLists.get(currInnerFold).getTestList());
 					
-					AbstractReasonerComponent rs = start.getReasonerComponent();
+					ReasonerComponent rs = start.getReasonerComponent();
 					// true positive
 					Set<Individual> posCorrect = rs.hasType(concept, posTest);
 					// false negative
@@ -301,10 +301,10 @@ public class NestedCrossValidation {
 			
 			// start a learning process with this parameter and evaluate it on the outer fold
 			start = new Start(confFile);
-			AbstractLearningProblem lpOut = start.getLearningProblem();
+			LearningProblem lpOut = start.getLearningProblem();
 			cm.applyConfigEntry(lpOut, "positiveExamples", Datastructures.individualListToStringSet(posLists.get(currOuterFold).getTrainList()));
 			cm.applyConfigEntry(lpOut, "negativeExamples", Datastructures.individualListToStringSet(negLists.get(currOuterFold).getTrainList()));
-			AbstractCELA laOut = start.getLearningAlgorithm();
+			LearningAlgorithm laOut = start.getLearningAlgorithm();
 			cm.applyConfigEntry(laOut, parameter, (double)bestPara);
 			
 			lpOut.init();
@@ -317,7 +317,7 @@ public class NestedCrossValidation {
 			TreeSet<Individual> posTest = new TreeSet<Individual>(posLists.get(currOuterFold).getTestList());
 			TreeSet<Individual> negTest = new TreeSet<Individual>(negLists.get(currOuterFold).getTestList());
 			
-			AbstractReasonerComponent rs = start.getReasonerComponent();
+			ReasonerComponent rs = start.getReasonerComponent();
 			// true positive
 			Set<Individual> posCorrect = rs.hasType(concept, posTest);
 			// false negative

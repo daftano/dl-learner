@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2008, Jens Lehmann
  *
  * This file is part of DL-Learner.
  *
@@ -15,29 +15,36 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.reasoning;
 
 import java.io.File;
-import java.util.HashSet;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Arrays;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
-import org.dllearner.core.AbstractKnowledgeSource;
-import org.dllearner.core.AbstractReasonerComponent;
-import org.dllearner.core.ComponentAnn;
 import org.dllearner.core.ComponentInitException;
 import org.dllearner.core.ComponentManager;
+import org.dllearner.core.KnowledgeSource;
+import org.dllearner.core.ReasonerComponent;
 import org.dllearner.core.ReasoningMethodUnsupportedException;
-import org.dllearner.core.config.ConfigOption;
+import org.dllearner.core.configurators.FastInstanceCheckerConfigurator;
+import org.dllearner.core.options.BooleanConfigOption;
+import org.dllearner.core.options.ConfigEntry;
+import org.dllearner.core.options.ConfigOption;
+import org.dllearner.core.options.InvalidConfigOptionValueException;
+import org.dllearner.core.options.StringConfigOption;
+import org.dllearner.core.options.URLConfigOption;
 import org.dllearner.core.owl.Axiom;
 import org.dllearner.core.owl.BooleanValueRestriction;
 import org.dllearner.core.owl.Constant;
@@ -69,8 +76,6 @@ import org.dllearner.parser.KBParser;
 import org.dllearner.parser.ParseException;
 import org.dllearner.utilities.Helper;
 import org.dllearner.utilities.owl.ConceptTransformation;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 
 /**
  * Reasoner for fast instance checks. It works by completely dematerialising the
@@ -81,21 +86,24 @@ import org.springframework.beans.propertyeditors.StringTrimmerEditor;
  * set modifications (union, intersection, difference), so it avoids any Java
  * object creation, which makes it extremely fast compared to standard
  * reasoners.
- * 
+ *
  * Meanwhile, the algorithm has been extended to also perform fast retrieval
  * operations. However, those need write access to memory and potentially have
  * to deal with all individuals in a knowledge base. For many knowledge bases,
- * they should still be reasonably fast. 
- * 
+ * they should still be reasonably fast.
+ *
  * @author Jens Lehmann
- * 
+ *
  */
-@ComponentAnn(name = "fast instance checker", shortName = "fic", version = 0.9)
-public class FastInstanceChecker extends AbstractReasonerComponent {
+public class FastInstanceChecker extends ReasonerComponent {
 
 	private static Logger logger = Logger.getLogger(FastInstanceChecker.class);
 
 //	private boolean defaultNegation = true;
+	@Override
+	public FastInstanceCheckerConfigurator getConfigurator() {
+		throw new UnsupportedOperationException("Get Configurator is no longer used - used dependency injection.");
+	}
 
 	private Set<NamedClass> atomicConcepts;
 	private Set<ObjectProperty> atomicRoles;
@@ -103,11 +111,10 @@ public class FastInstanceChecker extends AbstractReasonerComponent {
 	private SortedSet<DatatypeProperty> booleanDatatypeProperties = new TreeSet<DatatypeProperty>();
 	private SortedSet<DatatypeProperty> doubleDatatypeProperties = new TreeSet<DatatypeProperty>();
 	private SortedSet<DatatypeProperty> intDatatypeProperties = new TreeSet<DatatypeProperty>();
-	private SortedSet<DatatypeProperty> stringDatatypeProperties = new TreeSet<DatatypeProperty>();	
+	private SortedSet<DatatypeProperty> stringDatatypeProperties = new TreeSet<DatatypeProperty>();
 	private TreeSet<Individual> individuals;
 
 	// private ReasonerComponent rs;
-
 	private OWLAPIReasoner rc;
 
 	// we use sorted sets (map indices) here, because they have only log(n)
@@ -128,30 +135,54 @@ public class FastInstanceChecker extends AbstractReasonerComponent {
 	private Map<DatatypeProperty, Map<Individual, SortedSet<Integer>>> id = new TreeMap<DatatypeProperty, Map<Individual, SortedSet<Integer>>>();
 	private Map<DatatypeProperty, Map<Individual, SortedSet<String>>> sd = new TreeMap<DatatypeProperty, Map<Individual, SortedSet<String>>>();
 
-    @ConfigOption(name="defaultNegation", description = "Whether to use default negation, i.e. an instance not being in a class means that it is in the negation of the class.", defaultValue = "true", required = false)
-    private boolean defaultNegation = true;
-
-    @ConfigOption(name = "forAllRetrievalSemantics", description = "This option controls how to interpret the all quantifier in forall r.C. The standard option is" +
-            "to return all those which do not have an r-filler not in C. The domain semantics is to use those" +
-            "which are in the domain of r and do not have an r-filler not in C. The forallExists semantics is to"+
-            "use those which have at least one r-filler and do not have an r-filler not in C.",defaultValue = "standard",propertyEditorClass = StringTrimmerEditor.class)
-    private String forAllSemantics;
-
 	/**
 	 * Creates an instance of the fast instance checker.
+	 * @param sources The knowledge sources used as input.
 	 */
-	public FastInstanceChecker() {
+	public FastInstanceChecker(Set<KnowledgeSource> sources) {
+		super(sources);
 	}
 
-    public FastInstanceChecker(Set<AbstractKnowledgeSource> sources) {
-        super(sources);
-    }
+	/**
+	 * @return The options of this component.
+	 */
+	public static Collection<ConfigOption<?>> createConfigOptions() {
+		Collection<ConfigOption<?>> options = new LinkedList<ConfigOption<?>>();
+		StringConfigOption type = new StringConfigOption("reasonerType",
+				"FaCT++, HermiT, OWLlink or Pellet to dematerialize", "pellet", false, true);
+		type.setAllowedValues(new String[] { "fact", "hermit", "owllink", "pellet" });
+		// closure option? see:
+		// http://owlapi.svn.sourceforge.net/viewvc/owlapi/owl1_1/trunk/tutorial/src/main/java/uk/ac/manchester/owl/tutorial/examples/ClosureAxiomsExample.java?view=markup
+		options.add(type);
+		try {
+			URLConfigOption owlLinkURL = new URLConfigOption("owlLinkURL", "the URL to the remote OWLlink server", new URL("http://localhost:8080/"), false, true);
+			options.add(owlLinkURL);
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		}
+		options.add(new BooleanConfigOption("defaultNegation", "Whether to use default negation, i.e. an instance not being in a class means that it is in the negation of the class.", true, false, true));
+		StringConfigOption forallSemantics = new StringConfigOption("forallRetrievalSemantics",
+				"This option controls how to interpret the all quantifier in \forall r.C. The standard option is" +
+				"to return all those which do not have an r-filler not in C. The domain semantics is to use those" +
+				"which are in the domain of r and do not have an r-filler not in C. The forallExists semantics is to" +
+				"use those which have at least one r-filler and do not have an r-filler not in C.", "standard");
+		forallSemantics.setAllowedValues(new String[] { "standard", "domain", "forallExists" });
+		// closure option? see:
+		// http://owlapi.svn.sourceforge.net/viewvc/owlapi/owl1_1/trunk/tutorial/src/main/java/uk/ac/manchester/owl/tutorial/examples/ClosureAxiomsExample.java?view=markup
+//		options.add(forallSemantics);		
+		return options;
+	}
 
-    public FastInstanceChecker(AbstractKnowledgeSource... sources) {
-        super(new HashSet<AbstractKnowledgeSource>(Arrays.asList(sources)));
-    }
-    
-    /**
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.dllearner.core.Component#applyConfigEntry(org.dllearner.core.config.ConfigEntry)
+	 */
+	@Override
+	public <T> void applyConfigEntry(ConfigEntry<T> entry) throws InvalidConfigOptionValueException {
+	}
+
+	/**
 	 * @return The name of this component.
 	 */
 	public static String getName() {
@@ -160,16 +191,13 @@ public class FastInstanceChecker extends AbstractReasonerComponent {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.dllearner.core.Component#init()
 	 */
 	@Override
 	public void init() throws ComponentInitException {
+		// rc = new OWLAPIReasoner(sources);
 
-        if(rc == null){
-            rc = new OWLAPIReasoner(sources);
-            rc.init();
-        }
 //		try {
 			atomicConcepts = rc.getNamedClasses();
 			datatypeProperties = rc.getDatatypeProperties();
@@ -231,8 +259,8 @@ public class FastInstanceChecker extends AbstractReasonerComponent {
 
 			for (DatatypeProperty dp : stringDatatypeProperties) {
 				sd.put(dp, rc.getStringDatatypeMembers(dp));
-			}			
-			
+			}
+
 			long dematDuration = System.currentTimeMillis() - dematStartTime;
 			logger.debug("TBox dematerialised in " + dematDuration + " ms");
 
@@ -249,9 +277,6 @@ public class FastInstanceChecker extends AbstractReasonerComponent {
 //		 System.out.println("FIC: " + description + " " + individual);
 
 		if (description instanceof NamedClass) {
-			if(!atomicConcepts.contains(description)) {
-				throw new ReasoningMethodUnsupportedException("Class " + description + " is not contained in knowledge base.");
-			}
 			return classInstancesPos.get((NamedClass) description).contains(individual);
 		} else if (description instanceof Negation) {
 			Description child = description.getChild(0);
@@ -264,7 +289,7 @@ public class FastInstanceChecker extends AbstractReasonerComponent {
 				} else {
 					logger.debug("Converting description to negation normal form in fast instance check (should be avoided if possible).");
 					Description nnf = ConceptTransformation.transformToNegationNormalForm(child);
-					return hasTypeImpl(nnf, individual);					
+					return hasTypeImpl(nnf, individual);
 				}
 //				throw new ReasoningMethodUnsupportedException("Instance check for description "
 //						+ description
@@ -366,7 +391,7 @@ public class FastInstanceChecker extends AbstractReasonerComponent {
 //			SortedSet<Individual> roleFillers = opPos.get(op).get(individual);
 			SortedSet<Individual> roleFillers = mapping.get(individual);
 //			System.out.println(roleFillers);
-			
+
 			// special case: there are always at least zero fillers
 			if (number == 0) {
 				return true;
@@ -440,7 +465,7 @@ public class FastInstanceChecker extends AbstractReasonerComponent {
 		} else if (description instanceof ObjectValueRestriction) {
 			Individual i = ((ObjectValueRestriction)description).getIndividual();
 			ObjectProperty op = (ObjectProperty) ((ObjectValueRestriction)description).getRestrictedPropertyExpression();
-			
+
 			Set<Individual> inds = opPos.get(op).get(individual);
 			return inds == null ? false : inds.contains(i);
 		} else if (description instanceof BooleanValueRestriction) {
@@ -476,7 +501,7 @@ public class FastInstanceChecker extends AbstractReasonerComponent {
 		} else if (description instanceof DatatypeValueRestriction) {
 			String i = ((DatatypeValueRestriction)description).getValue().getLiteral();
 			DatatypeProperty dp = ((DatatypeValueRestriction)description).getRestrictedPropertyExpression();
-			
+
 			Set<String> inds = sd.get(dp).get(individual);
 			return inds == null ? false : inds.contains(i);
 		}
@@ -489,7 +514,7 @@ public class FastInstanceChecker extends AbstractReasonerComponent {
 	public SortedSet<Individual> getIndividualsImpl(Description concept) throws ReasoningMethodUnsupportedException {
 		return getIndividualsImplFast(concept);
 	}
-	
+
 	public SortedSet<Individual> getIndividualsImplStandard(Description concept)
 		throws ReasoningMethodUnsupportedException {
 		if (concept instanceof NamedClass) {
@@ -497,7 +522,7 @@ public class FastInstanceChecker extends AbstractReasonerComponent {
 	 	} else if (concept instanceof Negation && concept.getChild(0) instanceof NamedClass) {
 	 		return classInstancesNeg.get((NamedClass) concept.getChild(0));
 	 	}
-	 
+
 	 	// return rs.retrieval(concept);
 	 	SortedSet<Individual> inds = new TreeSet<Individual>();
 	 	for (Individual i : individuals) {
@@ -507,18 +532,14 @@ public class FastInstanceChecker extends AbstractReasonerComponent {
 	 	}
 		return inds;
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public SortedSet<Individual> getIndividualsImplFast(Description description)
 			throws ReasoningMethodUnsupportedException {
 		// policy: returned sets are clones, i.e. can be modified
 		// (of course we only have to clone the leafs of a class description tree)
 		if (description instanceof NamedClass) {
-			if(classInstancesPos.containsKey((NamedClass) description)){
-				return (TreeSet<Individual>) classInstancesPos.get((NamedClass) description).clone();
-			} else {
-				return new TreeSet<Individual>();
-			}
+			return (TreeSet<Individual>) classInstancesPos.get((NamedClass) description).clone();
 		} else if (description instanceof Negation) {
 			if(description.getChild(0) instanceof NamedClass) {
 				return (TreeSet<Individual>) classInstancesNeg.get((NamedClass) description.getChild(0)).clone();
@@ -554,15 +575,15 @@ public class FastInstanceChecker extends AbstractReasonerComponent {
 		} else if (description instanceof ObjectSomeRestriction) {
 			SortedSet<Individual> targetSet = getIndividualsImpl(description.getChild(0));
 			SortedSet<Individual> returnSet = new TreeSet<Individual>();
-			
+
 			ObjectPropertyExpression ope = ((ObjectSomeRestriction) description).getRole();
 			if (!(ope instanceof ObjectProperty)) {
 				throw new ReasoningMethodUnsupportedException("Retrieval for description "
 						+ description + " unsupported. Inverse object properties not supported.");
 			}
 			ObjectProperty op = (ObjectProperty) ope;
-			Map<Individual, SortedSet<Individual>> mapping = opPos.get(op);			
-			
+			Map<Individual, SortedSet<Individual>> mapping = opPos.get(op);
+
 			// each individual is connected to a set of individuals via the property;
 			// we loop through the complete mapping
 			for(Entry<Individual, SortedSet<Individual>> entry : mapping.entrySet()) {
@@ -571,7 +592,7 @@ public class FastInstanceChecker extends AbstractReasonerComponent {
 					if(targetSet.contains(ind)) {
 						returnSet.add(entry.getKey());
 						// once we found an individual, we do not need to check the others
-						continue; 
+						continue;
 					}
 				}
 			}
@@ -583,13 +604,13 @@ public class FastInstanceChecker extends AbstractReasonerComponent {
 //			if(!configurator.getForallRetrievalSemantics().equals("standard")) {
 //				throw new Error("Only forallExists semantics currently implemented.");
 //			}
-			
+
 			// problem: we need to make sure that \neg \exists r.\top \equiv \forall r.\bot
 			// can still be reached in an algorithm (\forall r.\bot \equiv \bot under forallExists
 			// semantics)
-			
+
 			SortedSet<Individual> targetSet = getIndividualsImpl(description.getChild(0));
-						
+
 			ObjectPropertyExpression ope = ((ObjectAllRestriction) description).getRole();
 			if (!(ope instanceof ObjectProperty)) {
 				throw new ReasoningMethodUnsupportedException("Instance check for description "
@@ -599,7 +620,7 @@ public class FastInstanceChecker extends AbstractReasonerComponent {
 			Map<Individual, SortedSet<Individual>> mapping = opPos.get(op);
 //			SortedSet<Individual> returnSet = new TreeSet<Individual>(mapping.keySet());
 			SortedSet<Individual> returnSet = (SortedSet<Individual>) individuals.clone();
-			
+
 			// each individual is connected to a set of individuals via the property;
 			// we loop through the complete mapping
 			for(Entry<Individual, SortedSet<Individual>> entry : mapping.entrySet()) {
@@ -607,7 +628,7 @@ public class FastInstanceChecker extends AbstractReasonerComponent {
 				for(Individual ind : inds) {
 					if(!targetSet.contains(ind)) {
 						returnSet.remove(entry.getKey());
-						continue; 
+						continue;
 					}
 				}
 			}
@@ -624,35 +645,35 @@ public class FastInstanceChecker extends AbstractReasonerComponent {
 			SortedSet<Individual> targetSet = getIndividualsImpl(child);
 			SortedSet<Individual> returnSet = new TreeSet<Individual>();
 
-			int number = ((ObjectCardinalityRestriction) description).getNumber();			
+			int number = ((ObjectCardinalityRestriction) description).getNumber();
 
 			for(Entry<Individual, SortedSet<Individual>> entry : mapping.entrySet()) {
 				int nrOfFillers = 0;
 				int index = 0;
 				SortedSet<Individual> inds = entry.getValue();
-				
+
 				// we do not need to run tests if there are not sufficiently many fillers
 				if(inds.size() < number) {
 					continue;
 				}
-				
+
 				for(Individual ind : inds) {
 					// stop inner loop when nr of fillers is reached
 					if(nrOfFillers >= number) {
 						returnSet.add(entry.getKey());
 						break;
-					}		
+					}
 					// early abort when too many instance checks failed
 					if (inds.size() - index < number) {
 						break;
-					}					
+					}
 					if(targetSet.contains(ind)) {
 						nrOfFillers++;
 					}
 					index++;
 				}
-			}			
-			
+			}
+
 			return returnSet;
 		} else if (description instanceof ObjectMaxCardinalityRestriction) {
 			ObjectPropertyExpression ope = ((ObjectCardinalityRestriction) description).getRole();
@@ -665,47 +686,47 @@ public class FastInstanceChecker extends AbstractReasonerComponent {
 			Map<Individual, SortedSet<Individual>> mapping = opPos.get(op);
 			SortedSet<Individual> targetSet = getIndividualsImpl(child);
 			// initially all individuals are in the return set and we then remove those
-			// with too many fillers			
+			// with too many fillers
 			SortedSet<Individual> returnSet = (SortedSet<Individual>) individuals.clone();
 
-			int number = ((ObjectCardinalityRestriction) description).getNumber();			
+			int number = ((ObjectCardinalityRestriction) description).getNumber();
 
 			for(Entry<Individual, SortedSet<Individual>> entry : mapping.entrySet()) {
 				int nrOfFillers = 0;
 				int index = 0;
 				SortedSet<Individual> inds = entry.getValue();
-				
+
 				// we do not need to run tests if there are not sufficiently many fillers
 				if(number < inds.size()) {
 					returnSet.add(entry.getKey());
 					continue;
 				}
-				
+
 				for(Individual ind : inds) {
 					// stop inner loop when nr of fillers is reached
 					if(nrOfFillers >= number) {
 						break;
-					}		
+					}
 					// early abort when too many instance are true already
 					if (inds.size() - index < number) {
 						returnSet.add(entry.getKey());
 						break;
-					}					
+					}
 					if(targetSet.contains(ind)) {
 						nrOfFillers++;
 					}
 					index++;
 				}
-			}			
-			
+			}
+
 			return returnSet;
 		} else if (description instanceof ObjectValueRestriction) {
 			Individual i = ((ObjectValueRestriction)description).getIndividual();
 			ObjectProperty op = (ObjectProperty) ((ObjectValueRestriction)description).getRestrictedPropertyExpression();
-			
-			Map<Individual, SortedSet<Individual>> mapping = opPos.get(op);			
+
+			Map<Individual, SortedSet<Individual>> mapping = opPos.get(op);
 			SortedSet<Individual> returnSet = new TreeSet<Individual>();
-			
+
 			for(Entry<Individual, SortedSet<Individual>> entry : mapping.entrySet()) {
 				if(entry.getValue().contains(i)) {
 					returnSet.add(entry.getKey());
@@ -727,15 +748,15 @@ public class FastInstanceChecker extends AbstractReasonerComponent {
 			DatatypeProperty dp = (DatatypeProperty) dsr.getRestrictedPropertyExpression();
 			DataRange dr = dsr.getDataRange();
 
-			Map<Individual, SortedSet<Double>> mapping = dd.get(dp);			
-			SortedSet<Individual> returnSet = new TreeSet<Individual>();			
+			Map<Individual, SortedSet<Double>> mapping = dd.get(dp);
+			SortedSet<Individual> returnSet = new TreeSet<Individual>();
 
 			if (dr instanceof DoubleMaxValue) {
 				for(Entry<Individual, SortedSet<Double>> entry : mapping.entrySet()) {
 					if(entry.getValue().first() <= ((DoubleMaxValue)dr).getValue()) {
 						returnSet.add(entry.getKey());
 					}
-				}				
+				}
 			} else if (dr instanceof DoubleMinValue) {
 				for(Entry<Individual, SortedSet<Double>> entry : mapping.entrySet()) {
 					if(entry.getValue().last() >= ((DoubleMinValue)dr).getValue()) {
@@ -744,10 +765,10 @@ public class FastInstanceChecker extends AbstractReasonerComponent {
 				}
 			}
 		}
-			
+
 		throw new ReasoningMethodUnsupportedException("Retrieval for description "
-					+ description + " unsupported.");		
-			
+					+ description + " unsupported.");
+
 		// return rs.retrieval(concept);
 //		SortedSet<Individual> inds = new TreeSet<Individual>();
 //		for (Individual i : individuals) {
@@ -760,7 +781,7 @@ public class FastInstanceChecker extends AbstractReasonerComponent {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.dllearner.core.Reasoner#getAtomicConcepts()
 	 */
 	@Override
@@ -770,7 +791,7 @@ public class FastInstanceChecker extends AbstractReasonerComponent {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.dllearner.core.Reasoner#getAtomicRoles()
 	 */
 	@Override
@@ -801,41 +822,41 @@ public class FastInstanceChecker extends AbstractReasonerComponent {
 	@Override
 	public SortedSet<DatatypeProperty> getStringDatatypePropertiesImpl() {
 		return stringDatatypeProperties;
-	}	
-	
+	}
+
 	@Override
 	protected SortedSet<Description> getSuperClassesImpl(Description concept) throws ReasoningMethodUnsupportedException {
 		return rc.getSuperClassesImpl(concept);
 	}
-	
+
 	@Override
 	protected SortedSet<Description> getSubClassesImpl(Description concept) throws ReasoningMethodUnsupportedException {
 		return rc.getSubClassesImpl(concept);
-	}		
+	}
 
 	@Override
 	protected SortedSet<ObjectProperty> getSuperPropertiesImpl(ObjectProperty role) throws ReasoningMethodUnsupportedException {
 		return rc.getSuperPropertiesImpl(role);
-	}	
+	}
 
 	@Override
 	protected SortedSet<ObjectProperty> getSubPropertiesImpl(ObjectProperty role) throws ReasoningMethodUnsupportedException {
 		return rc.getSubPropertiesImpl(role);
 	}
-	
+
 	@Override
 	protected SortedSet<DatatypeProperty> getSuperPropertiesImpl(DatatypeProperty role) throws ReasoningMethodUnsupportedException {
 		return rc.getSuperPropertiesImpl(role);
-	}	
+	}
 
 	@Override
 	protected SortedSet<DatatypeProperty> getSubPropertiesImpl(DatatypeProperty role) throws ReasoningMethodUnsupportedException {
 		return rc.getSubPropertiesImpl(role);
-	}	
-	
+	}
+
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.dllearner.core.Reasoner#getIndividuals()
 	 */
 	@Override
@@ -845,7 +866,7 @@ public class FastInstanceChecker extends AbstractReasonerComponent {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.dllearner.core.Reasoner#getReasonerType()
 	 */
 	@Override
@@ -888,7 +909,7 @@ public class FastInstanceChecker extends AbstractReasonerComponent {
 
 	/**
 	 * Test method for fast instance checker.
-	 * 
+	 *
 	 * @param args
 	 *            No arguments supported.
 	 * @throws ComponentInitException Component cannot be initialised.
@@ -902,7 +923,7 @@ public class FastInstanceChecker extends AbstractReasonerComponent {
 		String owlFile = new File("examples/family/father.owl").toURI().toString();
 		cm.applyConfigEntry(owl, "url", owlFile);
 		owl.init();
-		AbstractReasonerComponent reasoner = cm.reasoner(FastInstanceChecker.class, owl);
+		ReasonerComponent reasoner = cm.reasoner(FastInstanceChecker.class, owl);
 //		cm.reasoningService(reasoner);
 		reasoner.init();
 
@@ -916,7 +937,7 @@ public class FastInstanceChecker extends AbstractReasonerComponent {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.dllearner.core.Reasoner#getBaseURI()
 	 */
 	@Override
@@ -926,7 +947,7 @@ public class FastInstanceChecker extends AbstractReasonerComponent {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.dllearner.core.Reasoner#getPrefixes()
 	 */
 	@Override
@@ -958,58 +979,58 @@ public class FastInstanceChecker extends AbstractReasonerComponent {
 	public final SortedSet<Individual> getTrueDatatypeMembersImpl(DatatypeProperty datatypeProperty) {
 		return bdPos.get(datatypeProperty);
 	}
-	
+
 	@Override
 	public final SortedSet<Individual> getFalseDatatypeMembersImpl(DatatypeProperty datatypeProperty) {
 		return bdNeg.get(datatypeProperty);
 	}
-	
+
 	@Override
 	public Map<Individual, SortedSet<Integer>> getIntDatatypeMembersImpl(
 			DatatypeProperty datatypeProperty) {
 		return id.get(datatypeProperty);
-	}		
-	
+	}
+
 	@Override
 	public Map<Individual, SortedSet<Double>> getDoubleDatatypeMembersImpl(
 			DatatypeProperty datatypeProperty) {
 		return dd.get(datatypeProperty);
-	}	
-	
+	}
+
 	@Override
 	public Map<Individual, SortedSet<Constant>> getDatatypeMembersImpl(
 			DatatypeProperty datatypeProperty) {
 		return rc.getDatatypeMembersImpl(datatypeProperty);
-	}		
-	
+	}
+
 	@Override
 	public Set<Individual> getRelatedIndividualsImpl(Individual individual, ObjectProperty objectProperty) throws ReasoningMethodUnsupportedException {
 		return rc.getRelatedIndividuals(individual, objectProperty);
 	}
-	
+
 	@Override
 	protected Map<ObjectProperty,Set<Individual>> getObjectPropertyRelationshipsImpl(Individual individual) {
 		return rc.getObjectPropertyRelationships(individual);
-	}	
-	
+	}
+
 	@Override
 	public Set<Constant> getRelatedValuesImpl(Individual individual, DatatypeProperty datatypeProperty) throws ReasoningMethodUnsupportedException {
 		return rc.getRelatedValues(individual, datatypeProperty);
-	}	
-	
+	}
+
 	@Override
 	public boolean isSatisfiableImpl() {
 		return rc.isSatisfiable();
-	}	
-	
+	}
+
 	@Override
 	public Set<Constant> getLabelImpl(Entity entity) throws ReasoningMethodUnsupportedException {
 		return rc.getLabel(entity);
-	}	
-	
+	}
+
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.dllearner.core.ReasonerComponent#releaseKB()
 	 */
 	@Override
@@ -1043,14 +1064,12 @@ public class FastInstanceChecker extends AbstractReasonerComponent {
 		return rc.getAssertedDefinitionsImpl(nc);
 	}
 
-    public OWLAPIReasoner getReasonerComponent() {
-        return rc;
-    }
 
-    @Autowired(required = false)
-    public void setReasonerComponent(OWLAPIReasoner rc) {
-        this.rc = rc;
-    }
+
+
+    /** Begin Add of ISS Code */
+
+    private boolean defaultNegation = true;
 
     public boolean isDefaultNegation() {
         return defaultNegation;
@@ -1060,11 +1079,21 @@ public class FastInstanceChecker extends AbstractReasonerComponent {
         this.defaultNegation = defaultNegation;
     }
 
-    public String getForAllSemantics() {
-        return forAllSemantics;
+
+    /**
+     * The reasoner that this fast instance checker will use.
+     * @return The reasoner that this fast instance checker will use.
+     */
+    public OWLAPIReasoner getReasonerComponent() {
+        return rc;
     }
 
-    public void setForAllSemantics(String forAllSemantics) {
-        this.forAllSemantics = forAllSemantics;
+    /**
+     * Use dependency injection to inject the reasoner - that way we are decoupled from how the reasoner gets added.
+     *
+     * @param reasoner The reasoner for this fast instance checker to use.
+     */
+    public void setReasonerComponent(OWLAPIReasoner reasoner) {
+        this.rc = reasoner;
     }
 }

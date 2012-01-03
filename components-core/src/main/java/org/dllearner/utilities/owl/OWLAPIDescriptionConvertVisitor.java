@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2008, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.utilities.owl;
 
 import java.util.HashSet;
@@ -39,7 +39,6 @@ import org.dllearner.core.owl.Intersection;
 import org.dllearner.core.owl.NamedClass;
 import org.dllearner.core.owl.Negation;
 import org.dllearner.core.owl.Nothing;
-import org.dllearner.core.owl.OWL2Datatype;
 import org.dllearner.core.owl.ObjectAllRestriction;
 import org.dllearner.core.owl.ObjectExactCardinalityRestriction;
 import org.dllearner.core.owl.ObjectMaxCardinalityRestriction;
@@ -333,14 +332,14 @@ public class OWLAPIDescriptionConvertVisitor implements DescriptionVisitor {
 	}
 
 	public OWLDatatype convertDatatype(Datatype datatype) {
-		if(datatype.equals(OWL2Datatype.BOOLEAN.getDatatype()))
+		if(datatype.equals(Datatype.BOOLEAN))
 			return factory.getBooleanOWLDatatype();
-		else if(datatype.equals(OWL2Datatype.INT.getDatatype()))
+		else if(datatype.equals(Datatype.INT))
 			return factory.getIntegerOWLDatatype();
-		else if(datatype.equals(OWL2Datatype.DOUBLE.getDatatype()))
+		else if(datatype.equals(Datatype.DOUBLE))
 			return factory.getDoubleOWLDatatype();		
-		else if(datatype.equals(OWL2Datatype.STRING.getDatatype()))
-			return factory.getOWLDatatype(IRI.create(OWL2Datatype.STRING.getURI()));		
+//		else if(datatype.equals(Datatype.STRING))
+//			return factory.getOWLDataType(Datatype.STRING.getURI());		
 		
 		throw new Error("OWLAPIDescriptionConverter: datatype "+datatype+" not implemented");			
 	}

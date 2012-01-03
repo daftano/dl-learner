@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2008, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.utilities.components;
 
 import java.io.File;
@@ -25,7 +25,7 @@ import java.net.URL;
 
 import org.dllearner.core.ComponentInitException;
 import org.dllearner.core.ComponentManager;
-import org.dllearner.core.AbstractReasonerComponent;
+import org.dllearner.core.ReasonerComponent;
 import org.dllearner.kb.OWLFile;
 import org.dllearner.reasoning.FastInstanceChecker;
 import org.dllearner.reasoning.OWLAPIReasoner;
@@ -46,15 +46,15 @@ public class ReasonerComponentFactory {
 	 * @param type Reasoner type.
 	 * @return A reasoner component.
 	 */
-	public static AbstractReasonerComponent getReasonerComponent(String ontologyFile, ReasonerType type) {
+	public static ReasonerComponent getReasonerComponent(String ontologyFile, ReasonerType type) {
 		ComponentManager cm = ComponentManager.getInstance();
-		AbstractReasonerComponent rc = null;
+		ReasonerComponent rc = null;
 
 		try {
 			// knowledge source
 			OWLFile ks = cm.knowledgeSource(OWLFile.class);
 			URL fileURL = new File(ontologyFile).toURI().toURL();
-			ks.setURL(fileURL);
+			ks.getConfigurator().setUrl(fileURL);
 			ks.init();
 
 			// reasoner component
@@ -64,11 +64,11 @@ public class ReasonerComponentFactory {
 				break;
 			case OWLAPI_FACT:
 				rc = cm.reasoner(OWLAPIReasoner.class, ks);
-				((OWLAPIReasoner) rc).setReasonerTypeString("fact");
+				((OWLAPIReasoner) rc).getConfigurator().setReasonerType("fact");
 				break;
 			case OWLAPI_PELLET:
 				rc = cm.reasoner(OWLAPIReasoner.class, ks);
-				((OWLAPIReasoner) rc).setReasonerTypeString("pellet");
+				((OWLAPIReasoner) rc).getConfigurator().setReasonerType("pellet");
 				break;
 			default:
 				rc = cm.reasoner(FastInstanceChecker.class, ks);

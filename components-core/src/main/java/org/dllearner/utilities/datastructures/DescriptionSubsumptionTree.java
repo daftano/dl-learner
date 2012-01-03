@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.utilities.datastructures;
 
 import java.util.ArrayList;
@@ -29,7 +29,7 @@ import java.util.TreeSet;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.dllearner.core.EvaluatedDescription;
-import org.dllearner.core.AbstractReasonerComponent;
+import org.dllearner.core.ReasonerComponent;
 import org.dllearner.core.owl.Description;
 import org.dllearner.learningproblems.EvaluatedDescriptionPosNeg;
 
@@ -238,13 +238,13 @@ public class DescriptionSubsumptionTree {
 	 * */
 	
 	private Node rootNode;
-	private final AbstractReasonerComponent rc;
+	private final ReasonerComponent rc;
 
 	/**
 	 * 
 	 * @param rc An initialized reasoner component
 	 */
-	public DescriptionSubsumptionTree(AbstractReasonerComponent rc) {
+	public DescriptionSubsumptionTree(ReasonerComponent rc) {
 		logger.trace("Output for DescriptionSubsumptionTree deactivated (in class)");
 		logger.setLevel((debug) ? Level.WARN : Level.OFF);
 		this.rc = rc;

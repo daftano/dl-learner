@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,11 +15,11 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.core.options;
 
-import org.dllearner.core.AbstractCELA;
+import org.dllearner.core.LearningAlgorithm;
 
 
 
@@ -77,10 +77,6 @@ public final class CommonConfigOptions {
 	public static BooleanConfigOption getTerminateOnNoiseReached() {
 		return new BooleanConfigOption("terminateOnNoiseReached", "specifies whether to terminate when noise criterion is met", terminateOnNoiseReachedDefault);
 	}
-	
-	public static BooleanConfigOption getTerminateOnNoiseReached(boolean defaultValue) {
-		return new BooleanConfigOption("terminateOnNoiseReached", "specifies whether to terminate when noise criterion is met", defaultValue);
-	}	
 	
 	public static IntegerConfigOption getMaxDepth(int defaultValue) {
 		return new IntegerConfigOption("maxDepth", "maximum depth of description", defaultValue);
@@ -167,7 +163,7 @@ public final class CommonConfigOptions {
 	}	
 	
 	public static BooleanConfigOption useDoubleDatatypes() {
-		return new BooleanConfigOption("useDoubleDatatypes", "specifies whether double datatypes are used in the learning algorothm",useDoubleDatatypesDefault);
+		return new BooleanConfigOption("useDoubleDatatypes", "specifies whether boolean datatypes are used in the learning algorothm",useDoubleDatatypesDefault);
 	}	
 	
 	public static BooleanConfigOption useStringDatatypes() {
@@ -193,7 +189,7 @@ public final class CommonConfigOptions {
 	public static IntegerConfigOption maxNrOfResults(int defaultValue) {
 		IntegerConfigOption opt = new IntegerConfigOption("maxNrOfResults", "Sets the maximum number of results one is interested in. (Setting this to a lower value may increase performance as the learning algorithm has to store/evaluate/beautify less descriptions).", defaultValue);
 		opt.setLowerLimit(1);
-		opt.setUpperLimit(AbstractCELA.MAX_NR_OF_RESULTS);
+		opt.setUpperLimit(LearningAlgorithm.MAX_NR_OF_RESULTS);
 		return opt;
 	}
 	

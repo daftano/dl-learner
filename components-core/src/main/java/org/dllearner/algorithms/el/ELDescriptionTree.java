@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2008, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.algorithms.el;
 
 import java.util.Collection;
@@ -31,7 +31,7 @@ import java.util.TreeSet;
 import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
-import org.dllearner.core.AbstractReasonerComponent;
+import org.dllearner.core.ReasonerComponent;
 import org.dllearner.core.owl.ClassHierarchy;
 import org.dllearner.core.owl.Description;
 import org.dllearner.core.owl.Intersection;
@@ -76,11 +76,11 @@ public class ELDescriptionTree implements Cloneable {
 	// the background knowledge (we need to have it explicitly here, 
 	// since we store simulation information in the tree and simulation
 	// updates depend on background knowledge)
-	protected AbstractReasonerComponent rs;
+	protected ReasonerComponent rs;
 	protected ClassHierarchy subsumptionHierarchy;
 	protected ObjectPropertyHierarchy roleHierarchy;
 	
-	public ELDescriptionTree(AbstractReasonerComponent rs) {
+	public ELDescriptionTree(ReasonerComponent rs) {
 		this.rs = rs;
 		subsumptionHierarchy = rs.getClassHierarchy();
 		roleHierarchy = rs.getObjectPropertyHierarchy();
@@ -92,7 +92,7 @@ public class ELDescriptionTree implements Cloneable {
 	 * @param description
 	 *            A description
 	 */
-	public ELDescriptionTree(AbstractReasonerComponent rs, Description description) {
+	public ELDescriptionTree(ReasonerComponent rs, Description description) {
 		this(rs);
 		// construct root node and recursively build the tree
 		rootNode = new ELDescriptionNode(this);

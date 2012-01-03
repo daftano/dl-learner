@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2008, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.kb.sparql;
 
 import java.io.File;
@@ -284,9 +284,14 @@ public class Cache implements Serializable {
 	 */
 	public String executeSparqlQuery(SparqlQuery query) {
 		if(useDatabase) {
-			return h2.executeSelectQuery(query.getSparqlEndpoint(), query.getSparqlQueryString());
+            if(query instanceof EndpointBasedSparqlQuery){
+                /** Expecting an EndpointBasedSparqlQuery here */
+                return h2.executeSelectQuery(((EndpointBasedSparqlQuery)query).getSparqlEndpoint(), query.getSparqlQueryString());
+            }else{
+                throw new RuntimeException("Expected an EndpointBasedSparqlQuery here.");
+            }
+
 		}
-		
 		Monitor totaltime =JamonMonitorLogger.getTimeMonitor(Cache.class, "TotalTimeExecuteSparqlQuery").start();
 		JamonMonitorLogger.increaseCount(Cache.class, "TotalQueries");
 	

@@ -1,22 +1,3 @@
-/**
- * Copyright (C) 2007-2011, Jens Lehmann
- *
- * This file is part of DL-Learner.
- *
- * DL-Learner is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * DL-Learner is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
 package org.dllearner.refinementoperators;
 
 import java.util.HashSet;
@@ -26,8 +7,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.dllearner.core.AbstractReasonerComponent;
-import org.dllearner.core.ComponentInitException;
+import org.dllearner.core.ReasonerComponent;
 import org.dllearner.core.owl.ObjectAllRestriction;
 import org.dllearner.core.owl.NamedClass;
 import org.dllearner.core.owl.Nothing;
@@ -47,11 +27,11 @@ public class PsiUp extends RefinementOperatorAdapter {
 	ConceptComparator conceptComparator = new ConceptComparator();
 	
 	PosNegLP learningProblem;
-	AbstractReasonerComponent reasoningService;
+	ReasonerComponent reasoningService;
 	
 	private TreeSet<Description> bottomSet;
 	
-	public PsiUp(PosNegLP learningProblem, AbstractReasonerComponent reasoningService) {
+	public PsiUp(PosNegLP learningProblem, ReasonerComponent reasoningService) {
 		this.learningProblem = learningProblem;
 		this.reasoningService = reasoningService;
 		
@@ -237,12 +217,6 @@ public class PsiUp extends RefinementOperatorAdapter {
 	public Set<Description> refine(Description concept, int maxLength,
 			List<Description> knownRefinements) {
 		throw new RuntimeException();
-	}
-
-	@Override
-	public void init() throws ComponentInitException {
-		// TODO Auto-generated method stub
-		
 	}
 
 }

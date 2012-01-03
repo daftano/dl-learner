@@ -30,12 +30,12 @@ import javax.swing.JComboBox;
 import javax.swing.JPanel;
 
 import org.dllearner.algorithms.celoe.CELOE;
-import org.dllearner.core.AbstractComponent;
-import org.dllearner.core.AbstractKnowledgeSource;
-import org.dllearner.core.AbstractCELA;
-import org.dllearner.core.AbstractLearningProblem;
+import org.dllearner.core.Component;
+import org.dllearner.core.KnowledgeSource;
+import org.dllearner.core.LearningAlgorithm;
+import org.dllearner.core.LearningProblem;
 import org.dllearner.core.LearningProblemUnsupportedException;
-import org.dllearner.core.AbstractReasonerComponent;
+import org.dllearner.core.ReasonerComponent;
 import org.dllearner.learningproblems.ClassLearningProblem;
 import org.dllearner.learningproblems.PosOnlyLP;
 import org.dllearner.reasoning.PelletReasoner;
@@ -53,10 +53,10 @@ public class ComponentPanel extends JPanel implements ActionListener {
 
 	private Config config;
 	private StartGUI startGUI;
-	private List<Class<? extends AbstractComponent>> selectableComponents;
+	private List<Class<? extends Component>> selectableComponents;
 	private OptionPanel optionPanel;
-	private Class<? extends AbstractComponent> panelClass;
-	private AbstractComponent currentComponent;
+	private Class<? extends Component> panelClass;
+	private Component currentComponent;
 
 	// GUI elements
 	private JButton clearButton;
@@ -74,8 +74,8 @@ public class ComponentPanel extends JPanel implements ActionListener {
 	 * @param defaultComponent
 	 *            See main constructor.
 	 */
-	ComponentPanel(final Config config, StartGUI startGUI, Class<? extends AbstractComponent> panelClass,
-			Class<? extends AbstractComponent> defaultComponent) {
+	ComponentPanel(final Config config, StartGUI startGUI, Class<? extends Component> panelClass,
+			Class<? extends Component> defaultComponent) {
 		this(config, startGUI, panelClass, defaultComponent, null);
 	}
 
@@ -94,9 +94,9 @@ public class ComponentPanel extends JPanel implements ActionListener {
 	 * @param ignoredComponents
 	 *            Components of DL-Learner, which should not be displayed.
 	 */
-	ComponentPanel(final Config config, StartGUI startGUI, Class<? extends AbstractComponent> panelClass,
-			Class<? extends AbstractComponent> defaultComponent,
-			List<Class<? extends AbstractComponent>> ignoredComponents) {
+	ComponentPanel(final Config config, StartGUI startGUI, Class<? extends Component> panelClass,
+			Class<? extends Component> defaultComponent,
+			List<Class<? extends Component>> ignoredComponents) {
 		super(new BorderLayout());
 
 		this.config = config;
@@ -104,16 +104,16 @@ public class ComponentPanel extends JPanel implements ActionListener {
 		this.panelClass = panelClass;
 
 		// get all classes of the correct type
-		selectableComponents = new LinkedList<Class<? extends AbstractComponent>>();
-		if (panelClass == AbstractKnowledgeSource.class) {
+		selectableComponents = new LinkedList<Class<? extends Component>>();
+		if (panelClass == KnowledgeSource.class) {
 			selectableComponents.addAll(config.getComponentManager().getKnowledgeSources());
-		} else if (panelClass == AbstractReasonerComponent.class) {
+		} else if (panelClass == ReasonerComponent.class) {
 			selectableComponents.addAll(config.getComponentManager().getReasonerComponents());
 			selectableComponents.remove(PelletReasoner.class);
 			selectableComponents.remove(ProtegeReasoner.class);
-		} else if (panelClass == AbstractLearningProblem.class) {
+		} else if (panelClass == LearningProblem.class) {
 			selectableComponents.addAll(config.getComponentManager().getLearningProblems());
-		} else if (panelClass == AbstractCELA.class) {
+		} else if (panelClass == LearningAlgorithm.class) {
 //			selectableComponents.addAll(config.getComponentManager().getLearningAlgorithms());
 			selectableComponents.addAll(config.getComponentManager().getApplicableLearningAlgorithms(config.getLearningProblem().getClass()));
 		}
@@ -157,7 +157,7 @@ public class ComponentPanel extends JPanel implements ActionListener {
 	public void actionPerformed(ActionEvent e) {
 		if (e.getSource() == comboBox) {
 			// change component and update option panel
-			Class<? extends AbstractComponent> c = selectableComponents.get(comboBox.getSelectedIndex());
+			Class<? extends Component> c = selectableComponents.get(comboBox.getSelectedIndex());
 			currentComponent = changeInstance(c);
 			// we may have to change the learning algorithm depending on the learning problem
 			if(c.equals(ClassLearningProblem.class) || c.equals(PosOnlyLP.class)) {
@@ -187,13 +187,13 @@ public class ComponentPanel extends JPanel implements ActionListener {
 	 */
 	public void update() {
 		// detect current component
-		if (panelClass == AbstractKnowledgeSource.class) {
+		if (panelClass == KnowledgeSource.class) {
 			currentComponent = config.getKnowledgeSource();
-		} else if (panelClass == AbstractReasonerComponent.class) {
+		} else if (panelClass == ReasonerComponent.class) {
 			currentComponent = config.getReasoner();
-		} else if (panelClass == AbstractLearningProblem.class) {
+		} else if (panelClass == LearningProblem.class) {
 			currentComponent = config.getLearningProblem();
-		} else if (panelClass == AbstractCELA.class) {
+		} else if (panelClass == LearningAlgorithm.class) {
 			currentComponent = config.getLearningAlgorithm();
 		}
 		// select component without sending an event;
@@ -219,7 +219,7 @@ public class ComponentPanel extends JPanel implements ActionListener {
 	 */
 	public void panelActivated() {
 		// hook method, which does nothing yet
-		if(panelClass.equals(AbstractCELA.class)) {
+		if(panelClass.equals(LearningAlgorithm.class)) {
 			// update selectable components
 			selectableComponents.clear();
 			selectableComponents.addAll(config.getComponentManager().getApplicableLearningAlgorithms(config.getLearningProblem().getClass()));
@@ -238,17 +238,17 @@ public class ComponentPanel extends JPanel implements ActionListener {
 
 	// creates an instance of the specified component class
 	@SuppressWarnings("unchecked")
-	private AbstractComponent newInstance(Class<? extends AbstractComponent> clazz) {
-		AbstractComponent newComponent = null;
-		if (AbstractKnowledgeSource.class.isAssignableFrom(clazz)) {
-			newComponent = config.newKnowledgeSource((Class<AbstractKnowledgeSource>) clazz);
-		} else if (AbstractReasonerComponent.class.isAssignableFrom(clazz)) {
-			newComponent = config.newReasoner((Class<AbstractReasonerComponent>) clazz);
-		} else if (AbstractLearningProblem.class.isAssignableFrom(clazz)) {
-			newComponent = config.newLearningProblem((Class<AbstractLearningProblem>) clazz);
-		} else if (AbstractCELA.class.isAssignableFrom(clazz)) {
+	private Component newInstance(Class<? extends Component> clazz) {
+		Component newComponent = null;
+		if (KnowledgeSource.class.isAssignableFrom(clazz)) {
+			newComponent = config.newKnowledgeSource((Class<KnowledgeSource>) clazz);
+		} else if (ReasonerComponent.class.isAssignableFrom(clazz)) {
+			newComponent = config.newReasoner((Class<ReasonerComponent>) clazz);
+		} else if (LearningProblem.class.isAssignableFrom(clazz)) {
+			newComponent = config.newLearningProblem((Class<LearningProblem>) clazz);
+		} else if (LearningAlgorithm.class.isAssignableFrom(clazz)) {
 			try {
-				newComponent = config.newLearningAlgorithm((Class<AbstractCELA>) clazz);
+				newComponent = config.newLearningAlgorithm((Class<LearningAlgorithm>) clazz);
 			} catch (LearningProblemUnsupportedException e) {
 				// TODO status message
 				e.printStackTrace();
@@ -259,17 +259,17 @@ public class ComponentPanel extends JPanel implements ActionListener {
 
 	// changes current component to an instance of the specified class
 	@SuppressWarnings("unchecked")
-	private AbstractComponent changeInstance(Class<? extends AbstractComponent> clazz) {
-		AbstractComponent newComponent = null;
-		if (AbstractKnowledgeSource.class.isAssignableFrom(clazz)) {
-			newComponent = config.changeKnowledgeSource((Class<AbstractKnowledgeSource>) clazz);
-		} else if (AbstractReasonerComponent.class.isAssignableFrom(clazz)) {
-			newComponent = config.changeReasoner((Class<AbstractReasonerComponent>) clazz);
-		} else if (AbstractLearningProblem.class.isAssignableFrom(clazz)) {
-			newComponent = config.changeLearningProblem((Class<AbstractLearningProblem>) clazz);
-		} else if (AbstractCELA.class.isAssignableFrom(clazz)) {
+	private Component changeInstance(Class<? extends Component> clazz) {
+		Component newComponent = null;
+		if (KnowledgeSource.class.isAssignableFrom(clazz)) {
+			newComponent = config.changeKnowledgeSource((Class<KnowledgeSource>) clazz);
+		} else if (ReasonerComponent.class.isAssignableFrom(clazz)) {
+			newComponent = config.changeReasoner((Class<ReasonerComponent>) clazz);
+		} else if (LearningProblem.class.isAssignableFrom(clazz)) {
+			newComponent = config.changeLearningProblem((Class<LearningProblem>) clazz);
+		} else if (LearningAlgorithm.class.isAssignableFrom(clazz)) {
 			try {
-				newComponent = config.changeLearningAlgorithm((Class<AbstractCELA>) clazz);
+				newComponent = config.changeLearningAlgorithm((Class<LearningAlgorithm>) clazz);
 			} catch (LearningProblemUnsupportedException e) {
 				// TODO status message
 				e.printStackTrace();
@@ -281,7 +281,7 @@ public class ComponentPanel extends JPanel implements ActionListener {
 	/**
 	 * @return the currentComponent
 	 */
-	public AbstractComponent getCurrentComponent() {
+	public Component getCurrentComponent() {
 		return currentComponent;
 	}
 

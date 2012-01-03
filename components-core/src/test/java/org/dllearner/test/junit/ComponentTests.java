@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2008, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,13 +15,13 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.test.junit;
 
 import java.util.List;
 
-import org.dllearner.core.AbstractComponent;
+import org.dllearner.core.Component;
 import org.dllearner.core.ComponentManager;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -41,10 +41,10 @@ public class ComponentTests {
 	 */
 	@Test
 	public void nameTest() {
-		String defaultName = AbstractComponent.getName();
+		String defaultName = Component.getName();
 		ComponentManager cm = ComponentManager.getInstance();
-		List<Class<? extends AbstractComponent>> components = cm.getComponents();
-		for (Class<? extends AbstractComponent> component : components) {
+		List<Class<? extends Component>> components = cm.getComponents();
+		for (Class<? extends Component> component : components) {
 			String componentName = cm.getComponentName(component);
 			assertFalse(component + " does not overwrite getName().", componentName
 					.equals(defaultName));

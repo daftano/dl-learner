@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2008, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.kb.extraction;
 
 import org.dllearner.kb.aquisitors.TupleAquisitor;
@@ -40,8 +40,6 @@ public class Configuration {
 	// class extraction algorithm or manipulator
 	private boolean optimizeForDLLearner = true;
 
-	private int recursiondepth;
-
 	private boolean getAllSuperClasses = true;
 
 	private boolean closeAfterRecursion = true;
@@ -53,13 +51,12 @@ public class Configuration {
 	private int breakSuperClassesAfter = 200;
 
 	public Configuration(TupleAquisitor tupelAquisitor,
-			Manipulator manipulator, int recursiondepth,
+			Manipulator manipulator,
 			boolean getAllSuperClasses, boolean closeAfterRecursion,
 			boolean getPropertyInformation, int breakSuperClassesAfter, boolean dissolveBlankNodes) {
 
 		this.tupelAquisitor = tupelAquisitor;
 		this.manipulator = manipulator;
-		this.recursiondepth = recursiondepth;
 		this.getAllSuperClasses = getAllSuperClasses;
 		this.closeAfterRecursion = closeAfterRecursion;
 		this.getPropertyInformation = getPropertyInformation;
@@ -73,11 +70,10 @@ public class Configuration {
 	}
 
 	public Configuration(TupleAquisitor tupelAquisitor,
-			Manipulator manipulator, int recursiondepth,
-			boolean getAllSuperClasses, boolean closeAfterRecursion,
+			Manipulator manipulator, boolean getAllSuperClasses, boolean closeAfterRecursion,
 			boolean getPropertyInformation, int breakSuperClassesAfter, boolean dissolveBlankNodes,
 			OWLAPIOntologyCollector owlAPIOntologyCollector) {
-		this(tupelAquisitor, manipulator, recursiondepth, getAllSuperClasses,
+		this(tupelAquisitor, manipulator, getAllSuperClasses,
 				closeAfterRecursion, getAllSuperClasses, breakSuperClassesAfter,dissolveBlankNodes);
 		this.owlAPIOntologyCollector = owlAPIOntologyCollector;
 	}
@@ -96,10 +92,6 @@ public class Configuration {
 
 	public Manipulator getManipulator() {
 		return manipulator;
-	}
-
-	public int getRecursiondepth() {
-		return recursiondepth;
 	}
 
 	public TupleAquisitor getTupelAquisitor() {

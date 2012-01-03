@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.refinementoperators;
 
 import java.util.HashMap;
@@ -29,8 +29,7 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import org.dllearner.core.AbstractReasonerComponent;
-import org.dllearner.core.ComponentInitException;
+import org.dllearner.core.ReasonerComponent;
 import org.dllearner.core.owl.BooleanValueRestriction;
 import org.dllearner.core.owl.DatatypeProperty;
 import org.dllearner.core.owl.ObjectAllRestriction;
@@ -63,7 +62,7 @@ import org.dllearner.utilities.owl.ConceptTransformation;
 public class RhoDown extends RefinementOperatorAdapter {
 
 //	private PosNegLP learningProblem;
-	private AbstractReasonerComponent rs;
+	private ReasonerComponent rs;
 	
 	// gibt die Gr��e an bis zu der die Refinements des Top-Konzepts
 	// bereits berechnet worden => entspricht der max. L�nge der Menge M
@@ -98,7 +97,7 @@ public class RhoDown extends RefinementOperatorAdapter {
 	
 	// braucht man wirklich das learningProblem oder reicht der Reasoning-Service?
 	// TODO: conceptComparator könnte auch noch Parameter sein
-	public RhoDown(AbstractReasonerComponent reasoningService, boolean applyAllFilter, boolean applyExistsFilter, boolean useAllConstructor,
+	public RhoDown(ReasonerComponent reasoningService, boolean applyAllFilter, boolean applyExistsFilter, boolean useAllConstructor,
 	boolean useExistsConstructor, boolean useNegation, boolean useBooleanDatatypes) {
 		this.rs = reasoningService;
 		this.applyAllFilter = applyAllFilter;
@@ -679,12 +678,6 @@ public class RhoDown extends RefinementOperatorAdapter {
 			}
 		}
 		return retSet;
-	}
-
-	@Override
-	public void init() throws ComponentInitException {
-		// TODO Auto-generated method stub
-		
 	}
 
 }

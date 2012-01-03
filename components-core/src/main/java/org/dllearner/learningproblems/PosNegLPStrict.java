@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,18 +15,17 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.learningproblems;
 
 import java.util.Collection;
-import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import org.dllearner.core.AbstractReasonerComponent;
-import org.dllearner.core.ComponentInitException;
 import org.dllearner.core.EvaluatedDescription;
+import org.dllearner.core.ReasonerComponent;
+import org.dllearner.core.configurators.PosNegLPStrictConfigurator;
 import org.dllearner.core.options.BooleanConfigOption;
 import org.dllearner.core.options.ConfigEntry;
 import org.dllearner.core.options.ConfigOption;
@@ -45,7 +44,7 @@ import org.dllearner.utilities.datastructures.SortedSetTuple;
  */
 public class PosNegLPStrict extends PosNegLP {
 
-	private Set<Individual> neutralExamples;
+	private SortedSet<Individual> neutralExamples;
 	private boolean penaliseNeutralExamples = false;
 	
 	private static final double defaultAccuracyPenalty = 1;
@@ -53,9 +52,15 @@ public class PosNegLPStrict extends PosNegLP {
 	private static final double defaultErrorPenalty = 3;
 	private double errorPenalty = defaultErrorPenalty;
 	
+	private PosNegLPStrictConfigurator configurator;
+	@Override
+	public PosNegLPStrictConfigurator getConfigurator(){
+		return configurator;
+	}
 	
-	public PosNegLPStrict(AbstractReasonerComponent reasoningService) {
+	public PosNegLPStrict(ReasonerComponent reasoningService) {
 		super(reasoningService);
+		this.configurator = new PosNegLPStrictConfigurator(this);
 	}
 	
 	/* (non-Javadoc)
@@ -94,12 +99,12 @@ public class PosNegLPStrict extends PosNegLP {
 	 * @see org.dllearner.core.Component#init()
 	 */
 	@Override
-	public void init() throws ComponentInitException {
+	public void init() {
 		super.init();
 		// compute neutral examples, i.e. those which are neither positive
 		// nor negative (we have to take care to copy sets instead of 
 		// modifying them)
-		neutralExamples = Helper.intersection(getReasoner().getIndividuals(),positiveExamples);
+		neutralExamples = Helper.intersection(reasoner.getIndividuals(),positiveExamples);
 		neutralExamples.retainAll(negativeExamples);
 	}
 
@@ -108,23 +113,23 @@ public class PosNegLPStrict extends PosNegLP {
 	 */
 	@Override
 	public ScorePosNeg computeScore(Description concept) {
-	   	if(isUseRetrievalForClassification()) {
-    		if(getReasoner().getReasonerType() == ReasonerType.FAST_RETRIEVAL) {
-        		SortedSetTuple<Individual> tuple = getReasoner().doubleRetrieval(concept);
+	   	if(useRetrievalForClassification) {
+    		if(reasoner.getReasonerType() == ReasonerType.FAST_RETRIEVAL) {
+        		SortedSetTuple<Individual> tuple = reasoner.doubleRetrieval(concept);
         		// this.defPosSet = tuple.getPosSet();
         		// this.defNegSet = tuple.getNegSet();  
-        		Set<Individual> neutClassified = Helper.intersectionTuple(getReasoner().getIndividuals(),tuple);
-        		return new ScoreThreeValued(concept.getLength(),accuracyPenalty, errorPenalty, penaliseNeutralExamples, getPercentPerLengthUnit(), tuple.getPosSet(),neutClassified,tuple.getNegSet(),positiveExamples,neutralExamples,negativeExamples);
-    		} else if(getReasoner().getReasonerType() == ReasonerType.KAON2) {
-    			SortedSet<Individual> posClassified = getReasoner().getIndividuals(concept);
-    			SortedSet<Individual> negClassified = getReasoner().getIndividuals(new Negation(concept));
-    			Set<Individual> neutClassified = Helper.intersection(getReasoner().getIndividuals(),posClassified);
+        		SortedSet<Individual> neutClassified = Helper.intersectionTuple(reasoner.getIndividuals(),tuple);
+        		return new ScoreThreeValued(concept.getLength(),accuracyPenalty, errorPenalty, penaliseNeutralExamples, percentPerLengthUnit, tuple.getPosSet(),neutClassified,tuple.getNegSet(),positiveExamples,neutralExamples,negativeExamples);
+    		} else if(reasoner.getReasonerType() == ReasonerType.KAON2) {
+    			SortedSet<Individual> posClassified = reasoner.getIndividuals(concept);
+    			SortedSet<Individual> negClassified = reasoner.getIndividuals(new Negation(concept));
+    			SortedSet<Individual> neutClassified = Helper.intersection(reasoner.getIndividuals(),posClassified);
     			neutClassified.retainAll(negClassified);
-    			return new ScoreThreeValued(concept.getLength(), accuracyPenalty, errorPenalty, penaliseNeutralExamples, getPercentPerLengthUnit(), posClassified,neutClassified,negClassified,positiveExamples,neutralExamples,negativeExamples);
+    			return new ScoreThreeValued(concept.getLength(), accuracyPenalty, errorPenalty, penaliseNeutralExamples, percentPerLengthUnit, posClassified,neutClassified,negClassified,positiveExamples,neutralExamples,negativeExamples);     			
     		} else
     			throw new Error("score cannot be computed in this configuration");
     	} else {
-    		if(getReasoner().getReasonerType() == ReasonerType.KAON2) {
+    		if(reasoner.getReasonerType() == ReasonerType.KAON2) {
     			if(penaliseNeutralExamples)
     				throw new Error("It does not make sense to use single instance checks when" +
     						"neutral examples are penalized. Use Retrievals instead.");
@@ -139,28 +144,28 @@ public class PosNegLPStrict extends PosNegLP {
     			// umstellen
     			// pos => pos
     			for(Individual example : positiveExamples) {
-    				if(getReasoner().hasType(concept, example))
+    				if(reasoner.hasType(concept, example))
     					posClassified.add(example);
     			}
     			// neg => pos
     			for(Individual example: negativeExamples) {
-    				if(getReasoner().hasType(concept, example))
+    				if(reasoner.hasType(concept, example))
     					posClassified.add(example);
     			}
     			// pos => neg
     			for(Individual example : positiveExamples) {
-    				if(getReasoner().hasType(new Negation(concept), example))
+    				if(reasoner.hasType(new Negation(concept), example))
     					negClassified.add(example);
     			}
     			// neg => neg
     			for(Individual example : negativeExamples) {
-    				if(getReasoner().hasType(new Negation(concept), example))
+    				if(reasoner.hasType(new Negation(concept), example))
     					negClassified.add(example);
     			}    			
     			
-    			Set<Individual> neutClassified = Helper.intersection(getReasoner().getIndividuals(),posClassified);
+    			SortedSet<Individual> neutClassified = Helper.intersection(reasoner.getIndividuals(),posClassified);
     			neutClassified.retainAll(negClassified);
-    			return new ScoreThreeValued(concept.getLength(), accuracyPenalty, errorPenalty, penaliseNeutralExamples, getPercentPerLengthUnit(), posClassified,neutClassified,negClassified,positiveExamples,neutralExamples,negativeExamples);
+    			return new ScoreThreeValued(concept.getLength(), accuracyPenalty, errorPenalty, penaliseNeutralExamples, percentPerLengthUnit, posClassified,neutClassified,negClassified,positiveExamples,neutralExamples,negativeExamples); 		
     		} else
     			throw new Error("score cannot be computed in this configuration");
     	}
@@ -174,7 +179,7 @@ public class PosNegLPStrict extends PosNegLP {
 		throw new UnsupportedOperationException("Method not implemented for three valued definition learning problem.");
 	}
 
-	public Set<Individual> getNeutralExamples() {
+	public SortedSet<Individual> getNeutralExamples() {
 		return neutralExamples;
 	}
 

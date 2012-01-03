@@ -33,7 +33,6 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import org.dllearner.core.owl.Axiom;
-import org.dllearner.core.owl.BooleanDatatypePropertyAssertion;
 import org.dllearner.core.owl.ClassAssertionAxiom;
 import org.dllearner.core.owl.DatatypeProperty;
 import org.dllearner.core.owl.DatatypePropertyAssertion;
@@ -66,7 +65,7 @@ public class Mutagenesis {
 			.create("http://dl-learner.org/mutagenesis");
 
 	// directory of Prolog files
-	private static final String prologDirectory = "../examples/mutagenesis/prolog/";
+	private static final String prologDirectory = "examples/mutagenesis/prolog/";
 
 	// mapping of symbols to names of chemical elements
 	private static Map<String, String> chemElements;
@@ -89,7 +88,6 @@ public class Mutagenesis {
 	// list of all bonds
 	private static Set<String> bonds = new TreeSet<String>();
 	private static List<String> positiveExamples = new LinkedList<String>();
-	private static List<String> negativeExamples = new LinkedList<String>();
 
 	// list of all "hasProperty" test
 
@@ -100,9 +98,9 @@ public class Mutagenesis {
 		createChemElementsMapping();
 		createRingGroups();
 		String[] files = new String[] { "atom_bond.pl", "log_mutag.pl",
-				"logp.pl", "lumo.pl", "ring_struc.pl", "inda.pl", "ind1.pl" };
+				"logp.pl", "lumo.pl", "ring_struc.pl" };
 
-		File owlFile = new File("../examples/mutagenesis/mutagenesis.owl");
+		File owlFile = new File("examples/mutagenesis/mutagenesis.owl");
 
 		Program program = null;
 		long startTime, duration;
@@ -144,14 +142,6 @@ public class Mutagenesis {
 				+ getURI2("Atom") + ".\n";
 		kbString += "DPRANGE(" + getURI2("charge") + ") = DOUBLE.\n";
 
-		kbString += "DPDOMAIN(" + getURI2("hasFifeExamplesOfAcenthrylenes") + ") = "
-		+ getURI2("Compound") + ".\n";
-		kbString += "DPRANGE(" + getURI2("hasFifeExamplesOfAcenthrylenes") + ") = BOOLEAN.\n";
-		
-		kbString += "DPDOMAIN(" + getURI2("hasThreeOrMoreFusedRings") + ") = "
-		+ getURI2("Compound") + ".\n";
-		kbString += "DPRANGE(" + getURI2("hasThreeOrMoreFusedRings") + ") = BOOLEAN.\n";
-		
 		kbString += "DPDOMAIN(" + getURI2("logp") + ") = "
 				+ getURI2("Compound") + ".\n";
 		kbString += "DPRANGE(" + getURI2("logp") + ") = DOUBLE.\n";
@@ -205,7 +195,7 @@ public class Mutagenesis {
 		// generating first conf file
 		System.out.print("Generatin first conf file ... ");
 		startTime = System.nanoTime();
-		File confTrainFile = new File("../examples/mutagenesis/train1.conf");
+		File confTrainFile = new File("examples/mutagenesis/train1.conf");
 		Files.clearFile(confTrainFile);
 		generateConfFile(confTrainFile);
 		String[] trainingFiles = new String[] { "s1.pl", "s2.pl", "s3.pl",
@@ -221,11 +211,10 @@ public class Mutagenesis {
 
 		// generating second conf file
 		System.out.print("Generatin second conf file ... ");
-		File confSecondTrainFile = new File("../examples/mutagenesis/train2.conf");
+		File confSecondTrainFile = new File("examples/mutagenesis/train2.conf");
 		Files.clearFile(confSecondTrainFile);
 		generateConfFile(confSecondTrainFile);
 		positiveExamples.clear();
-		negativeExamples.clear();
 		generatePositiveExamples(prologDirectory + "42/all.pl");
 		appendExamples(confSecondTrainFile, positiveExamples);
 		duration = System.nanoTime() - startTime;
@@ -238,12 +227,12 @@ public class Mutagenesis {
 		String confHeader = "import(\"mutagenesis.owl\");\n\n";
 		confHeader += "reasoner = fastInstanceChecker;\n";
 		confHeader += "algorithm = refexamples;\n";
-		confHeader += "refexamples.noisePercentage = 30;\n";
+		confHeader += "refexamples.noisePercentage = 0;\n";
 		confHeader += "refexamples.startClass = " + getURI2("Compound") + ";\n";
 		confHeader += "refexamples.writeSearchTree = false;\n";
 		confHeader += "refexamples.searchTreeFile = \"log/mutagenesis/searchTree.log\";\n";
 		confHeader += "\n";
-		Files.appendToFile(file, confHeader);
+		Files.appendFile(file, confHeader);
 	}
 
 	private static void generatePositiveExamples(String fileName)
@@ -258,11 +247,6 @@ public class Mutagenesis {
 				int end = trainingContent.indexOf(")");
 				String individual = trainingContent.substring(start, end);
 				positiveExamples.add(individual);
-			} else {
-				int start = trainingContent.indexOf("(") + 1;
-				int end = trainingContent.indexOf(")");
-				String individual = trainingContent.substring(start, end);
-				negativeExamples.add(individual);
 			}
 		}
 	}
@@ -399,32 +383,6 @@ public class Mutagenesis {
 					structureInstance);
 			axioms.add(ca);
 			structureNr++;
-		} else if (headName.equals("inda")) {
-			String compoundName = head.getArgument(0).toPLString();
-			double hasAcenthrylenes = Double
-			.parseDouble(head.getArgument(1).toPLString());
-			if(hasAcenthrylenes == 1.0) {
-			BooleanDatatypePropertyAssertion lumb = getBooleanDatatypePropertyAssertion(
-					compoundName, "hasFifeExamplesOfAcenthrylenes", true);
-			axioms.add(lumb);
-			} else {
-				BooleanDatatypePropertyAssertion lumb = getBooleanDatatypePropertyAssertion(
-						compoundName, "hasFifeExamplesOfAcenthrylenes", false);
-				axioms.add(lumb);
-			}
-		} else if (headName.equals("ind1")) {
-			String compoundName = head.getArgument(0).toPLString();
-			double hasAcenthrylenes = Double
-			.parseDouble(head.getArgument(1).toPLString());
-			if(hasAcenthrylenes == 1.0) {
-			BooleanDatatypePropertyAssertion lumb = getBooleanDatatypePropertyAssertion(
-					compoundName, "hasThreeOrMoreFusedRings", true);
-			axioms.add(lumb);
-			} else {
-				BooleanDatatypePropertyAssertion lumb = getBooleanDatatypePropertyAssertion(
-						compoundName, "hasThreeOrMoreFusedRings", false);
-				axioms.add(lumb);
-			}
 		} else {
 			System.out.println("clause not supportet: " + headName);
 		}
@@ -439,7 +397,7 @@ public class Mutagenesis {
 			else
 				content.append("-\"" + example.toString() + "\"\n");
 		}
-		Files.appendToFile(file, content.toString());
+		Files.appendFile(file, content.toString());
 	}
 
 	public static void appendNegExamples(File file, List<Individual> examples) {
@@ -450,7 +408,7 @@ public class Mutagenesis {
 			else
 				content.append("+\"" + example.toString() + "\"\n");
 		}
-		Files.appendToFile(file, content.toString());
+		Files.appendFile(file, content.toString());
 	}
 
 	private static String getAtomClass(String element, String atomType) {
@@ -577,19 +535,15 @@ public class Mutagenesis {
 	 */
 	public static void appendExamples(File file, List<String> examples) {
 		StringBuffer content = new StringBuffer();
-		for (String posEx : positiveExamples) {
-			content.append("+\"" + getIndividual(posEx) + "\"\n");
+		for (String compound : compounds) {
+			if (examples.contains(compound.toString())) {
+				content.append("+\"" + getIndividual(compound) + "\"\n");
+			} else {
+				content.append("-\"" + getIndividual(compound.toString())
+						+ "\"\n");
+			}
 		}
-		for (String negEx : negativeExamples) {
-			content.append("-\"" + getIndividual(negEx) + "\"\n");
-		}
-		Files.appendToFile(file, content.toString());
+		Files.appendFile(file, content.toString());
 	}
 
-	private static BooleanDatatypePropertyAssertion getBooleanDatatypePropertyAssertion(
-			String individual, String datatypeProperty, boolean value) {
-		Individual ind = getIndividual(individual);
-		DatatypeProperty dp = getDatatypeProperty(datatypeProperty);
-		return new BooleanDatatypePropertyAssertion(dp, ind, value);
-	}
 }

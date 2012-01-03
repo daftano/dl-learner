@@ -1,22 +1,3 @@
-/**
- * Copyright (C) 2007-2011, Jens Lehmann
- *
- * This file is part of DL-Learner.
- *
- * DL-Learner is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * DL-Learner is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
 package org.dllearner.kb.sparql;
 import java.util.Iterator;
 import java.util.Set;
@@ -24,7 +5,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 import org.dllearner.algorithms.gp.ADC;
 import org.dllearner.core.ComponentManager;
-import org.dllearner.core.AbstractReasonerComponent;
+import org.dllearner.core.ReasonerComponent;
 import org.dllearner.core.owl.Constant;
 import org.dllearner.core.owl.DatatypeExactCardinalityRestriction;
 import org.dllearner.core.owl.DatatypeMaxCardinalityRestriction;
@@ -66,9 +47,9 @@ public class NaturalLanguageDescriptionConvertVisitor implements DescriptionVisi
 
 	private String query="";
 	
-	private AbstractReasonerComponent service;
+	private ReasonerComponent service;
 	
-	public NaturalLanguageDescriptionConvertVisitor(AbstractReasonerComponent service)
+	public NaturalLanguageDescriptionConvertVisitor(ReasonerComponent service)
 	{
 		//stack.push("subject");
 		this.service=service;
@@ -84,7 +65,7 @@ public class NaturalLanguageDescriptionConvertVisitor implements DescriptionVisi
 		return query;
 	}
 	
-	public static String getNaturalLanguageDescription(Description description, AbstractReasonerComponent service)
+	public static String getNaturalLanguageDescription(Description description, ReasonerComponent service)
 	{
 		NaturalLanguageDescriptionConvertVisitor visitor=new NaturalLanguageDescriptionConvertVisitor(service);
 		description.accept(visitor);
@@ -92,7 +73,7 @@ public class NaturalLanguageDescriptionConvertVisitor implements DescriptionVisi
 		return ret;
 	}
 	
-	public static String getNaturalLanguageDescription(String descriptionKBSyntax, AbstractReasonerComponent service) throws ParseException
+	public static String getNaturalLanguageDescription(String descriptionKBSyntax, ReasonerComponent service) throws ParseException
 	{	
 		Description d = KBParser.parseConcept(descriptionKBSyntax);
 		NaturalLanguageDescriptionConvertVisitor visitor=new NaturalLanguageDescriptionConvertVisitor(service);

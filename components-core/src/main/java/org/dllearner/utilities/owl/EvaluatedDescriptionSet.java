@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2008, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.utilities.owl;
 
 import java.util.Collection;
@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.TreeSet;
 
 import org.dllearner.core.EvaluatedDescription;
-import org.dllearner.core.AbstractLearningProblem;
+import org.dllearner.core.LearningProblem;
 import org.dllearner.core.owl.Description;
 import org.dllearner.learningproblems.EvaluatedDescriptionPosNeg;
 
@@ -50,7 +50,7 @@ public class EvaluatedDescriptionSet {
 		this.maxSize = maxSize;
 	}
 	
-	public void add(Description description, double accuracy, AbstractLearningProblem problem) {
+	public void add(Description description, double accuracy, LearningProblem problem) {
 		// bug http://sourceforge.net/tracker/?func=detail&atid=986319&aid=3029181&group_id=203619
 		// -> set should be filled up to max size before we compare acc. with the worst result
 		if(set.size()<maxSize || getWorst().getAccuracy() <= accuracy) {

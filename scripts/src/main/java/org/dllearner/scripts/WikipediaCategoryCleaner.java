@@ -34,26 +34,23 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.SimpleLayout;
 import org.dllearner.algorithms.ocel.OCEL;
-import org.dllearner.core.AbstractKnowledgeSource;
 import org.dllearner.core.ComponentManager;
 import org.dllearner.core.EvaluatedDescription;
+import org.dllearner.core.KnowledgeSource;
+import org.dllearner.core.configurators.ComponentFactory;
+import org.dllearner.core.configurators.ROLComponent2Configurator;
+import org.dllearner.core.configurators.SparqlKnowledgeSourceConfigurator;
 import org.dllearner.core.owl.Individual;
 import org.dllearner.kb.extraction.ExtractionAlgorithm;
 import org.dllearner.kb.extraction.Manager;
-import org.dllearner.kb.sparql.Cache;
-import org.dllearner.kb.sparql.SPARQLTasks;
-import org.dllearner.kb.sparql.SparqlEndpoint;
-import org.dllearner.kb.sparql.SparqlKnowledgeSource;
-import org.dllearner.kb.sparql.SparqlQuery;
+import org.dllearner.kb.sparql.*;
 import org.dllearner.learningproblems.EvaluatedDescriptionPosNeg;
 import org.dllearner.learningproblems.PosNegLPStandard;
 import org.dllearner.reasoning.FastInstanceChecker;
-import org.dllearner.refinementoperators.RhoDRDown;
 import org.dllearner.scripts.improveWikipedia.ConceptSPARQLReEvaluator;
 import org.dllearner.scripts.improveWikipedia.ConceptSelector;
 import org.dllearner.scripts.improveWikipedia.WikipediaCategoryTasks;
 import org.dllearner.utilities.Files;
-import org.dllearner.utilities.Helper;
 import org.dllearner.utilities.datastructures.SetManipulation;
 import org.dllearner.utilities.examples.AutomaticNegativeExampleFinderSPARQL;
 import org.dllearner.utilities.examples.AutomaticPositiveExampleFinderSPARQL;
@@ -281,55 +278,56 @@ public class WikipediaCategoryCleaner {
 			instances.addAll(SetManipulation.stringToInd(posExamples));
 			instances.addAll(SetManipulation.stringToInd(negExamples));
 	
-			SparqlKnowledgeSource ks = new SparqlKnowledgeSource(URI.create(
+			SparqlKnowledgeSource ks = ComponentFactory
+					.getSparqlKnowledgeSource(URI.create(
 							"http://dbpedia.org").toURL(), SetManipulation
 							.indToString(instances));
 	
-//			SparqlKnowledgeSourceConfigurator c = ks.getConfigurator();
+			SparqlKnowledgeSourceConfigurator c = ks.getConfigurator();
 			
-			ks.setCloseAfterRecursion(true);
-			ks.setRecursionDepth(1);
+			c.setCloseAfterRecursion(true);
+			c.setRecursionDepth(1);
 			if(LOCAL){
-			ks.setPredefinedEndpoint("LOCALDBPEDIA");
+			c.setPredefinedEndpoint("LOCALDBPEDIA");
 			}else{
-				ks.setPredefinedEndpoint("DBPEDIA");
+				c.setPredefinedEndpoint("DBPEDIA");
 			}
-			ks.setUseLits(false);
-			ks.setGetAllSuperClasses(true);
-			ks.setPropertyInformation(false);
-//			ks.setVerbosity("warning");
-			ks.setCacheDir(Cache.getPersistantCacheDir());
-			ks.setPredefinedFilter("YAGOONLY");
+			c.setUseLits(false);
+			c.setGetAllSuperClasses(true);
+			c.setGetPropertyInformation(false);
+			c.setVerbosity("warning");
+			c.setCacheDir(Cache.getPersistantCacheDir());
+			c.setPredefinedFilter("YAGOONLY");
 			
 			
 			
-			Set<AbstractKnowledgeSource> tmp = new HashSet<AbstractKnowledgeSource>();
+			Set<KnowledgeSource> tmp = new HashSet<KnowledgeSource>();
 			tmp.add(ks);
 			// reasoner
-			FastInstanceChecker f = new FastInstanceChecker(tmp);
-			f.setDefaultNegation(false);
+			FastInstanceChecker f = ComponentFactory.getFastInstanceChecker(tmp);
+			f.getConfigurator().setDefaultNegation(false);
 			//OWLAPIReasoner f = ComponentFactory.getOWLAPIReasoner(tmp);
 	
 			// learning problem
-			PosNegLPStandard lp = new PosNegLPStandard(f, Helper.getIndividualSet(posExamples), Helper.getIndividualSet(negExamples));
+			PosNegLPStandard lp = ComponentFactory.getPosNegLPStandard(f,
+					posExamples, negExamples);
 	
 			// learning algorithm
-			la = ComponentManager.getInstance().learningAlgorithm(OCEL.class, lp, f);
-//			OCELConfigurator lc = la.getConfigurator();
-			la.setNoisePercentage(20);
-			la.setGuaranteeXgoodDescriptions(100);
-			la.setMaxExecutionTimeInSeconds(50);
-			RhoDRDown op = (RhoDRDown) la.getOperator();
+			la = ComponentFactory.getROLComponent2(lp, f);
+			ROLComponent2Configurator lc = la.getConfigurator();
+			la.getConfigurator().setNoisePercentage(20);
+			la.getConfigurator().setGuaranteeXgoodDescriptions(100);
+			la.getConfigurator().setMaxExecutionTimeInSeconds(50);
 			
-			op.setUseAllConstructor(false);
-			op.setUseBooleanDatatypes(false);
-			op.setUseCardinalityRestrictions(false);
-			op.setUseNegation(false);
-			op.setUseHasValueConstructor(false);
-			op.setUseDoubleDatatypes(false);
-			la.setWriteSearchTree(true);
-//			la.setSearchTreeFile("log/dbpedia.txt");
-			la.setReplaceSearchTree(true);
+			lc.setUseAllConstructor(false);
+			lc.setUseBooleanDatatypes(false);
+			lc.setUseCardinalityRestrictions(false);
+			lc.setUseNegation(false);
+			lc.setUseHasValueConstructor(false);
+			lc.setUseDoubleDatatypes(false);
+			lc.setWriteSearchTree(true);
+			lc.setSearchTreeFile("log/dbpedia.txt");
+			lc.setReplaceSearchTree(true);
 			
 			ks.init();
 			f.init();
@@ -400,11 +398,11 @@ public class WikipediaCategoryCleaner {
 
 		if (LOCAL) {
 			// url = "http://139.18.2.37:8890/sparql";
-			sparqlTasks = new SPARQLTasks(cache, SparqlEndpoint
+			sparqlTasks = new EndpointBasedSPARQLTasks(cache, SparqlEndpoint
 					.getEndpointLOCALDBpedia());
 		} else {
 			// url = "http://dbpedia.openlinksw.com:8890/sparql";
-			sparqlTasks = new SPARQLTasks(cache, SparqlEndpoint
+			sparqlTasks = new EndpointBasedSPARQLTasks(cache, SparqlEndpoint
 					.getEndpointDBpedia());
 			
 		}
@@ -430,7 +428,7 @@ public class WikipediaCategoryCleaner {
 		logger.setLevel(Level.DEBUG);
 		Logger.getLogger(Manager.class).setLevel(Level.INFO);
 		Level lwarn = Level.WARN;
-		Logger.getLogger(AbstractKnowledgeSource.class).setLevel(lwarn);
+		Logger.getLogger(KnowledgeSource.class).setLevel(lwarn);
 		Logger.getLogger(SparqlKnowledgeSource.class).setLevel(lwarn);
 		
 		Logger.getLogger(ExtractionAlgorithm.class).setLevel(lwarn);

@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2009, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,15 +15,15 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.utilities.owl;
 
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import org.dllearner.core.AbstractReasonerComponent;
+import org.dllearner.core.ReasonerComponent;
 import org.dllearner.core.owl.Description;
 import org.dllearner.core.owl.Intersection;
 import org.dllearner.core.owl.Negation;
@@ -47,13 +47,13 @@ import org.dllearner.core.owl.Union;
  */
 public class DescriptionMinimizer {
 
-	private AbstractReasonerComponent reasoner;
+	private ReasonerComponent reasoner;
 	private ConceptComparator conceptComparator = new ConceptComparator();
 	private Map<Description,Map<Description,Boolean>> cachedSubclassOf = new TreeMap<Description,Map<Description,Boolean>>(conceptComparator);	
 
 	private boolean beautify = true;
 	
-	public DescriptionMinimizer(AbstractReasonerComponent reasoner) {
+	public DescriptionMinimizer(ReasonerComponent reasoner) {
 		this.reasoner = reasoner;
 	}
 

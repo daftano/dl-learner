@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2008, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,6 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
 
 package org.dllearner.algorithms.ocel;
@@ -44,8 +45,6 @@ public class ExampleBasedNode implements SearchTreeNode {
 
 //	public static long exampleMemoryCounter = 0;
 	
-//	private OCELConfigurator configurator;
-	
 	private static DecimalFormat df = new DecimalFormat();
 	
 	// example based variables
@@ -67,11 +66,6 @@ public class ExampleBasedNode implements SearchTreeNode {
 	private boolean isQualityEvaluated;
 	private boolean isRedundant;
 	
-	private double negativeWeight;
-	private double startNodeBonus;
-	private double expansionPenaltyFactor;
-	private int negationPenalty;
-	
 	private static ConceptComparator conceptComparator = new ConceptComparator();
 	private static NodeComparatorStable nodeComparator = new NodeComparatorStable();
 	
@@ -84,15 +78,10 @@ public class ExampleBasedNode implements SearchTreeNode {
 	// a flag whether this could be a solution for a posonly learning problem
 	private boolean isPosOnlyCandidate = true;
 	
-	public ExampleBasedNode(Description concept, double negativeWeight, double startNodeBonus, double expansionPenaltyFactor, int negationPenalty) {
-//		this.configurator = configurator;
+	public ExampleBasedNode(Description concept) {
 		this.concept = concept;
 		horizontalExpansion = 0;
 		isQualityEvaluated = false;
-		this.negativeWeight = negativeWeight;
-		this.startNodeBonus = startNodeBonus;
-		this.expansionPenaltyFactor = expansionPenaltyFactor;
-		this.negationPenalty = negationPenalty;
 	}
 
 	public void setHorizontalExpansion(int horizontalExpansion) {
@@ -188,7 +177,7 @@ public class ExampleBasedNode implements SearchTreeNode {
 			ret += "acc:" + df.format(accuracy) + "% ";			
 			
 			// comment this out to display the heuristic score with default parameters
-			double heuristicScore = MultiHeuristic.getNodeScore(this, nrOfPositiveExamples, nrOfNegativeExamples, negativeWeight, startNodeBonus, expansionPenaltyFactor, negationPenalty);
+			double heuristicScore = MultiHeuristic.getNodeScore(this, nrOfPositiveExamples, nrOfNegativeExamples);
 			ret += "h:" +df.format(heuristicScore) + " ";
 			
 			int wrongPositives = nrOfPositiveExamples - coveredPositives.size();
@@ -211,7 +200,7 @@ public class ExampleBasedNode implements SearchTreeNode {
 			ret += "<b>acc: " + df.format(accuracy) + "% </b>";			
 			
 			// comment this out to display the heuristic score with default parameters
-			double heuristicScore = MultiHeuristic.getNodeScore(this, nrOfPositiveExamples, nrOfNegativeExamples, negativeWeight, startNodeBonus, expansionPenaltyFactor, negationPenalty);
+			double heuristicScore = MultiHeuristic.getNodeScore(this, nrOfPositiveExamples, nrOfNegativeExamples);
 			ret += "h:" +df.format(heuristicScore) + " ";
 			
 			int wrongPositives = nrOfPositiveExamples - coveredPositives.size();
@@ -235,7 +224,7 @@ public class ExampleBasedNode implements SearchTreeNode {
 			ret += "acc:" + df.format(accuracy) + "% ";			
 			
 			// comment this out to display the heuristic score with default parameters
-			double heuristicScore = MultiHeuristic.getNodeScore(this, nrOfPositiveExamples, nrOfNegativeExamples, negativeWeight, startNodeBonus, expansionPenaltyFactor, negationPenalty);
+			double heuristicScore = MultiHeuristic.getNodeScore(this, nrOfPositiveExamples, nrOfNegativeExamples);
 			ret += "h:" +df.format(heuristicScore) + " ";
 			
 			int wrongPositives = nrOfPositiveExamples - coveredPositives.size();

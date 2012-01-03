@@ -34,18 +34,16 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.SimpleLayout;
 import org.dllearner.algorithms.ocel.OCEL;
-import org.dllearner.core.AbstractKnowledgeSource;
 import org.dllearner.core.ComponentInitException;
-import org.dllearner.core.ComponentManager;
 import org.dllearner.core.EvaluatedDescription;
+import org.dllearner.core.KnowledgeSource;
 import org.dllearner.core.LearningProblemUnsupportedException;
+import org.dllearner.core.configurators.ComponentFactory;
 import org.dllearner.kb.OWLFile;
 import org.dllearner.learningproblems.EvaluatedDescriptionPosNeg;
 import org.dllearner.learningproblems.PosNegLPStandard;
 import org.dllearner.reasoning.FastInstanceChecker;
-import org.dllearner.refinementoperators.RhoDRDown;
 import org.dllearner.utilities.Files;
-import org.dllearner.utilities.Helper;
 
 import com.jamonapi.MonitorFactory;
 
@@ -122,33 +120,31 @@ public class NewSample {
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 		}
-		OWLFile ks = new OWLFile();
-		ks.setUrl(fileURL);
+		OWLFile ks = ComponentFactory.getOWLFile( fileURL);
 				
-		Set<AbstractKnowledgeSource> tmp = new HashSet<AbstractKnowledgeSource>();
+		Set<KnowledgeSource> tmp = new HashSet<KnowledgeSource>();
 		tmp.add(ks);
 		// reasoner
-		FastInstanceChecker f = new FastInstanceChecker(tmp);
+		FastInstanceChecker f = ComponentFactory.getFastInstanceChecker(tmp);
 
 		// learning problem
-		PosNegLPStandard lp =  new PosNegLPStandard( f, Helper.getIndividualSet(posExamples), Helper.getIndividualSet(negExamples));
+		PosNegLPStandard lp = ComponentFactory.getPosNegLPStandard( f, posExamples, negExamples);
 		
 		// learning algorithm
-		OCEL la = ComponentManager.getInstance().learningAlgorithm(OCEL.class, lp, f);
-		RhoDRDown op = (RhoDRDown) la.getOperator();
+		OCEL la = ComponentFactory.getROLComponent2( lp, f);
 		//OPTIONAL PARAMETERS
-		op.setUseAllConstructor( false);
-		op.setUseExistsConstructor(true);
-		op.setUseCardinalityRestrictions(false);
-		op.setUseExistsConstructor(true);
-		op.setUseNegation(false);
-		la.setWriteSearchTree(false);
-//		la.setSearchTreeFile("log/searchTree.txt");
-		la.setReplaceSearchTree(true);
-		la.setNoisePercentage(0.0);
-//		SortedSet<String> ignore = new TreeSet<String>();
-//		ignore.add("http://example.com/foo#car");
-//		la.setIgnoredConcepts(ignore);
+		la.getConfigurator().setUseAllConstructor( false);
+		la.getConfigurator().setUseExistsConstructor(true);
+		la.getConfigurator().setUseCardinalityRestrictions(false);
+		la.getConfigurator().setUseExistsConstructor(true);
+		la.getConfigurator().setUseNegation(false);
+		la.getConfigurator().setWriteSearchTree(false);
+		la.getConfigurator().setSearchTreeFile("log/searchTree.txt");
+		la.getConfigurator().setReplaceSearchTree(true);
+		la.getConfigurator().setNoisePercentage(0.0);
+		SortedSet<String> ignore = new TreeSet<String>();
+		ignore.add("http://example.com/foo#car");
+		la.getConfigurator().setIgnoredConcepts(ignore);
 		
 
 		// all components need to be initialised before they can be used

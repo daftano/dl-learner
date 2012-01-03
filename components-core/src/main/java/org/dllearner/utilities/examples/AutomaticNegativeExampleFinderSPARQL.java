@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.utilities.examples;
 
 import java.util.Iterator;
@@ -24,6 +24,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 import org.apache.log4j.Logger;
+import org.dllearner.core.ComponentManager;
 import org.dllearner.kb.sparql.SPARQLTasks;
 import org.dllearner.utilities.datastructures.SetManipulation;
 import org.dllearner.utilities.owl.OWLVocabulary;
@@ -31,7 +32,7 @@ import org.dllearner.utilities.owl.OWLVocabulary;
 public class AutomaticNegativeExampleFinderSPARQL {
 
 	// LOGGER: ComponentManager
-	private static Logger logger = Logger.getLogger(AutomaticNegativeExampleFinderSPARQL.class);
+	private static Logger logger = Logger.getLogger(ComponentManager.class);
 
 	private SPARQLTasks sparqltasks;
 

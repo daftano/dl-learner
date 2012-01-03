@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2008, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.kb.manipulator;
 
 import java.util.ArrayList;
@@ -45,7 +45,7 @@ public class Manipulator {
 	private static Logger logger = Logger.getLogger(Manipulator.class);
 	private List<Rule> rules = new ArrayList<Rule>();
 	
-	private Manipulator() {
+	public Manipulator() {
 	}
 
 	public Manipulator(List<Rule> rules) {

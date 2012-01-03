@@ -31,7 +31,7 @@ public class Mammographic {
 
 	private static IRI ontologyIRI = IRI
 	.create("http://dl-learner.org/mammographic");
-	private static final String fileName = "../test/mammographic/files/mammographic_masses.data";
+	private static final String fileName = "test/mammographic/files/mammographic_masses.data";
 	private static HashMap<String, String> shapes;
 	private static HashMap<String, String> margines;
 	private static HashMap<String, String> densities;
@@ -44,7 +44,7 @@ public class Mammographic {
 	
 	public static void main(String agrs[]) throws FileNotFoundException, ParseException {
 		Scanner input = new Scanner(new File(fileName), "UTF-8");
-		File owlFile = new File("../test/mammographic/mammographic.owl");
+		File owlFile = new File("test/mammographic/mammographic.owl");
 		long startTime, duration;
 		String time;
 		createShapeMapping();
@@ -125,7 +125,7 @@ public class Mammographic {
 		
 		// generating second conf file
 		System.out.print("Generating  conf file ... ");
-		File confTrainFile = new File("../test/mammographic/train.conf");
+		File confTrainFile = new File("test/mammographic/train.conf");
 		Files.clearFile(confTrainFile);
 		generateConfFile(confTrainFile);
 		generateExamples(confTrainFile);	
@@ -255,7 +255,7 @@ public class Mammographic {
 		confHeader += "refexamples.writeSearchTree = false;\n";
 		confHeader += "refexamples.searchTreeFile = \"log/mammographic/searchTree.log\";\n";
 		confHeader += "\n";
-		Files.appendToFile(file, confHeader);
+		Files.appendFile(file, confHeader);
 	}
 	
 	private static void generateExamples(File file) {
@@ -269,7 +269,7 @@ public class Mammographic {
 				content.append("-\"" + getIndividual(key) + "\"\n");
 			}
 		}
-		Files.appendToFile(file, content.toString());
+		Files.appendFile(file, content.toString());
 	}
 	
 	private static String getURI(String name) {

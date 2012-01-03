@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2008, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,15 +15,14 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.test.junit;
 
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.net.MalformedURLException;
-import java.util.Collections;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -32,10 +31,10 @@ import org.apache.log4j.Logger;
 import org.dllearner.algorithms.ocel.OCEL;
 import org.dllearner.core.ComponentInitException;
 import org.dllearner.core.ComponentManager;
-import org.dllearner.core.AbstractKnowledgeSource;
-import org.dllearner.core.AbstractLearningProblem;
+import org.dllearner.core.KnowledgeSource;
+import org.dllearner.core.LearningProblem;
 import org.dllearner.core.LearningProblemUnsupportedException;
-import org.dllearner.core.AbstractReasonerComponent;
+import org.dllearner.core.ReasonerComponent;
 import org.dllearner.core.owl.ClassHierarchy;
 import org.dllearner.core.owl.Description;
 import org.dllearner.core.owl.NamedClass;
@@ -70,23 +69,26 @@ public class RefinementOperatorTests {
 	@Test
 	public void rhoDRDownTest() {
 		try {
-			String file = "../examples/carcinogenesis/carcinogenesis.owl";
-			AbstractKnowledgeSource ks = new OWLFile(file);
-			AbstractReasonerComponent reasoner = new OWLAPIReasoner(Collections.singleton(ks));
-			reasoner.init();
-			baseURI = reasoner.getBaseURI();
+			String file = "examples/carcinogenesis/carcinogenesis.owl";
+			ComponentManager cm = ComponentManager.getInstance();
+			KnowledgeSource ks = cm.knowledgeSource(OWLFile.class);
+			try {
+				cm.applyConfigEntry(ks, "url", new File(file).toURI().toURL());
+			} catch (MalformedURLException e) {
+				// should never happen
+				e.printStackTrace();
+			}
+			ks.init();
+			ReasonerComponent rc = cm.reasoner(OWLAPIReasoner.class, ks);
+			rc.init();
+			baseURI = rc.getBaseURI();
 //			ReasonerComponent rs = cm.reasoningService(rc);
 			
 			// TODO the following two lines should not be necessary
 //			rs.prepareSubsumptionHierarchy();
 //			rs.prepareRoleHierarchy();
 			
-			RhoDRDown op = new RhoDRDown();
-			op.setReasoner(reasoner);
-			op.setSubHierarchy(reasoner.getClassHierarchy());
-			op.setObjectPropertyHierarchy(reasoner.getObjectPropertyHierarchy());
-			op.setDataPropertyHierarchy(reasoner.getDatatypePropertyHierarchy());
-			op.init();
+			RhoDRDown op = new RhoDRDown(rc);
 			Description concept = KBParser.parseConcept(uri("Compound"));
 			Set<Description> results = op.refine(concept, 4, null);
 
@@ -107,18 +109,11 @@ public class RefinementOperatorTests {
 	}
 	
 	@Test
-	public void rhoDRDownTest2() throws ParseException, ComponentInitException {
-		AbstractReasonerComponent reasoner = TestOntologies.getTestOntology(TestOntology.EPC_OE);
-		reasoner.init();
+	public void rhoDRDownTest2() throws ParseException {
+		ReasonerComponent reasoner = TestOntologies.getTestOntology(TestOntology.EPC_OE);
 		baseURI = reasoner.getBaseURI();
 		
-		RhoDRDown op = new RhoDRDown();
-		op.setReasoner(reasoner);
-		op.setSubHierarchy(reasoner.getClassHierarchy());
-		op.setObjectPropertyHierarchy(reasoner.getObjectPropertyHierarchy());
-		op.setDataPropertyHierarchy(reasoner.getDatatypePropertyHierarchy());
-		op.init();
-		
+		RhoDRDown op = new RhoDRDown(reasoner);
 		Description concept = KBParser.parseConcept("(\"http://localhost/aris/sap_model.owl#EPC\" AND EXISTS \"http://localhost/aris/sap_model.owl#hasModelElements\".\"http://localhost/aris/sap_model.owl#Object\")");
 		Set<Description> results = op.refine(concept,10);
 
@@ -134,14 +129,14 @@ public class RefinementOperatorTests {
 	}
 	
 	@Test
-	public void rhoDRDownTest3() throws ParseException, LearningProblemUnsupportedException, ComponentInitException {
-		AbstractReasonerComponent reasoner = TestOntologies.getTestOntology(TestOntology.KRK_ZERO_ONE);
+	public void rhoDRDownTest3() throws ParseException, LearningProblemUnsupportedException {
+		ReasonerComponent reasoner = TestOntologies.getTestOntology(TestOntology.KRK_ZERO_ONE);
 		baseURI = reasoner.getBaseURI();
 		
 		// create learning algorithm in order to test under similar conditions than 
 		// within a learning algorithm
 		ComponentManager cm = ComponentManager.getInstance();
-		AbstractLearningProblem lp = cm.learningProblem(PosNegLPStandard.class, reasoner);
+		LearningProblem lp = cm.learningProblem(PosNegLPStandard.class, reasoner);
 		OCEL la = cm.learningAlgorithm(OCEL.class, lp, reasoner);
 		
 		Set<NamedClass> ignoredConcepts = new TreeSet<NamedClass>();
@@ -151,14 +146,12 @@ public class RefinementOperatorTests {
 		
 		ClassHierarchy classHierarchy = reasoner.getClassHierarchy().cloneAndRestrict(usedConcepts); 
 		classHierarchy.thinOutSubsumptionHierarchy();
-		
-		System.out.println(" UNIT TEST INCOMPLETE AFTER FRAMEWORK CHANGE, BECAUSE CLASS HIERARCHY IS NOT PASSED TO REFINEMENT OPERATOR ");
-		RhoDRDown op = new RhoDRDown();
-		op.setReasoner(reasoner);
-		op.setSubHierarchy(reasoner.getClassHierarchy());
-		op.setObjectPropertyHierarchy(reasoner.getObjectPropertyHierarchy());
-		op.setDataPropertyHierarchy(reasoner.getDatatypePropertyHierarchy());
-		op.init();
+		RhoDRDown op = new RhoDRDown(
+				reasoner,
+				classHierarchy,
+				Thing.instance,
+				la.getConfigurator()
+			);		
 		
 		Description concept = KBParser.parseConcept("EXISTS \"http://www.test.de/test#hasPiece\".EXISTS \"http://www.test.de/test#hasLowerRankThan\".(\"http://www.test.de/test#WRook\" AND TOP)");
 		Set<Description> results = op.refine(concept,8);
@@ -198,59 +191,36 @@ public class RefinementOperatorTests {
 	}
 			
 	@Test
-	public void rhoDRDownTest4() throws ParseException, LearningProblemUnsupportedException, ComponentInitException {
-		AbstractReasonerComponent reasoner = TestOntologies.getTestOntology(TestOntology.RHO1);
-		
-		RhoDRDown op = new RhoDRDown();
-		op.setReasoner(reasoner);
-		op.setSubHierarchy(reasoner.getClassHierarchy());
-		op.setObjectPropertyHierarchy(reasoner.getObjectPropertyHierarchy());
-		op.setDataPropertyHierarchy(reasoner.getDatatypePropertyHierarchy());
-		op.init();
-		
+	public void rhoDRDownTest4() throws ParseException, LearningProblemUnsupportedException {
+		ReasonerComponent rs = TestOntologies.getTestOntology(TestOntology.RHO1);
+		RefinementOperator operator = new RhoDRDown(rs);
 		Description concept = KBParser.parseConcept("(car AND EXISTS hasOwner.person)");
 //		Description concept = Thing.instance;
-		Set<Description> refinements = op.refine(concept, 6);
+		Set<Description> refinements = operator.refine(concept, 6);
 		for(Description refinement : refinements) {
 			System.out.println(refinement);
 		}		
 	}
 		
 	@Test
-	public void rhoDRDownTest5() throws ParseException, LearningProblemUnsupportedException, ComponentInitException {
-		AbstractReasonerComponent reasoner = TestOntologies.getTestOntology(TestOntology.SWORE);
-		reasoner.init();
-		
-		RhoDRDown op = new RhoDRDown();
-		op.setReasoner(reasoner);
-		op.setSubHierarchy(reasoner.getClassHierarchy());
-		op.setObjectPropertyHierarchy(reasoner.getObjectPropertyHierarchy());
-		op.setDataPropertyHierarchy(reasoner.getDatatypePropertyHierarchy());
-		op.init();
-		
+	public void rhoDRDownTest5() throws ParseException, LearningProblemUnsupportedException {
+		ReasonerComponent rs = TestOntologies.getTestOntology(TestOntology.SWORE);
+		RefinementOperator operator = new RhoDRDown(rs);
 //		Description concept = KBParser.parseConcept("((NOT \"http://ns.softwiki.de/req/Requirement\") OR (ALL \"http://ns.softwiki.de/req/isCreatedBy\".(NOT \"http://ns.softwiki.de/req/Creditor\")))");
 		Description concept = KBParser.parseConcept("(NOT \"http://ns.softwiki.de/req/Requirement\" OR ALL \"http://ns.softwiki.de/req/isCreatedBy\".NOT \"http://ns.softwiki.de/req/Creditor\")");
 		System.out.println(concept);
-		Set<Description> refinements = op.refine(concept, 7);
+		Set<Description> refinements = operator.refine(concept, 7);
 		for(Description refinement : refinements) {
 			System.out.println(refinement);
 		}		
 	}	
 	
 	@Test
-	public void invertedOperatorTest() throws ParseException, ComponentInitException {
-		AbstractReasonerComponent reasoner = TestOntologies.getTestOntology(TestOntology.RHO1);
-		reasoner.init();
-		
-		RhoDRDown op = new RhoDRDown();
-		op.setReasoner(reasoner);
-		op.setSubHierarchy(reasoner.getClassHierarchy());
-		op.setObjectPropertyHierarchy(reasoner.getObjectPropertyHierarchy());
-		op.setDataPropertyHierarchy(reasoner.getDatatypePropertyHierarchy());
-		op.setDropDisjuncts(true);
-		op.init();
-		
-		RefinementOperator operator = new OperatorInverter(op);
+	public void invertedOperatorTest() throws ParseException {
+		ReasonerComponent rs = TestOntologies.getTestOntology(TestOntology.RHO1);
+		RhoDRDown rho = new RhoDRDown(rs);
+		rho.setDropDisjuncts(true);
+		RefinementOperator operator = new OperatorInverter(rho);
 		Description concept = KBParser.parseConcept("(limo AND EXISTS hasOwner.man)");
 		Set<Description> refinements = operator.refine(concept, 6);
 		for(Description refinement : refinements) {
@@ -262,20 +232,12 @@ public class RefinementOperatorTests {
 	}
 	
 	@Test
-	public void rhoDownTestPellet() throws ComponentInitException {
+	public void rhoDownTestPellet() {
 		Logger.getRootLogger().setLevel(Level.TRACE);
-		AbstractReasonerComponent reasoner = TestOntologies.getTestOntology(TestOntology.FATHER);
-		reasoner.init();
-		
-		RhoDRDown op = new RhoDRDown();
-		op.setReasoner(reasoner);
-		op.setSubHierarchy(reasoner.getClassHierarchy());
-		op.setObjectPropertyHierarchy(reasoner.getObjectPropertyHierarchy());
-		op.setDataPropertyHierarchy(reasoner.getDatatypePropertyHierarchy());
-		op.init();
-		
+		ReasonerComponent rs = TestOntologies.getTestOntology(TestOntology.FATHER);
+		RhoDRDown rho = new RhoDRDown(rs);
 		NamedClass nc = new NamedClass("http://example.com/father#male");
-		Set<Description> refinements = op.refine(nc, 5);
+		Set<Description> refinements = rho.refine(nc, 5);
 		for(Description refinement : refinements) {
 			System.out.println(refinement);
 		}		
@@ -290,7 +252,7 @@ public class RefinementOperatorTests {
 		//		(male AND EXISTS hasChild.TOP) 
 //		System.out.println(rs);
 //		System.out.println("most general properties: " + rs.getMostGeneralProperties());
-		System.out.println(reasoner.getObjectPropertyHierarchy());
+		System.out.println(rs.getObjectPropertyHierarchy());
 		assertTrue(refinements.size()==8);		
 	}
 	

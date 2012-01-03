@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2008, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,12 +15,10 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.core.owl;
 
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -34,9 +32,9 @@ public class DisjointClassesAxiom extends TerminologicalAxiom {
 	 * 
 	 */
 	private static final long serialVersionUID = 7788863077013583508L;
-	private Collection<Description> descriptions;
+	private Set<Description> descriptions;
 	
-	public DisjointClassesAxiom(Collection<Description> descriptions) {
+	public DisjointClassesAxiom(Set<Description> descriptions) {
 		this.descriptions = descriptions;
 	}
 
@@ -54,31 +52,13 @@ public class DisjointClassesAxiom extends TerminologicalAxiom {
 	 * @see org.dllearner.core.owl.KBElement#toString(java.lang.String, java.util.Map)
 	 */
 	public String toString(String baseURI, Map<String, String> prefixes) {
-		StringBuffer sb = new StringBuffer();
-		sb.append("DisjointClasses(");
-		Iterator<Description> it = descriptions.iterator();
-		while(it.hasNext()){
-			sb.append(it.next().toString());
-			if(it.hasNext()){
-				sb.append(", ");
-			}
-		}
-		sb.append(")");
-		return sb.toString();
+		// TODO Auto-generated method stub
+		return null;
 	}
 	
 	public String toKBSyntaxString(String baseURI, Map<String, String> prefixes) {
-		StringBuffer sb = new StringBuffer();
-		sb.append("DisjointClasses(");
-		Iterator<Description> it = descriptions.iterator();
-		while(it.hasNext()){
-			sb.append(it.next().toKBSyntaxString());
-			if(it.hasNext()){
-				sb.append(", ");
-			}
-		}
-		sb.append(")");
-		return sb.toString();
+		// TODO Auto-generated method stub
+		throw new Error("DisjointClassesAxiom: Not implemented");
 	}
 	
 	
@@ -95,7 +75,7 @@ public class DisjointClassesAxiom extends TerminologicalAxiom {
 	/**
 	 * @return the descriptions
 	 */
-	public Collection<Description> getDescriptions() {
+	public Set<Description> getDescriptions() {
 		return descriptions;
 	}
 
@@ -104,17 +84,7 @@ public class DisjointClassesAxiom extends TerminologicalAxiom {
 	 */
 	@Override
 	public String toManchesterSyntaxString(String baseURI, Map<String, String> prefixes) {
-		StringBuffer sb = new StringBuffer();
-		sb.append("DisjointClasses(");
-		Iterator<Description> it = descriptions.iterator();
-		while(it.hasNext()){
-			sb.append(it.next().toManchesterSyntaxString(baseURI, prefixes));
-			if(it.hasNext()){
-				sb.append(", ");
-			}
-		}
-		sb.append(")");
-		return sb.toString();
+		return "DISJOINT_CLASSES_AXIOM NOT IMPLEMENTED";
 	}	
 	
 }

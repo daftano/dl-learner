@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2008, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.test.junit;
 
 import static org.junit.Assert.assertTrue;
@@ -24,7 +24,6 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.util.Collections;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -37,8 +36,8 @@ import org.dllearner.algorithms.el.ELDescriptionNode;
 import org.dllearner.algorithms.el.ELDescriptionTree;
 import org.dllearner.core.ComponentInitException;
 import org.dllearner.core.ComponentManager;
-import org.dllearner.core.AbstractKnowledgeSource;
-import org.dllearner.core.AbstractReasonerComponent;
+import org.dllearner.core.KnowledgeSource;
+import org.dllearner.core.ReasonerComponent;
 import org.dllearner.core.owl.Description;
 import org.dllearner.core.owl.NamedClass;
 import org.dllearner.core.owl.ObjectProperty;
@@ -83,7 +82,7 @@ public class ELDownTests {
 	@Test
 	public void test1() throws ParseException, ComponentInitException, IOException {
 		System.out.println("TEST 1");		
-		AbstractReasonerComponent rs = TestOntologies.getTestOntology(TestOntology.SIMPLE);
+		ReasonerComponent rs = TestOntologies.getTestOntology(TestOntology.SIMPLE);
 		
 //		ELDescriptionTree t = new ELDescriptionTree(rs);
 //		ObjectProperty p1 = new ObjectProperty("p1");
@@ -183,7 +182,7 @@ public class ELDownTests {
 	public void test2() throws ParseException, IOException {
 		System.out.println("TEST 2");			
 		
-		AbstractReasonerComponent rs = TestOntologies.getTestOntology(TestOntology.SIMPLE_NO_DR);
+		ReasonerComponent rs = TestOntologies.getTestOntology(TestOntology.SIMPLE_NO_DR);
 		
 		// input description
 		Description input = KBParser.parseConcept("(human AND EXISTS hasPet.bird)");
@@ -239,7 +238,7 @@ public class ELDownTests {
 	public void test3() throws ParseException, IOException {
 		System.out.println("TEST 3");
 		
-		AbstractReasonerComponent rs = TestOntologies.getTestOntology(TestOntology.SIMPLE_NO_DISJOINT);
+		ReasonerComponent rs = TestOntologies.getTestOntology(TestOntology.SIMPLE_NO_DISJOINT);
 		
 		// input description
 		Description input = KBParser.parseConcept("(human AND (EXISTS hasChild.human AND EXISTS has.animal))");
@@ -297,10 +296,12 @@ public class ELDownTests {
 		logger.removeAllAppenders();
 		logger.addAppender(app);	
 		
-		String ont = "../test/galen2.owl";
-		AbstractKnowledgeSource source = new OWLFile(ont);
+		ComponentManager cm = ComponentManager.getInstance();
+		KnowledgeSource source = cm.knowledgeSource(OWLFile.class);
+		String ont = "test/galen2.owl";
+		cm.applyConfigEntry(source, "url", new File(ont).toURI().toURL());
 		source.init();
-		AbstractReasonerComponent reasoner = new OWLAPIReasoner(Collections.singleton(source));
+		ReasonerComponent reasoner = cm.reasoner(OWLAPIReasoner.class, source);
 		reasoner.init();
 		System.out.println("Galen loaded.");
 		
@@ -315,7 +316,7 @@ public class ELDownTests {
 
 	@Test
 	public void test5() {
-		AbstractReasonerComponent rs = TestOntologies.getTestOntology(TestOntology.TRAINS_OWL);
+		ReasonerComponent rs = TestOntologies.getTestOntology(TestOntology.TRAINS_OWL);
 		RefinementOperator operator = new ELDown2(rs);
 		Set<Description> refinements = operator.refine(Thing.instance);
 		for(Description refinement : refinements) {
@@ -332,10 +333,12 @@ public class ELDownTests {
 	@Test
 	public void asTest() throws ComponentInitException, MalformedURLException {
 		
-		String ont = "../test/galen2.owl";
-		AbstractKnowledgeSource source = new OWLFile(ont);
+		ComponentManager cm = ComponentManager.getInstance();
+		KnowledgeSource source = cm.knowledgeSource(OWLFile.class);
+		String ont = "test/galen2.owl";
+		cm.applyConfigEntry(source, "url", new File(ont).toURI().toURL());
 		source.init();
-		AbstractReasonerComponent reasoner = new OWLAPIReasoner(Collections.singleton(source));
+		ReasonerComponent reasoner = cm.reasoner(OWLAPIReasoner.class, source);
 		reasoner.init();
 		System.out.println("Galen loaded.");
 		

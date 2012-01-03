@@ -1,8 +1,8 @@
-/**
- * Copyright (C) 2007-2011, Jens Lehmann
+/*
+ * Copyright (C) 2007-2008, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.test;
 
 import java.io.File;
@@ -27,11 +27,11 @@ import java.util.TreeSet;
 import org.dllearner.algorithms.ocel.OCEL;
 import org.dllearner.core.ComponentInitException;
 import org.dllearner.core.ComponentManager;
-import org.dllearner.core.AbstractKnowledgeSource;
-import org.dllearner.core.AbstractCELA;
-import org.dllearner.core.AbstractLearningProblem;
+import org.dllearner.core.KnowledgeSource;
+import org.dllearner.core.LearningAlgorithm;
+import org.dllearner.core.LearningProblem;
 import org.dllearner.core.LearningProblemUnsupportedException;
-import org.dllearner.core.AbstractReasonerComponent;
+import org.dllearner.core.ReasonerComponent;
 import org.dllearner.kb.OWLFile;
 import org.dllearner.learningproblems.PosNegLPStandard;
 import org.dllearner.reasoning.OWLAPIReasoner;
@@ -55,17 +55,17 @@ public class SworeTest {
 		ComponentManager cm = ComponentManager.getInstance();
 		
 		// create knowledge source
-		AbstractKnowledgeSource source = cm.knowledgeSource(OWLFile.class);
+		KnowledgeSource source = cm.knowledgeSource(OWLFile.class);
 		String example = "examples/swore/swore.rdf";
 		cm.applyConfigEntry(source, "url", new File(example).toURI().toURL());
 		source.init();
 		
 		// create OWL API reasoning service with standard settings
-		AbstractReasonerComponent reasoner = cm.reasoner(OWLAPIReasoner.class, source);
+		ReasonerComponent reasoner = cm.reasoner(OWLAPIReasoner.class, source);
 		reasoner.init();
 		
 		// create a learning problem and set positive and negative examples
-		AbstractLearningProblem lp = cm.learningProblem(PosNegLPStandard.class, reasoner);
+		LearningProblem lp = cm.learningProblem(PosNegLPStandard.class, reasoner);
 		Set<String> positiveExamples = new TreeSet<String>();
 		positiveExamples.add("http://ns.softwiki.de/req/important");
 		positiveExamples.add("http://ns.softwiki.de/req/very_important");
@@ -76,7 +76,7 @@ public class SworeTest {
 		lp.init();
 		
 		// create the learning algorithm
-		AbstractCELA la = null;
+		LearningAlgorithm la = null;
 		try {
 			la = cm.learningAlgorithm(OCEL.class, lp, reasoner);
 			la.init();

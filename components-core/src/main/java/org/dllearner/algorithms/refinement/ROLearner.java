@@ -1,22 +1,3 @@
-/**
- * Copyright (C) 2007-2011, Jens Lehmann
- *
- * This file is part of DL-Learner.
- *
- * DL-Learner is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * DL-Learner is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
 package org.dllearner.algorithms.refinement;
 
 import java.io.File;
@@ -33,9 +14,10 @@ import java.util.TreeSet;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.dllearner.core.AbstractCELA;
-import org.dllearner.core.AbstractLearningProblem;
-import org.dllearner.core.AbstractReasonerComponent;
+import org.dllearner.core.LearningAlgorithm;
+import org.dllearner.core.LearningProblem;
+import org.dllearner.core.ReasonerComponent;
+import org.dllearner.core.configurators.ROLearnerConfigurator;
 import org.dllearner.core.options.BooleanConfigOption;
 import org.dllearner.core.options.CommonConfigMappings;
 import org.dllearner.core.options.CommonConfigOptions;
@@ -60,10 +42,16 @@ import org.dllearner.utilities.owl.ConceptComparator;
 import org.dllearner.utilities.owl.ConceptTransformation;
 import org.dllearner.utilities.owl.EvaluatedDescriptionPosNegComparator;
 
-public class ROLearner extends AbstractCELA {
+public class ROLearner extends LearningAlgorithm {
+	
+	private ROLearnerConfigurator configurator;
+	@Override
+	public ROLearnerConfigurator getConfigurator(){
+		return configurator;
+	}
 	
 	private static Logger logger = Logger
-	.getLogger(AbstractCELA.class);	
+	.getLogger(LearningAlgorithm.class);	
 	
 	private String logLevel = CommonConfigOptions.logLevelDefault;
 	
@@ -203,15 +191,16 @@ public class ROLearner extends AbstractCELA {
 	// prefixes
 	private String baseURI;
 
-	public ROLearner(PosNegLP learningProblem, AbstractReasonerComponent reasoningService) {
+	public ROLearner(PosNegLP learningProblem, ReasonerComponent reasoningService) {
 		super(learningProblem, reasoningService);
 		this.learningProblem = learningProblem;
+		this.configurator =  new ROLearnerConfigurator(this);
 		baseURI = reasoningService.getBaseURI();
 		
 	}
 	
-	public static Collection<Class<? extends AbstractLearningProblem>> supportedLearningProblems() {
-		Collection<Class<? extends AbstractLearningProblem>> problems = new LinkedList<Class<? extends AbstractLearningProblem>>();
+	public static Collection<Class<? extends LearningProblem>> supportedLearningProblems() {
+		Collection<Class<? extends LearningProblem>> problems = new LinkedList<Class<? extends LearningProblem>>();
 		problems.add(PosNegLP.class);
 		return problems;
 	}
@@ -521,7 +510,7 @@ public class ROLearner extends AbstractCELA {
 				if(replaceSearchTree)
 					Files.createFile(searchTreeFile, treeString);
 				else
-					Files.appendToFile(searchTreeFile, treeString);
+					Files.appendFile(searchTreeFile, treeString);
 			}//write search tree
 			
 			// Anzahl Schleifendurchläufe
@@ -974,7 +963,7 @@ public class ROLearner extends AbstractCELA {
 			// System.out.println("max. number of one-step refinements: " + maxNrOfRefinements);
 			// System.out.println("max. number of children of a node: " + maxNrOfChildren);
 			logger.debug("subsumption time: " + Helper.prettyPrintNanoSeconds(reasoner.getSubsumptionReasoningTimeNs()));
-			logger.debug("instance check time: " + Helper.prettyPrintNanoSeconds(reasoner.getInstanceCheckReasoningTimeNs()));
+			logger.debug("instance check time: " + Helper.prettyPrintNanoSeconds(reasoner.getInstanceCheckReasoningTimeNs()));					
 		}
 		
 		if(showBenchmarkInformation) {

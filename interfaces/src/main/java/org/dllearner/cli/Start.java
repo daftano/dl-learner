@@ -44,15 +44,15 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.dllearner.Info;
 import org.dllearner.algorithms.ocel.OCEL;
-import org.dllearner.core.AbstractComponent;
+import org.dllearner.core.Component;
 import org.dllearner.core.ComponentInitException;
 import org.dllearner.core.ComponentManager;
-import org.dllearner.core.AbstractKnowledgeSource;
-import org.dllearner.core.AbstractCELA;
-import org.dllearner.core.AbstractLearningProblem;
+import org.dllearner.core.KnowledgeSource;
+import org.dllearner.core.LearningAlgorithm;
+import org.dllearner.core.LearningProblem;
 import org.dllearner.core.LearningProblemUnsupportedException;
 import org.dllearner.core.OntologyFormat;
-import org.dllearner.core.AbstractReasonerComponent;
+import org.dllearner.core.ReasonerComponent;
 import org.dllearner.core.options.BooleanConfigOption;
 import org.dllearner.core.options.ConfigEntry;
 import org.dllearner.core.options.ConfigOption;
@@ -70,7 +70,6 @@ import org.dllearner.core.owl.ObjectProperty;
 import org.dllearner.kb.KBFile;
 import org.dllearner.kb.OWLFile;
 import org.dllearner.kb.sparql.SparqlKnowledgeSource;
-import org.dllearner.learningproblems.FuzzyPosNegLPStandard;
 import org.dllearner.learningproblems.PosNegLPStandard;
 import org.dllearner.learningproblems.PosOnlyLP;
 import org.dllearner.learningproblems.ScorePosNeg;
@@ -104,10 +103,10 @@ public class Start {
 
 	private static ConfMapper confMapper = new ConfMapper();
 	
-	private Set<AbstractKnowledgeSource> sources;
-	private AbstractCELA la;
-	private AbstractLearningProblem lp;
-	private AbstractReasonerComponent rc;
+	private Set<KnowledgeSource> sources;
+	private LearningAlgorithm la;
+	private LearningProblem lp;
+	private ReasonerComponent rc;
 
 	/**
 	 * Entry point for CLI interface.
@@ -115,10 +114,6 @@ public class Start {
 	 * @param args Command line arguments.
 	 */
 	public static void main(String[] args) {
-
-		System.out.println("********************************************************************************");
-		System.out.println("* Caution: The command line interface is currently unlikely to work correctly. *");
-		System.out.println("********************************************************************************");
 		
 		System.out.println("DL-Learner " + Info.build + " command line interface");
 		
@@ -216,7 +211,7 @@ public class Start {
 		// write JaMON report in HTML file
 		File jamonlog = new File("log/jamon.html");
 		Files.createFile(jamonlog, MonitorFactory.getReport());
-		Files.appendToFile(jamonlog, "<xmp>\n"+JamonMonitorLogger.getStringForAllSortedByLabel());
+		Files.appendFile(jamonlog, "<xmp>\n"+JamonMonitorLogger.getStringForAllSortedByLabel());
 	}
 
 	/**
@@ -252,18 +247,16 @@ public class Start {
 
 		// step 1: detect knowledge sources
 		Monitor ksMonitor = JamonMonitorLogger.getTimeMonitor(Start.class, "initKnowledgeSource").start();
-		sources = new HashSet<AbstractKnowledgeSource>();
-		Map<URL, Class<? extends AbstractKnowledgeSource>> importedFiles = getImportedFiles(parser, baseDir);
-		for (Map.Entry<URL, Class<? extends AbstractKnowledgeSource>> entry : importedFiles.entrySet()) {
-			AbstractKnowledgeSource ks = cm.knowledgeSource(entry.getValue());
+		sources = new HashSet<KnowledgeSource>();
+		Map<URL, Class<? extends KnowledgeSource>> importedFiles = getImportedFiles(parser, baseDir);
+		for (Map.Entry<URL, Class<? extends KnowledgeSource>> entry : importedFiles.entrySet()) {
+			KnowledgeSource ks = cm.knowledgeSource(entry.getValue());
 			// apply URL entry (this assumes that every knowledge source has a
 			// configuration option "url"), so this may need to be changed in
 			// the
 			// future
 			cm.applyConfigEntry(ks, "url", entry.getKey());
-            if(ks instanceof OWLFile){
-                ((OWLFile)ks).setURL(entry.getKey());
-            }
+
 			sources.add(ks);
 			configureComponent(cm, ks, parser);
 			initComponent(cm, ks);
@@ -274,7 +267,7 @@ public class Start {
 		// step 2: detect used reasoner
 		Monitor rsMonitor = JamonMonitorLogger.getTimeMonitor(Start.class, "initReasonerComponent").start();
 		ConfFileOption reasonerOption = parser.getConfOptionsByName("reasoner");
-		Class<? extends AbstractReasonerComponent> rcClass;
+		Class<? extends ReasonerComponent> rcClass;
 		if(reasonerOption != null) {
 			rcClass = confMapper.getReasonerComponentClass(reasonerOption.getStringValue());
 			if(rcClass == null) {
@@ -291,7 +284,7 @@ public class Start {
 		// step 3: detect learning problem
 		Monitor lpMonitor = JamonMonitorLogger.getTimeMonitor(Start.class, "initLearningProblem").start();
 		ConfFileOption problemOption = parser.getConfOptionsByName("problem");
-		Class<? extends AbstractLearningProblem> lpClass;
+		Class<? extends LearningProblem> lpClass;
 		if(problemOption != null) {
 			lpClass = confMapper.getLearningProblemClass(problemOption.getStringValue());
 			if(lpClass == null) {
@@ -301,13 +294,11 @@ public class Start {
 			lpClass = PosNegLPStandard.class;
 		}
 		lp = cm.learningProblem(lpClass, rc);
-		// changed by Josue
-		if(lpClass == PosNegLPStandard.class || lpClass == PosOnlyLP.class || lpClass == FuzzyPosNegLPStandard.class) {
+		if(lpClass == PosNegLPStandard.class || lpClass == PosOnlyLP.class) {
 			SortedSet<String> posExamples = parser.getPositiveExamples();
 			cm.applyConfigEntry(lp, "positiveExamples", posExamples);
 		}
-		// changed by Josue
-		if(lpClass == PosNegLPStandard.class || lpClass == FuzzyPosNegLPStandard.class) {
+		if(lpClass == PosNegLPStandard.class) {
 			SortedSet<String> negExamples = parser.getNegativeExamples();
 			cm.applyConfigEntry(lp, "negativeExamples", negExamples);
 		}
@@ -318,7 +309,7 @@ public class Start {
 		// step 4: detect learning algorithm
 		Monitor laMonitor = JamonMonitorLogger.getTimeMonitor(Start.class, "initLearningAlgorithm").start();
 		ConfFileOption algorithmOption = parser.getConfOptionsByName("algorithm");
-		Class<? extends AbstractCELA> laClass;
+		Class<? extends LearningAlgorithm> laClass;
 		if(algorithmOption != null) {
 			laClass = confMapper.getLearningAlgorithmClass(algorithmOption.getStringValue());
 			if(laClass == null) {
@@ -367,7 +358,7 @@ public class Start {
 	 * this way the CLI will automatically support any configuration options
 	 * supported by the component
 	 */
-	private static void configureComponent(ComponentManager cm, AbstractComponent component,
+	private static void configureComponent(ComponentManager cm, Component component,
 			ConfParser parser) {
 		String prefix = confMapper.getComponentString(component.getClass());
 		if (prefix != null)
@@ -375,7 +366,7 @@ public class Start {
 	}
 
 	// convenience method - see above method
-	private static void configureComponent(ComponentManager cm, AbstractComponent component,
+	private static void configureComponent(ComponentManager cm, Component component,
 			List<ConfFileOption> options) {
 		if (options != null)
 			for (ConfFileOption option : options)
@@ -384,7 +375,7 @@ public class Start {
 
 	// applies an option to a component - checks whether the option and its
 	// value is valid
-	private static void applyConfFileOption(ComponentManager cm, AbstractComponent component,
+	private static void applyConfFileOption(ComponentManager cm, Component component,
 			ConfFileOption option) {
 		// the name of the option is suboption-part (the first part refers
 		// to its component)
@@ -481,10 +472,10 @@ public class Start {
 	/**
 	 * detects all imported files and their format
 	 */
-	public static Map<URL, Class<? extends AbstractKnowledgeSource>> getImportedFiles(ConfParser parser,
+	public static Map<URL, Class<? extends KnowledgeSource>> getImportedFiles(ConfParser parser,
 			String baseDir) {
 		List<List<String>> imports = parser.getFunctionCalls().get("import");
-		Map<URL, Class<? extends AbstractKnowledgeSource>> importedFiles = new HashMap<URL, Class<? extends AbstractKnowledgeSource>>();
+		Map<URL, Class<? extends KnowledgeSource>> importedFiles = new HashMap<URL, Class<? extends KnowledgeSource>>();
 
 		if (imports != null) {
 			for (List<String> arguments : imports) {
@@ -503,7 +494,7 @@ public class Start {
 				}
 
 				// step 2: detect format
-				Class<? extends AbstractKnowledgeSource> ksClass;
+				Class<? extends KnowledgeSource> ksClass;
 				if (arguments.size() == 1) {
 					String filename = url.getPath();
 					String ending = filename.substring(filename.lastIndexOf(".") + 1);
@@ -548,7 +539,7 @@ public class Start {
 	}
 
 	private static void performExports(ConfParser parser, String baseDir,
-			Set<AbstractKnowledgeSource> sources, AbstractReasonerComponent rs) {
+			Set<KnowledgeSource> sources, ReasonerComponent rs) {
 		List<List<String>> exports = parser.getFunctionCalls().get("export");
 
 		if (exports == null)
@@ -578,14 +569,14 @@ public class Start {
 		// however implementing this requires quite some effort so for the
 		// moment we just stick to exporting KB files (moreover all but the last
 		// export statement are ignored)
-		for (AbstractKnowledgeSource source : sources) {
+		for (KnowledgeSource source : sources) {
 			if (source instanceof KBFile)
 				((KBFile) source).export(file, format);
 		}
 	}
 
 	private static void processCLIOptions(ComponentManager cm, ConfParser parser,
-			AbstractReasonerComponent rs, AbstractLearningProblem lp) {
+			ReasonerComponent rs, LearningProblem lp) {
 		// CLI options (i.e. options which are related to the CLI
 		// user interface but not to one of the components)
 		List<ConfFileOption> cliOptions = parser.getConfOptionsByPrefix("cli");
@@ -691,7 +682,7 @@ public class Start {
 		}
 	}
 
-	private static void initComponent(ComponentManager cm, AbstractComponent component)
+	private static void initComponent(ComponentManager cm, Component component)
 			throws ComponentInitException {
 		String startMessage = "initialising component \""
 				+ cm.getComponentName(component.getClass()) + "\" ... ";
@@ -701,7 +692,7 @@ public class Start {
 		// components
 		String message = "OK";
 		if (component instanceof KBFile)
-			message = ((KBFile) component).getUrl().toString() + " read";
+			message = ((KBFile) component).getURL().toString() + " read";
 		else if (component instanceof DIGReasoner) {
 			DIGReasoner reasoner = (DIGReasoner) component;
 			message = "using " + reasoner.getIdentifier() + " connected via DIG 1.1 at "
@@ -713,7 +704,7 @@ public class Start {
 				+ Helper.prettyPrintNanoSeconds(initTime, false, false) + ")");
 	}
 
-	private static void printConclusions(AbstractReasonerComponent rs, long algorithmDuration) {
+	private static void printConclusions(ReasonerComponent rs, long algorithmDuration) {
 		if (rs.getNrOfRetrievals() > 0) {
 			logger.info("number of retrievals: " + rs.getNrOfRetrievals());
 			logger.info("retrieval reasoning time: "
@@ -760,7 +751,7 @@ public class Start {
 	}
 
 	// performs a query - used for debugging learning examples
-	private static void processQueryMode(AbstractLearningProblem lp, AbstractReasonerComponent rs) {
+	private static void processQueryMode(LearningProblem lp, ReasonerComponent rs) {
 
 		logger.info("Entering query mode. Enter a concept for performing "
 				+ "retrieval or q to quit. Use brackets for complex expresssions,"
@@ -874,19 +865,19 @@ public class Start {
 	/**
 	 * @return the sources
 	 */
-	public Set<AbstractKnowledgeSource> getSources() {
+	public Set<KnowledgeSource> getSources() {
 		return sources;
 	}	
 	
-	public AbstractCELA getLearningAlgorithm() {
+	public LearningAlgorithm getLearningAlgorithm() {
 		return la;
 	}
 
-	public AbstractLearningProblem getLearningProblem() {
+	public LearningProblem getLearningProblem() {
 		return lp;
 	}
 
-	public AbstractReasonerComponent getReasonerComponent() {
+	public ReasonerComponent getReasonerComponent() {
 		return rc;
 	}
 

@@ -19,20 +19,16 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.dllearner.algorithms.ocel.OCEL;
 import org.dllearner.algorithms.ocel.ROLearner2;
-import org.dllearner.core.AbstractCELA;
-import org.dllearner.core.AbstractKnowledgeSource;
-import org.dllearner.core.AbstractLearningProblem;
-import org.dllearner.core.AbstractReasonerComponent;
 import org.dllearner.core.ComponentManager;
 import org.dllearner.core.ComponentPool;
 import org.dllearner.core.EvaluatedDescription;
-import org.dllearner.core.owl.NamedClass;
+import org.dllearner.core.KnowledgeSource;
+import org.dllearner.core.LearningAlgorithm;
+import org.dllearner.core.LearningProblem;
+import org.dllearner.core.ReasonerComponent;
+import org.dllearner.core.configurators.ComponentFactory;
 import org.dllearner.kb.OWLFile;
-import org.dllearner.kb.sparql.Cache;
-import org.dllearner.kb.sparql.SPARQLTasks;
-import org.dllearner.kb.sparql.SparqlEndpoint;
-import org.dllearner.kb.sparql.SparqlQuery;
-import org.dllearner.kb.sparql.SparqlQueryDescriptionConvertVisitor;
+import org.dllearner.kb.sparql.*;
 import org.dllearner.learningproblems.PosNegLPStandard;
 import org.dllearner.reasoning.FastInstanceChecker;
 import org.dllearner.refinementoperators.RhoDRDown;
@@ -110,7 +106,7 @@ public class TestIterativeLearning {
 		try {
 			sparqlEndpoint = new SparqlEndpoint(new URL(sparqlEndpointURL), new ArrayList<String>(Arrays
 					.asList(new String[] { graph })), new ArrayList<String>());
-			sparqlTasks = new SPARQLTasks(Cache.getDefaultCache(), sparqlEndpoint);
+			sparqlTasks = new EndpointBasedSPARQLTasks(Cache.getDefaultCache(), sparqlEndpoint);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -300,15 +296,15 @@ public class TestIterativeLearning {
 		logger.debug("Total set \n" + allExamples);
 		logger.debug("Initial training set \n" + learn);
 
-		Set<String> posAsPos = new TreeSet<String>();
-		Set<String> posAsNeg = new TreeSet<String>();
-		Set<String> negAsNeg = new TreeSet<String>();
-		Set<String> negAsPos = new TreeSet<String>();
+		SortedSet<String> posAsPos = new TreeSet<String>();
+		SortedSet<String> posAsNeg = new TreeSet<String>();
+		SortedSet<String> negAsNeg = new TreeSet<String>();
+		SortedSet<String> negAsPos = new TreeSet<String>();
 		
 		
-		Set<String> retrieved = new TreeSet<String>();
-		Set<String> newTestRetrieved = new TreeSet<String>();
-		Set<String> newTrainRetrieved = new TreeSet<String>();
+		SortedSet<String> retrieved = new TreeSet<String>();
+		SortedSet<String> newTestRetrieved = new TreeSet<String>();
+		SortedSet<String> newTrainRetrieved = new TreeSet<String>();
 
 		String lastConcept = "";
 		double precision = 0.0;
@@ -378,9 +374,9 @@ public class TestIterativeLearning {
 					+ newTestRetrieved.size());
 
 			Examples newlyFound = new Examples();
-			Set<String> discoveredPosInStore = Helper.intersection(newTrainRetrieved, allExamples
+			SortedSet<String> discoveredPosInStore = Helper.intersection(newTrainRetrieved, allExamples
 					.getPosTrain());
-			Set<String> misclassifiedNegInStore = Helper.intersection(newTrainRetrieved, allExamples
+			SortedSet<String> misclassifiedNegInStore = Helper.intersection(newTrainRetrieved, allExamples
 					.getNegTrain());
 			newlyFound.addPosTrain(discoveredPosInStore);
 			newlyFound.addNegTrain(misclassifiedNegInStore);
@@ -444,15 +440,15 @@ public class TestIterativeLearning {
 
 	}
 
-	private static Set<AbstractKnowledgeSource> _getOWL(Examples ex) throws Exception {
-		Set<AbstractKnowledgeSource> tmp = new HashSet<AbstractKnowledgeSource>();
+	private static Set<KnowledgeSource> _getOWL(Examples ex) throws Exception {
+		Set<KnowledgeSource> tmp = new HashSet<KnowledgeSource>();
 		List<URL> urls = new ArrayList<URL>();
 		urls.add(new File(backgroundXML).toURI().toURL());
 		urls.addAll(ExampleDataCollector.convert(sentenceXMLFolder, ex.getPosTrain()));
 		urls.addAll(ExampleDataCollector.convert(sentenceXMLFolder, ex.getNegTrain()));
 
 		for (URL u : urls) {
-			OWLFile ks = new OWLFile(u);
+			OWLFile ks = ComponentFactory.getOWLFile(u);
 			tmp.add(ks);
 		}
 		return tmp;
@@ -499,11 +495,11 @@ public class TestIterativeLearning {
 	// }
 
 	public static FastInstanceChecker _getFastInstanceChecker(Examples ex) throws Exception {
-		Set<AbstractKnowledgeSource> tmp = _getOWL(ex);
+		Set<KnowledgeSource> tmp = _getOWL(ex);
 		// Set<KnowledgeSource> tmp = _getSPARQL(ex);
 
-		FastInstanceChecker rc = new FastInstanceChecker(tmp);
-		for (AbstractKnowledgeSource ks : tmp) {
+		FastInstanceChecker rc = ComponentFactory.getFastInstanceChecker(tmp);
+		for (KnowledgeSource ks : tmp) {
 			ks.init();
 		}
 		rc.init();
@@ -518,8 +514,9 @@ public class TestIterativeLearning {
 
 		try {
 			FastInstanceChecker rc = _getFastInstanceChecker(ex);
-			PosNegLPStandard lp = new PosNegLPStandard(rc, Helper.getIndividualSet(ex.getPosTrain()), Helper.getIndividualSet(ex.getNegTrain()));
-			AbstractCELA la = _getROLLearner(lp, rc, config, ex, iteration);
+			PosNegLPStandard lp = ComponentFactory
+					.getPosNegLPStandard(rc, ex.getPosTrain(), ex.getNegTrain());
+			LearningAlgorithm la = _getROLLearner(lp, rc, config, ex, iteration);
 			lp.init();
 			la.init();
 			initTimeKBandReasoner.stop();
@@ -601,7 +598,7 @@ public class TestIterativeLearning {
 		return result;
 	}
 
-	private static void _getLabels(Set<String> sentenceURIs, int limit) {
+	private static void _getLabels(SortedSet<String> sentenceURIs, int limit) {
 		Monitor m = JamonMonitorLogger.getTimeMonitor(TestIterativeLearning.class, "_getLabels").start();
 		int i = 0;
 		for (String sentenceURI : sentenceURIs) {
@@ -624,7 +621,7 @@ public class TestIterativeLearning {
 		}
 	}
 
-	private static AbstractCELA _getROLLearner(AbstractLearningProblem lp, AbstractReasonerComponent rc,
+	private static LearningAlgorithm _getROLLearner(LearningProblem lp, ReasonerComponent rc,
 			IteratedConfig config, Examples ex, int iteration) throws Exception {
 
 		int maxExecutionTime = config.maxExecutionTime;
@@ -636,17 +633,16 @@ public class TestIterativeLearning {
 			// Math.floor(0.8d*((double)ex.getPosTrain().size()));
 		}
 
-		OCEL la = ComponentManager.getInstance().learningAlgorithm(OCEL.class, lp, rc);
-		RhoDRDown op = (RhoDRDown) la.getOperator();
+		OCEL la = ComponentFactory.getROLComponent2(lp, rc);
 //		CELOE la = ComponentFactory.getCELOE(lp, rc);
-		op.setUseExistsConstructor(true);
+		la.getConfigurator().setUseExistsConstructor(true);
 
-		op.setUseAllConstructor(false);
-		op.setUseCardinalityRestrictions(false);
-		op.setUseNegation(false);
-		op.setUseHasValueConstructor(false);
-		op.setUseDataHasValueConstructor(config.useDataHasValue);
-		op.setFrequencyThreshold(valueFrequencyThreshold);
+		la.getConfigurator().setUseAllConstructor(false);
+		la.getConfigurator().setUseCardinalityRestrictions(false);
+		la.getConfigurator().setUseNegation(false);
+		la.getConfigurator().setUseHasValueConstructor(false);
+		la.getConfigurator().setUseDataHasValueConstructor(config.useDataHasValue);
+		la.getConfigurator().setValueFrequencyThreshold(valueFrequencyThreshold);
 //		la.getConfigurator().setInstanceBasedDisjoints(true);
 		
 //		la.getConfigurator().setIgnoredConcepts(
@@ -656,17 +652,17 @@ public class TestIterativeLearning {
 //						"http://nachhalt.sfb632.uni-potsdam.de/owl/stts.owl#SentenceFinalPunctuation",
 //						"http://nlp2rdf.org/ontology/generalsentenceinternalpunctuation_tag" })));
 
-		la.setNoisePercentage(noise);
-		la.setTerminateOnNoiseReached(true);
-		la.setMaxExecutionTimeInSeconds(maxExecutionTime);
+		la.getConfigurator().setNoisePercentage(noise);
+		la.getConfigurator().setTerminateOnNoiseReached(true);
+		la.getConfigurator().setMaxExecutionTimeInSeconds(maxExecutionTime);
 
 		if (config.useStartClass) {
-			la.setStartClass(new NamedClass(prefix + "Sentence"));
+			la.getConfigurator().setStartClass(prefix + "Sentence");
 		}
 
-		la.setWriteSearchTree(config.searchTree);
-		la.setSearchTreeFile(new File("log/searchTreeTiger.txt"));
-		la.setReplaceSearchTree(true);
+		la.getConfigurator().setWriteSearchTree(config.searchTree);
+		la.getConfigurator().setSearchTreeFile("log/searchTreeTiger.txt");
+		la.getConfigurator().setReplaceSearchTree(true);
 		return la;
 	}
 	

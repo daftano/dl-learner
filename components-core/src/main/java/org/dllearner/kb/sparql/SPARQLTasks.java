@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2008, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,20 +15,15 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.kb.sparql;
 
 import java.util.List;
-import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
 import org.apache.log4j.Logger;
-import org.dllearner.core.owl.DatatypeProperty;
-import org.dllearner.core.owl.Entity;
-import org.dllearner.core.owl.NamedClass;
-import org.dllearner.core.owl.ObjectProperty;
 import org.dllearner.utilities.datastructures.RDFNodeTuple;
 import org.dllearner.utilities.datastructures.StringTuple;
 import org.dllearner.utilities.owl.OWLVocabulary;
@@ -40,42 +35,25 @@ import com.hp.hpl.jena.query.ResultSetFormatter;
 import com.hp.hpl.jena.query.ResultSetRewindable;
 
 /**
- * Convenience class for SPARQL queries initialized
+ * @author Sebastian Hellmann Convenience class for SPARQL queries initialized
  *         with a SparqlEndpoint. A Cache can also be used to further improve
  *         query time. Some methods allow basic reasoning
- * 
- * @author Sebastian Hellmann 
- * @author Jens Lehmann
  */
-public class SPARQLTasks {
+public abstract class SPARQLTasks {
 
 	private static Logger logger = Logger.getLogger(SPARQLTasks.class);
 
-	private final Cache cache;
+	private Cache cache;
 
-	private final SparqlEndpoint sparqlEndpoint;
+    public SPARQLTasks(){
+    }
 
-	/**
-	 * @param sparqlEndpoint
-	 *            the Endpoint the sparql queries will be send to
-	 */
-	public SPARQLTasks(final SparqlEndpoint sparqlEndpoint) {
-//		super();
-		this.cache = null;
-		this.sparqlEndpoint = sparqlEndpoint;
-	}
+    /**
+     *
+     * @return
+     */
+    public abstract SparqlQuery buildSPARQLQuery(String sparqlQueryString);
 
-	/**
-	 * @param cache
-	 *            a cache object
-	 * @param sparqlEndpoint
-	 *            the Endpoint the sparql queries will be send to
-	 */
-	public SPARQLTasks(final Cache cache, final SparqlEndpoint sparqlEndpoint) {
-//		super();
-		this.cache = cache;
-		this.sparqlEndpoint = sparqlEndpoint;
-	}
 
 	/**
 	 * get all superclasses up to a certain depth, 1 means direct superclasses
@@ -94,16 +72,6 @@ public class SPARQLTasks {
 			final int maxDepth) {
 		// TODO check for quotes in uris
 		return getRecursiveSuperOrSubClasses(classURI, maxDepth, false);
-	}
-	
-	public SortedSet<String> getParallelClasses(String classURI, int limit) {
-		String query = "SELECT ?sub WHERE { <" + classURI + "> <http://www.w3.org/2000/01/rdf-schema#subClassOf> ?super .";
-		query += "?sub <http://www.w3.org/2000/01/rdf-schema#subClassOf> ?super .";
-		query += "FILTER( ?sub != <" + classURI + ">) . } LIMIT " + limit;
-		return queryAsSet(query, "?sub");
-//		SparqlQuery sq = new SparqlQuery(query, sparqlEndpoint);
-//		ResultSet rs = sq.send();
-		
 	}
 
 	/**
@@ -496,12 +464,12 @@ public class SPARQLTasks {
 	 * @return jena ResultSet
 	 */
 	public ResultSetRewindable queryAsResultSet(String sparqlQueryString) {
-		SparqlQuery sq = new SparqlQuery(sparqlQueryString, sparqlEndpoint);
-		if(cache == null) {
+		SparqlQuery sq = buildSPARQLQuery(sparqlQueryString);
+		if(getCache() == null) {
 			return sq.send();
 		} else {
 			// get JSON from cache and convert to result set
-			String json = cache.executeSparqlQuery(sq);
+			String json = getCache().executeSparqlQuery(sq);
 			return SparqlQuery.convertJSONtoResultSet(json);
 		}
 	}
@@ -512,13 +480,13 @@ public class SPARQLTasks {
 	 * @return -1 on failure count on success
 	 */
 	public int queryAsCount(String sparqlQueryString) {
-		SparqlQuery sq = new SparqlQuery(sparqlQueryString, sparqlEndpoint);
+		SparqlQuery sq = buildSPARQLQuery(sparqlQueryString);
 		ResultSetRewindable rsw = null;
-		if(cache == null) {
+		if(getCache() == null) {
 			rsw = sq.send();
 		} else {
 			// get JSON from cache and convert to result set
-			String json = cache.executeSparqlQuery(sq);
+			String json = getCache().executeSparqlQuery(sq);
 			rsw =  SparqlQuery.convertJSONtoResultSet(json);
 		}
 		int ret = -1;
@@ -539,27 +507,26 @@ public class SPARQLTasks {
 	 */
 	public String query(String sparqlQueryString) {
 		String jsonString;
-		if (cache == null) {
+		if (getCache() == null) {
 			
-			SparqlQuery sq = new SparqlQuery(sparqlQueryString, sparqlEndpoint);
+			SparqlQuery sq = buildSPARQLQuery(sparqlQueryString);
 			//SimpleClock sc = new SimpleClock();
-			sq.send(false);
+			sq.send();
 			//sc.printAndSet("querysend");
 			jsonString = sq.getJson();
 			
 		} else {
-			jsonString = cache.executeSparqlQuery(new SparqlQuery(
-					sparqlQueryString, sparqlEndpoint));
+			jsonString = getCache().executeSparqlQuery(buildSPARQLQuery(sparqlQueryString));
 		}
 		return jsonString;
 	}
 
 	public boolean ask(String askQueryString) {
-		if(cache == null) {
-			SparqlQuery sq = new SparqlQuery(askQueryString, sparqlEndpoint);
+		if(getCache() == null) {
+			SparqlQuery sq = buildSPARQLQuery(askQueryString);
 			return sq.sendAsk();
 		} else {
-			return cache.executeSparqlAskQuery(new SparqlQuery(askQueryString, sparqlEndpoint));
+			return getCache().executeSparqlAskQuery(buildSPARQLQuery(askQueryString));
 		}
 	}
 	
@@ -606,125 +573,14 @@ public class SPARQLTasks {
 
 	}
 
-	public SparqlEndpoint getSparqlEndpoint() {
-		return sparqlEndpoint;
-	}
-	
-	public static SPARQLTasks getPredefinedSPARQLTasksWithCache(String endpointName) {
-		return new SPARQLTasks( Cache.getDefaultCache(), SparqlEndpoint.getEndpointByName(endpointName) );
-	}
 
-	// tries to detect the type of the resource
-	public Entity guessResourceType(String resource) {
-		SortedSet<String> types = retrieveObjectsForSubjectAndRole(resource, "http://www.w3.org/1999/02/22-rdf-syntax-ns#type", 10000);
-//		System.out.println(types);
-		if(types.contains("http://www.w3.org/2002/07/owl#ObjectProperty")) {
-			return new ObjectProperty(resource);
-		} else if(types.contains("http://www.w3.org/2002/07/owl#DatatypeProperty")) {
-			return new DatatypeProperty(resource);
-		} else if(types.contains("http://www.w3.org/2002/07/owl#Class")) {
-			return new NamedClass(resource);
-		} else {
-			return null;
-		}
-	}
-	
-	// tries to detect the type of the resource
-	public Entity guessResourceType(String resource, boolean byTriples) {
-		SortedSet<String> types = retrieveObjectsForSubjectAndRole(resource, "http://www.w3.org/1999/02/22-rdf-syntax-ns#type", 10000);
-//		System.out.println(types);
-		if(types.contains("http://www.w3.org/2002/07/owl#ObjectProperty")) {
-			return new ObjectProperty(resource);
-		} else if(types.contains("http://www.w3.org/2002/07/owl#DatatypeProperty")) {
-			return new DatatypeProperty(resource);
-		} else if(types.contains("http://www.w3.org/2002/07/owl#Class")) {
-			return new NamedClass(resource);
-		} else {
-			if(byTriples){
-				String queryString = String.format("ASK {?s a <%s>}", resource);
-				SparqlQuery sq = new SparqlQuery(queryString, sparqlEndpoint);
-				boolean isClass = sq.sendAsk();
-				if(isClass){
-					return new NamedClass(resource);
-				} else {
-					queryString = String.format("SELECT ?o WHERE {?s <%s> ?o.} LIMIT 10", resource);
-					sq = new SparqlQuery(queryString, sparqlEndpoint);
-					ResultSet rs = sq.send(false);
-					QuerySolution qs = null;
-					boolean isDataProperty = false;
-					boolean isObjectProperty = false;
-					while(rs.hasNext()){
-						qs = rs.next();
-						if(qs.get("o").isLiteral()){
-							isDataProperty = true;
-						} else if(qs.get("o").isResource()){
-							isObjectProperty = true;
-						}
-						
-					}
-					if(isDataProperty && !isObjectProperty){
-						return new DatatypeProperty(resource);
-					} else if(!isDataProperty && isObjectProperty){
-						return new ObjectProperty(resource);
-					}
-				}
-			}
-			
-			return null;
-		}
-	}
-	
-	public Set<ObjectProperty> getAllObjectProperties() {
-		Set<ObjectProperty> properties = new TreeSet<ObjectProperty>();
-		String query = "PREFIX owl: <http://www.w3.org/2002/07/owl#> SELECT ?p WHERE {?p a owl:ObjectProperty}";
-		SparqlQuery sq = new SparqlQuery(query, sparqlEndpoint);
-		ResultSet q = sq.send(false);
-		while (q.hasNext()) {
-			QuerySolution qs = q.next();
-			properties.add(new ObjectProperty(qs.getResource("p").getURI()));
-		}
-		return properties;
-	}
-	
-	public Set<DatatypeProperty> getAllDataProperties() {
-		Set<DatatypeProperty> properties = new TreeSet<DatatypeProperty>();
-		String query = "PREFIX owl: <http://www.w3.org/2002/07/owl#> SELECT ?p WHERE {?p a owl:DatatypeProperty}";
-		SparqlQuery sq = new SparqlQuery(query, sparqlEndpoint);
-		ResultSet q = sq.send(false);
-		while (q.hasNext()) {
-			QuerySolution qs = q.next();
-			properties.add(new DatatypeProperty(qs.getResource("p").getURI()));
-		}
-		return properties;
-	}
-	
-	public Set<NamedClass> getAllClasses() {
-		Set<NamedClass> classes = new TreeSet<NamedClass>();
-		String query = "PREFIX owl: <http://www.w3.org/2002/07/owl#> SELECT ?c WHERE {?c a owl:Class} LIMIT 1000";
-		SparqlQuery sq = new SparqlQuery(query, sparqlEndpoint);
-		ResultSet q = sq.send(false);
-		while (q.hasNext()) {
-			QuerySolution qs = q.next();
-			if(qs.getResource("c").isURIResource()){
-				classes.add(new NamedClass(qs.getResource("c").getURI()));
-			}
-			
-		}
-		return classes;
-	}	
-	
-	public boolean supportsSPARQL_1_1(){
-		String query = "SELECT * WHERE {?s ?p ?o. {SELECT * WHERE {?s ?p ?o.} LIMIT 1} } LIMIT 1";
-		SparqlQuery sq = new SparqlQuery(query, sparqlEndpoint);
-		try {
-			sq.send(false);
-			return true;
-		} catch (Exception e) {
-			System.out.println("Endpoint doesn't seem to support SPARQL 1.1 .");
-		}
-		return false;
-	}
-	
+    public Cache getCache() {
+        return cache;
+    }
+
+    public void setCache(Cache cache) {
+        this.cache = cache;
+    }
 }
 
 /*

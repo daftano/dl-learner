@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2008, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.learningproblems;
 
 import java.util.Set;
@@ -156,7 +156,7 @@ public class EvaluatedDescriptionPosNeg extends EvaluatedDescription {
 	// we need to use this method instead of the standard JSON array constructor,
 	// otherwise we'll get unexpected results (JSONArray does not take Individuals
 	// as arguments and does not use toString)
-	public static JSONArray getJSONArray(Set<Individual> individuals) {
+	private static JSONArray getJSONArray(Set<Individual> individuals) {
 		JSONArray j = new JSONArray();
 		for(Individual i : individuals) {
 			j.put(i.getName());

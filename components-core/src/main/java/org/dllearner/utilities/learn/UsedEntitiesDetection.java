@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2008, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.utilities.learn;
 
 import java.util.Comparator;
@@ -27,7 +27,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.Map.Entry;
 
-import org.dllearner.core.AbstractReasonerComponent;
+import org.dllearner.core.ReasonerComponent;
 import org.dllearner.core.owl.Individual;
 import org.dllearner.core.owl.NamedClass;
 import org.dllearner.core.owl.ObjectProperty;
@@ -74,7 +74,7 @@ public class UsedEntitiesDetection {
 	
 	private Map<Set<ObjectProperty>,Set<ObjectProperty>> usedObjectProperties;
 	
-	private AbstractReasonerComponent reasoner;
+	private ReasonerComponent reasoner;
 	private int maxDepth;
 	
 	/**
@@ -85,7 +85,7 @@ public class UsedEntitiesDetection {
 	 * @param individuals A set of individuals to start from.
 	 * @param depth The maximum depth for the search.
 	 */
-	public UsedEntitiesDetection(AbstractReasonerComponent reasoner, Set<Individual> individuals, int maxDepth) {
+	public UsedEntitiesDetection(ReasonerComponent reasoner, Set<Individual> individuals, int maxDepth) {
 		this.reasoner = reasoner;
 		this.maxDepth = maxDepth;
 		usedClasses = new TreeMap<Set<ObjectProperty>,Set<NamedClass>>(keyComp);

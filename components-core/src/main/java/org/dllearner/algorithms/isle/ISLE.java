@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2010, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.algorithms.isle;
 
 import java.text.DecimalFormat;
@@ -32,11 +32,12 @@ import java.util.TreeSet;
 import org.apache.log4j.Logger;
 import org.dllearner.algorithms.celoe.CELOE;
 import org.dllearner.algorithms.celoe.OENode;
-import org.dllearner.core.AbstractCELA;
-import org.dllearner.core.AbstractLearningProblem;
-import org.dllearner.core.AbstractReasonerComponent;
 import org.dllearner.core.ComponentInitException;
 import org.dllearner.core.EvaluatedDescription;
+import org.dllearner.core.LearningAlgorithm;
+import org.dllearner.core.LearningProblem;
+import org.dllearner.core.ReasonerComponent;
+import org.dllearner.core.configurators.ISLEConfigurator;
 import org.dllearner.core.options.BooleanConfigOption;
 import org.dllearner.core.options.CommonConfigOptions;
 import org.dllearner.core.options.ConfigOption;
@@ -70,9 +71,10 @@ import com.jamonapi.MonitorFactory;
  * @author Jens Lehmann
  *
  */
-public class ISLE extends AbstractCELA {
+public class ISLE extends LearningAlgorithm {
 
 	private static Logger logger = Logger.getLogger(CELOE.class);
+	private ISLEConfigurator configurator;
 	
 	private boolean isRunning = false;
 	private boolean stop = false;	
@@ -129,24 +131,20 @@ public class ISLE extends AbstractCELA {
 	private int expressionTests = 0;
 	private int minHorizExp = 0;
 	private int maxHorizExp = 0;
-
-	private double noisePercentage = 0.0;
-
-	private int maxNrOfResults = 10;
-
-	private boolean filterDescriptionsFollowingFromKB = true;
-
-	private long maxExecutionTimeInSeconds = 10;
-
-	private boolean reuseExistingDescription = false;
 	
-	public ISLE(AbstractLearningProblem problem, AbstractReasonerComponent reasoner) {
+	@Override
+	public ISLEConfigurator getConfigurator() {
+		return configurator;
+	}
+	
+	public ISLE(LearningProblem problem, ReasonerComponent reasoner) {
 		super(problem, reasoner);
+		configurator = new ISLEConfigurator(this);
 	}
 
-	public static Collection<Class<? extends AbstractLearningProblem>> supportedLearningProblems() {
-		Collection<Class<? extends AbstractLearningProblem>> problems = new LinkedList<Class<? extends AbstractLearningProblem>>();
-		problems.add(AbstractLearningProblem.class);
+	public static Collection<Class<? extends LearningProblem>> supportedLearningProblems() {
+		Collection<Class<? extends LearningProblem>> problems = new LinkedList<Class<? extends LearningProblem>>();
+		problems.add(LearningProblem.class);
 		return problems;
 	}	
 	
@@ -189,31 +187,23 @@ public class ISLE extends AbstractCELA {
 		
 		startClass = Thing.instance;
 		
-//		singleSuggestionMode = configurator.getSingleSuggestionMode();
+		singleSuggestionMode = configurator.getSingleSuggestionMode();
 		
 		// create refinement operator
-//		operator = new RhoDRDown(reasoner, classHierarchy, startClass, configurator);
-		// create refinement operator
-		if(operator == null) {
-			operator = new RhoDRDown();
-			((RhoDRDown)operator).setStartClass(startClass);
-			((RhoDRDown)operator).setSubHierarchy(classHierarchy);
-			((RhoDRDown)operator).setReasoner(reasoner);
-			((RhoDRDown)operator).init();
-		}		
+		operator = new RhoDRDown(reasoner, classHierarchy, startClass, configurator);
 		baseURI = reasoner.getBaseURI();
 		prefixes = reasoner.getPrefixes();		
 		
-		bestEvaluatedDescriptions = new EvaluatedDescriptionSet(maxNrOfResults);
+		bestEvaluatedDescriptions = new EvaluatedDescriptionSet(configurator.getMaxNrOfResults());
 		
 		isClassLearningProblem = (learningProblem instanceof ClassLearningProblem);
 		
 		// we put important parameters in class variables
-		noise = noisePercentage/100d;
-//		maxDepth = configurator.getMaxDepth();
+		noise = configurator.getNoisePercentage()/100d;
+		maxDepth = configurator.getMaxDepth();
 		// (filterFollowsFromKB is automatically set to false if the problem
 		// is not a class learning problem
-		filterFollowsFromKB = filterDescriptionsFollowingFromKB
+		filterFollowsFromKB = configurator.getFilterDescriptionsFollowingFromKB()
 		  && isClassLearningProblem;
 		
 		// actions specific to ontology engineering
@@ -229,7 +219,7 @@ public class ISLE extends AbstractCELA {
 			// superfluous to add super classes in this case)
 			if(isEquivalenceProblem) {
 				Set<Description> existingDefinitions = reasoner.getAssertedDefinitions(classToDescribe);
-				if(reuseExistingDescription  && (existingDefinitions.size() > 0)) {
+				if(configurator.getReuseExistingDescription() && (existingDefinitions.size() > 0)) {
 					// the existing definition is reused, which in the simplest case means to
 					// use it as a start class or, if it is already too specific, generalise it
 					
@@ -392,7 +382,6 @@ public class ISLE extends AbstractCELA {
 			logger.info("Algorithm stopped ("+expressionTests+" descriptions tested). " + nodes.size() + " nodes in the search tree.\n");
 		} else {
 			logger.info("Algorithm terminated successfully ("+expressionTests+" descriptions tested). "  + nodes.size() + " nodes in the search tree.\n");
-            logger.info(reasoner.toString());
 		}
 
 		if(singleSuggestionMode) {
@@ -636,7 +625,7 @@ public class ISLE extends AbstractCELA {
 	}
 	
 	private boolean terminationCriteriaSatisfied() {
-		return stop || ((System.nanoTime() - nanoStartTime) >= (maxExecutionTimeInSeconds*1000000000l));
+		return stop || ((System.nanoTime() - nanoStartTime) >= (configurator.getMaxExecutionTimeInSeconds()*1000000000l));
 	}
 	
 	private void reset() {

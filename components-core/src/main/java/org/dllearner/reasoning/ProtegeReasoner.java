@@ -1,22 +1,3 @@
-/**
- * Copyright (C) 2007-2011, Jens Lehmann
- *
- * This file is part of DL-Learner.
- *
- * DL-Learner is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * DL-Learner is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
 package org.dllearner.reasoning;
 
 import java.io.File;
@@ -36,10 +17,11 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import org.dllearner.core.AbstractKnowledgeSource;
-import org.dllearner.core.AbstractReasonerComponent;
 import org.dllearner.core.ComponentInitException;
+import org.dllearner.core.KnowledgeSource;
+import org.dllearner.core.ReasonerComponent;
 import org.dllearner.core.ReasoningMethodUnsupportedException;
+import org.dllearner.core.configurators.ProtegeReasonerConfigurator;
 import org.dllearner.core.options.BooleanConfigOption;
 import org.dllearner.core.options.ConfigOption;
 import org.dllearner.core.owl.Axiom;
@@ -113,7 +95,7 @@ import org.semanticweb.owlapi.reasoner.ReasonerProgressMonitor;
 import org.semanticweb.owlapi.util.SimpleIRIMapper;
 import org.semanticweb.owlapi.vocab.PrefixOWLOntologyFormat;
 
-public class ProtegeReasoner extends AbstractReasonerComponent {
+public class ProtegeReasoner extends ReasonerComponent {
 	
 	private OWLOntologyManager manager;
 	private OWLOntology ontology;
@@ -121,6 +103,8 @@ public class ProtegeReasoner extends AbstractReasonerComponent {
 	private OWLReasoner reasoner;
 	
 	private ReasonerProgressMonitor progressMonitor;
+	
+	private ProtegeReasonerConfigurator configurator;
 	
 	private Set<OWLOntology> loadedOntologies;
 	
@@ -162,13 +146,13 @@ public class ProtegeReasoner extends AbstractReasonerComponent {
 	
 	// references to OWL API ontologies
 	private List<OWLOntology> owlAPIOntologies = new LinkedList<OWLOntology>();
-	private boolean defaultNegation = true;
 
-	public ProtegeReasoner(Set<AbstractKnowledgeSource> sources) {
+	public ProtegeReasoner(Set<KnowledgeSource> sources) {
 		super(sources);
+		this.configurator = new ProtegeReasonerConfigurator(this);
 	}
 	
-	public ProtegeReasoner(Set<AbstractKnowledgeSource> sources, OWLReasoner reasoner) {
+	public ProtegeReasoner(Set<KnowledgeSource> sources, OWLReasoner reasoner) {
 		this(sources);
 		this.reasoner = reasoner;
 	}
@@ -190,6 +174,11 @@ public class ProtegeReasoner extends AbstractReasonerComponent {
 	@Override
 	public void releaseKB() {
 		reasoner.dispose();
+	}
+
+	@Override
+	public ProtegeReasonerConfigurator getConfigurator() {
+		return configurator;
 	}
 	
 	/**
@@ -248,7 +237,7 @@ public class ProtegeReasoner extends AbstractReasonerComponent {
 		Set<OWLOntology> allImports = new HashSet<OWLOntology>();
 		prefixes = new TreeMap<String, String>();
 
-		for (AbstractKnowledgeSource source : sources) {
+		for (KnowledgeSource source : sources) {
 
 			if (source instanceof OWLFile
 					|| source instanceof SparqlKnowledgeSource
@@ -368,7 +357,7 @@ public class ProtegeReasoner extends AbstractReasonerComponent {
 		for (NamedClass atomicConcept : atomicConcepts) {
 			SortedSet<Individual> pos = getIndividualsWithPellet(atomicConcept);
 			classInstancesPos.put(atomicConcept, (TreeSet<Individual>) pos);
-			if (defaultNegation) {
+			if (configurator.getDefaultNegation()) {
 				classInstancesNeg.put(atomicConcept, (TreeSet<Individual>) Helper.difference(individuals, pos));
 			} else {
 				Negation negatedAtomicConcept = new Negation(atomicConcept);
@@ -532,7 +521,7 @@ public class ProtegeReasoner extends AbstractReasonerComponent {
 				return classInstancesNeg.get((NamedClass) child).contains(individual);
 			} else {
 				// default negation
-				if(defaultNegation ) {
+				if(configurator.getDefaultNegation()) {
 					return !hasTypeImpl(child, individual);
 				} else {
 					logger.debug("Converting description to negation normal form in fast instance check (should be avoided if possible).");
@@ -759,9 +748,7 @@ public class ProtegeReasoner extends AbstractReasonerComponent {
 		Set<OWLNamedIndividual> individuals = reasoner.getInstances(d, false).getFlattened();
 		SortedSet<Individual> inds = new TreeSet<Individual>();
 		for(OWLNamedIndividual ind : individuals)
-			if(ind != null){
-				inds.add(new Individual(ind.toStringID()));
-			}
+			inds.add(new Individual(ind.toStringID()));
 		return inds;
 	}
 	
@@ -1293,16 +1280,8 @@ public SortedSet<Individual> getIndividualsImplFast(Description description)
 			}
 			// take one element from the set and ignore the rest
 			// (TODO: we need to make sure we always ignore the same concepts)
-			
-			for(OWLObjectPropertyExpression property : node.getEntities()){
-				if(!property.isAnonymous()){
-					roles.add(new ObjectProperty(property.asOWLObjectProperty().toStringID()));
-					break;
-				}
-			}
-			//TODO: We get a problem when the returned representative element is anonymous, so we now use the code above
-//			OWLObjectPropertyExpression property = node.getRepresentativeElement();
-//			roles.add(new ObjectProperty(property.asOWLObjectProperty().toStringID()));
+			OWLObjectPropertyExpression property = node.getRepresentativeElement();
+			roles.add(new ObjectProperty(property.asOWLObjectProperty().toStringID()));
 		}
 		roles.remove(new ObjectProperty(factory.getOWLTopObjectProperty().toStringID()));
 		roles.remove(new ObjectProperty(factory.getOWLBottomObjectProperty().toStringID()));

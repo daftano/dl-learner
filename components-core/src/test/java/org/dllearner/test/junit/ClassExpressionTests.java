@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2010, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,13 +15,13 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.test.junit;
 
 import static org.junit.Assert.*;
 
-import org.dllearner.core.AbstractReasonerComponent;
+import org.dllearner.core.ReasonerComponent;
 import org.dllearner.core.owl.Description;
 import org.dllearner.core.owl.Individual;
 import org.dllearner.core.owl.Intersection;
@@ -48,7 +48,7 @@ public class ClassExpressionTests {
 
 	@Test
 	public void minimizeTest1() throws ParseException {
-		AbstractReasonerComponent reasoner = TestOntologies.getTestOntology(TestOntology.FATHER_OE);
+		ReasonerComponent reasoner = TestOntologies.getTestOntology(TestOntology.FATHER_OE);
 		DescriptionMinimizer minimizer = new DescriptionMinimizer(reasoner);
 		Description d = KBParser.parseConcept("(\"http://example.com/father#male\" AND (\"http://example.com/father#male\" OR EXISTS \"http://example.com/father#hasChild\".TOP))");		
 		Description minD = minimizer.minimize(d);
@@ -59,7 +59,7 @@ public class ClassExpressionTests {
 	public void minimizeTest2() throws ParseException {
 		// this tests for a bug, when in A AND A AND SOMETHING, both A were removed because they subsume 
 		// each other, while in fact only one A should be removed
-		AbstractReasonerComponent reasoner = TestOntologies.getTestOntology(TestOntology.MDM);
+		ReasonerComponent reasoner = TestOntologies.getTestOntology(TestOntology.MDM);
 		DescriptionMinimizer minimizer = new DescriptionMinimizer(reasoner);
 		NamedClass nc = new NamedClass("http://acl/BMV#MedicalThings");
 		ObjectProperty op = new ObjectProperty("http://acl/BMV#refersSubstance");

@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.learningproblems;
 
 import java.util.Collection;
@@ -28,9 +28,9 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import org.dllearner.core.AbstractLearningProblem;
-import org.dllearner.core.AbstractReasonerComponent;
-import org.dllearner.core.ComponentAnn;
+import org.dllearner.core.LearningProblem;
+import org.dllearner.core.ReasonerComponent;
+import org.dllearner.core.configurators.PosOnlyLPConfigurator;
 import org.dllearner.core.options.CommonConfigMappings;
 import org.dllearner.core.options.ConfigEntry;
 import org.dllearner.core.options.ConfigOption;
@@ -45,11 +45,9 @@ import org.dllearner.core.owl.Individual;
  * @author Jens Lehmann
  *
  */
-@ComponentAnn(name = "positive only learning problem", shortName = "posonlylp", version = 0.6)
-public class PosOnlyLP extends AbstractLearningProblem {
+public class PosOnlyLP extends LearningProblem {
 
 	protected SortedSet<Individual> positiveExamples;
-	
 	private List<Individual> positiveExamplesShuffled;
 //	protected SortedSet<Individual> pseudoNegatives;
 	private List<Individual> individuals;
@@ -57,12 +55,17 @@ public class PosOnlyLP extends AbstractLearningProblem {
 	// approximation of accuracy +- 0.03 %
 	private static final double approx = 0.03;	
 	
-	public PosOnlyLP() {
-		super(null);
-	}
+//	private PosNegLPStandard definitionLP;
+	private PosOnlyLPConfigurator configurator;
 	
-	public PosOnlyLP(AbstractReasonerComponent reasoningService) {
+	@Override
+	public PosOnlyLPConfigurator getConfigurator(){
+		return configurator;
+	}	
+	
+	public PosOnlyLP(ReasonerComponent reasoningService) {
 		super(reasoningService);
+		configurator = new PosOnlyLPConfigurator(this);
 	}
 
 	/*
@@ -109,14 +112,10 @@ public class PosOnlyLP extends AbstractLearningProblem {
 		// reasoning options (i.e. options are the same up to reversed example sets)
 //		definitionLP.init();
 		
-		Random rand = new Random(1);		
-		
-		if(getReasoner()!=null) {
-			individuals = new LinkedList<Individual>(getReasoner().getIndividuals());
-			Collections.shuffle(individuals, rand);			
-		}
-		
+		individuals = new LinkedList<Individual>(reasoner.getIndividuals());
 		positiveExamplesShuffled = new LinkedList<Individual>(positiveExamples);
+		Random rand = new Random(1);
+		Collections.shuffle(individuals, rand);
 		Collections.shuffle(positiveExamplesShuffled, rand);
 	}
 	
@@ -141,7 +140,7 @@ public class PosOnlyLP extends AbstractLearningProblem {
 	 */
 	@Override
 	public ScorePosOnly computeScore(Description description) {
-		Set<Individual> retrieval = getReasoner().getIndividuals(description);
+		Set<Individual> retrieval = reasoner.getIndividuals(description);
 		
 		Set<Individual> instancesCovered = new TreeSet<Individual>();
 		Set<Individual> instancesNotCovered = new TreeSet<Individual>();
@@ -175,7 +174,7 @@ public class PosOnlyLP extends AbstractLearningProblem {
 	 */
 	@Override
 	public double getAccuracy(Description description) {
-		Set<Individual> retrieval = getReasoner().getIndividuals(description);
+		Set<Individual> retrieval = reasoner.getIndividuals(description);
 		
 		int instancesCovered = 0;
 		for(Individual ind : positiveExamples) {
@@ -212,7 +211,7 @@ public class PosOnlyLP extends AbstractLearningProblem {
 		int upperEstimateA = positiveExamples.size();
 		
 		for(Individual ind : positiveExamplesShuffled) {
-			if(getReasoner().hasType(description, ind)) {
+			if(reasoner.hasType(description, ind)) {
 				instancesCovered++;
 			} else {
 				instancesNotCovered ++;
@@ -264,7 +263,7 @@ public class PosOnlyLP extends AbstractLearningProblem {
 		
 		for(Individual ind : individuals) {
 
-			if(getReasoner().hasType(description, ind)) {
+			if(reasoner.hasType(description, ind)) {
 				instancesDescription++;
 			}
 			
@@ -324,9 +323,5 @@ public class PosOnlyLP extends AbstractLearningProblem {
 	
 	private double getAccuracy(double coverage, double protusion) {
 		return 0.5 * (coverage + Math.sqrt(protusion));
-	}
-
-	public void setPositiveExamples(SortedSet<Individual> positiveExamples) {
-		this.positiveExamples = positiveExamples;
 	}	
 }

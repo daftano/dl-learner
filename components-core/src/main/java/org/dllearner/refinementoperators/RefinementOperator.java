@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2008, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,14 +15,13 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.refinementoperators;
 
 import java.util.List;
 import java.util.Set;
 
-import org.dllearner.core.Component;
 import org.dllearner.core.owl.Description;
 
 /**
@@ -35,7 +34,7 @@ import org.dllearner.core.owl.Description;
  * @author Jens Lehmann
  *
  */
-public interface RefinementOperator extends Component {
+public interface RefinementOperator {
 
 	/**
 	 * Standard refinement operation.

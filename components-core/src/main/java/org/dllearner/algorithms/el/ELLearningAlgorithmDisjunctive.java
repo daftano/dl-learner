@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2009, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.algorithms.el;
 
 import java.util.Collection;
@@ -24,20 +24,23 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
 
 import org.apache.log4j.Logger;
-import org.dllearner.core.AbstractCELA;
-import org.dllearner.core.AbstractLearningProblem;
-import org.dllearner.core.AbstractReasonerComponent;
 import org.dllearner.core.ComponentInitException;
 import org.dllearner.core.EvaluatedDescription;
+import org.dllearner.core.LearningAlgorithm;
+import org.dllearner.core.LearningProblem;
+import org.dllearner.core.ReasonerComponent;
+import org.dllearner.core.configurators.Configurator;
+import org.dllearner.core.configurators.ELLearningAlgorithmDisjunctiveConfigurator;
 import org.dllearner.core.options.CommonConfigOptions;
 import org.dllearner.core.options.ConfigOption;
 import org.dllearner.core.options.StringConfigOption;
 import org.dllearner.core.owl.Description;
 import org.dllearner.core.owl.Individual;
+import org.dllearner.core.owl.NamedClass;
 import org.dllearner.core.owl.Thing;
 import org.dllearner.core.owl.Union;
 import org.dllearner.learningproblems.PosNegLP;
@@ -80,9 +83,10 @@ import org.dllearner.utilities.owl.DescriptionMinimizer;
  * @author Jens Lehmann
  *
  */
-public class ELLearningAlgorithmDisjunctive extends AbstractCELA {
+public class ELLearningAlgorithmDisjunctive extends LearningAlgorithm {
 
 	private static Logger logger = Logger.getLogger(ELLearningAlgorithmDisjunctive.class);	
+	private ELLearningAlgorithmDisjunctiveConfigurator configurator;
 	
 	String baseURI;
 	Map<String,String> prefixes;
@@ -109,26 +113,25 @@ public class ELLearningAlgorithmDisjunctive extends AbstractCELA {
 	private double posWeight = 1.2; // 2;
 	private int startPosExamplesSize;
 //	private int startNegExamplesSize;
-	private Set<Individual> currentPosExamples;
-	private Set<Individual> currentNegExamples;
+	private SortedSet<Individual> currentPosExamples;
+	private SortedSet<Individual> currentNegExamples;
 	private SearchTreeNode bestCurrentNode;
 	private double bestCurrentScore = 0;
 	private long treeStartTime;
 	// minimum score a tree must have to be part of the solution
-	private double minimumTreeScore = -1;
-
-	private boolean instanceBasedDisjoints; 
+	private double minimumTreeScore = -1; 
 	
-	public ELLearningAlgorithmDisjunctive(PosNegLP problem, AbstractReasonerComponent reasoner) {
+	public ELLearningAlgorithmDisjunctive(PosNegLP problem, ReasonerComponent reasoner) {
 		super(problem, reasoner);
+		configurator = new ELLearningAlgorithmDisjunctiveConfigurator(this);
 	}
 	
 	public static String getName() {
 		return "disjunctive EL learning algorithm";
 	}	
 	
-	public static Collection<Class<? extends AbstractLearningProblem>> supportedLearningProblems() {
-		Collection<Class<? extends AbstractLearningProblem>> problems = new LinkedList<Class<? extends AbstractLearningProblem>>();
+	public static Collection<Class<? extends LearningProblem>> supportedLearningProblems() {
+		Collection<Class<? extends LearningProblem>> problems = new LinkedList<Class<? extends LearningProblem>>();
 		problems.add(PosNegLP.class);
 		return problems;
 	}
@@ -140,7 +143,17 @@ public class ELLearningAlgorithmDisjunctive extends AbstractCELA {
 		options.add(new StringConfigOption("startClass", "the named class which should be used to start the algorithm (GUI: needs a widget for selecting a class)"));
 		options.add(CommonConfigOptions.getInstanceBasedDisjoints());
 		return options;
-	}		
+	}	
+	
+	// we can assume a PosNegLP, because it is the only supported one
+	private PosNegLP getLearningProblem() {
+		return (PosNegLP) learningProblem;
+	}
+	
+	@Override
+	public Configurator getConfigurator() {
+		return configurator;
+	}	
 	
 	@Override
 	public void init() throws ComponentInitException {
@@ -148,10 +161,12 @@ public class ELLearningAlgorithmDisjunctive extends AbstractCELA {
 		candidates = new TreeSet<SearchTreeNode>(heuristic);
 		trees = new TreeSet<ELDescriptionTree>(new ELDescriptionTreeComparator());
 		
-		if(startClass == null) {
+		if(configurator.getStartClass() != null) {
+			startClass = new NamedClass(configurator.getStartClass());
+		} else {
 			startClass = Thing.instance;
 		}
-		operator = new ELDown2(reasoner, instanceBasedDisjoints);
+		operator = new ELDown2(reasoner, configurator.getInstanceBasedDisjoints());
 		
 //		noise = configurator.getNoisePercentage()/(double)100;
 		
@@ -391,8 +406,8 @@ public class ELLearningAlgorithmDisjunctive extends AbstractCELA {
 		trees.clear();
 		currentSolution.clear();
 		bestEvaluatedDescription = learningProblem.evaluate(Thing.instance);
-		currentPosExamples = ((PosNegLP)getLearningProblem()).getPositiveExamples();
-		currentNegExamples = ((PosNegLP)getLearningProblem()).getNegativeExamples();
+		currentPosExamples = getLearningProblem().getPositiveExamples();
+		currentNegExamples = getLearningProblem().getNegativeExamples();
 		startPosExamplesSize = currentPosExamples.size();
 //		startNegExamplesSize = currentNegExamples.size();
 	}
@@ -422,22 +437,6 @@ public class ELLearningAlgorithmDisjunctive extends AbstractCELA {
 	 */
 	public SearchTreeNode getStartNode() {
 		return startNode;
-	}
-
-	public Description getStartClass() {
-		return startClass;
-	}
-
-	public void setStartClass(Description startClass) {
-		this.startClass = startClass;
-	}
-
-	public boolean isInstanceBasedDisjoints() {
-		return instanceBasedDisjoints;
-	}
-
-	public void setInstanceBasedDisjoints(boolean instanceBasedDisjoints) {
-		this.instanceBasedDisjoints = instanceBasedDisjoints;
 	}	
 
 }

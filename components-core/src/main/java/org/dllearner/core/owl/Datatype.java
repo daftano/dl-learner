@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2008, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.core.owl;
 
 import java.net.URI;
@@ -26,11 +26,19 @@ import java.util.Map;
  * @author Jens Lehmann
  *
  */
-public class Datatype implements DataRange, Comparable<Datatype> {
+public enum Datatype implements DataRange {
 	
+    DOUBLE ("http://www.w3.org/2001/XMLSchema#double"),
+    INT ("http://www.w3.org/2001/XMLSchema#int"),
+    INTEGER ("http://www.w3.org/2001/XMLSchema#integer"),
+    BOOLEAN   ("http://www.w3.org/2001/XMLSchema#boolean"),
+    STRING ("http://www.w3.org/2001/XMLSchema#string"),
+    DATE ("http://www.w3.org/2001/XMLSchema#date"),
+    DATETIME ("http://www.w3.org/2001/XMLSchema#dateTime");
+    
     private URI uri;
 
-    public Datatype(String uriString) {
+    private Datatype(String uriString) {
     	uri = URI.create(uriString);
     }
 
@@ -65,35 +73,5 @@ public class Datatype implements DataRange, Comparable<Datatype> {
 	@Override
 	public String toManchesterSyntaxString(String baseURI, Map<String, String> prefixes) {
 		return uri.toString();
-	}
-
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((uri == null) ? 0 : uri.hashCode());
-		return result;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		Datatype other = (Datatype) obj;
-		if (uri == null) {
-			if (other.uri != null)
-				return false;
-		} else if (!uri.equals(other.uri))
-			return false;
-		return true;
-	}
-
-	@Override
-	public int compareTo(Datatype o) {
-		return this.getURI().compareTo(o.getURI());
 	}	
 }

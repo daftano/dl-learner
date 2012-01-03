@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2008, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,15 +15,12 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.utilities.owl;
 
 import org.coode.owlapi.manchesterowlsyntax.ManchesterOWLSyntaxEditorParser;
 import org.dllearner.core.owl.Description;
-import org.dllearner.kb.sparql.SparqlQueryDescriptionConvertVisitor;
-import org.dllearner.parser.ManchesterSyntaxParser;
-import org.dllearner.parser.ParseException;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.expression.ParserException;
 import org.semanticweb.owlapi.model.OWLClassExpression;
@@ -44,16 +41,9 @@ public class ManchesterOWLSyntaxParser {
 		return parser.parseClassExpression();
 	}
 	
-	public static Description getDescription(String manchesterSyntaxDescription) throws ParseException {
-//		OWLClassExpression d = getOWLAPIDescription(manchesterSyntaxDescription);
-//		return DLLearnerDescriptionConvertVisitor.getDLLearnerDescription(d);
-		return ManchesterSyntaxParser.parseClassExpression(manchesterSyntaxDescription);
+	public static Description getDescription(String manchesterSyntaxDescription) throws ParserException {
+		OWLClassExpression d = getOWLAPIDescription(manchesterSyntaxDescription);
+		return DLLearnerDescriptionConvertVisitor.getDLLearnerDescription(d);
 	}
-	
 
-//	public static void main(String args[]) throws ParserException {
-//		Description d = ManchesterOWLSyntaxParser.getDescription("hasP SOME A");
-//		SparqlQueryDescriptionConvertVisitor.getSparqlQuery(d, 10, false, false);
-//	}
-	
 }

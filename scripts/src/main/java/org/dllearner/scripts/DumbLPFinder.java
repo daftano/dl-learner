@@ -32,9 +32,10 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.SimpleLayout;
 import org.dllearner.algorithms.ocel.OCEL;
-import org.dllearner.core.AbstractKnowledgeSource;
-import org.dllearner.core.AbstractReasonerComponent;
 import org.dllearner.core.ComponentManager;
+import org.dllearner.core.KnowledgeSource;
+import org.dllearner.core.ReasonerComponent;
+import org.dllearner.core.configurators.ComponentFactory;
 import org.dllearner.core.owl.Individual;
 import org.dllearner.kb.sparql.SparqlKnowledgeSource;
 import org.dllearner.learningproblems.EvaluatedDescriptionPosNeg;
@@ -52,7 +53,7 @@ public class DumbLPFinder {
 
 	private static Logger logger = Logger.getRootLogger();
 
-	private static AbstractReasonerComponent reasoningService;
+	private static ReasonerComponent reasoningService;
 
 	private static String ontologyPath = "examples/semantic_bible/NTNcombined.owl";
 
@@ -217,30 +218,32 @@ public class DumbLPFinder {
 			instances.addAll(posExamples);
 			instances.addAll(negExamples);
 
-			SparqlKnowledgeSource ks = new SparqlKnowledgeSource();
-			ks.setUrl(URI.create("http://www.blabla.com").toURL());
-			ks.setInstances(SetManipulation.indToString(instances));
-			ks.setCloseAfterRecursion(true);
-			ks.setRecursionDepth(2);
-			ks.setPredefinedEndpoint("LOCALJOSEKIBIBLE");
-			ks.setUseLits(true);
+			SparqlKnowledgeSource ks = ComponentFactory
+					.getSparqlKnowledgeSource(URI.create(
+							"http://www.blabla.com").toURL(), SetManipulation
+							.indToString(instances));
 
-			Set<AbstractKnowledgeSource> tmp = new HashSet<AbstractKnowledgeSource>();
+			ks.getConfigurator().setCloseAfterRecursion(true);
+			ks.getConfigurator().setRecursionDepth(2);
+			ks.getConfigurator().setPredefinedEndpoint("LOCALJOSEKIBIBLE");
+			ks.getConfigurator().setUseLits(true);
+
+			Set<KnowledgeSource> tmp = new HashSet<KnowledgeSource>();
 			tmp.add(ks);
 			// reasoner
-			OWLAPIReasoner f = new OWLAPIReasoner(tmp);
+			OWLAPIReasoner f = ComponentFactory
+					.getOWLAPIReasoner(tmp);
 
 			// learning problem
-			PosNegLPStandard lp = new PosNegLPStandard();
-			lp.setReasoner(f);
-			lp.setPositiveExamples(posExamples);
-			lp.setNegativeExamples(negExamples);
-				
+			PosNegLPStandard lp = ComponentFactory.getPosNegLPStandard(f,
+					SetManipulation.indToString(posExamples), SetManipulation
+							.indToString(negExamples));
+
 			// learning algorithm
-			la = ComponentManager.getInstance().learningAlgorithm(OCEL.class, lp, f);;
-			la.setNoisePercentage(0.0);
-			la.setGuaranteeXgoodDescriptions(1);
-			la.setMaxExecutionTimeInSeconds(30);
+			la = ComponentFactory.getROLComponent2(lp, f);
+			la.getConfigurator().setNoisePercentage(0.0);
+			la.getConfigurator().setGuaranteeXgoodDescriptions(1);
+			la.getConfigurator().setMaxExecutionTimeInSeconds(30);
 			
 			ks.init();
 			f.init();	

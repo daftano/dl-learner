@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2008, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.core.owl;
 
 import java.util.Map;
@@ -67,13 +67,13 @@ public class TypedConstant extends Constant {
 	public String toManchesterSyntaxString(String baseURI, Map<String, String> prefixes) {
 		// implemented according to http://www.w3.org/TR/owl2-manchester-syntax/
 		// (not completely clear because "typedLiteral" and "integerLiteral" definitions there overlap, but hopefully correct)
-		if(datatype.equals(OWL2Datatype.INT.getDatatype()) || datatype.equals(OWL2Datatype.DOUBLE.getDatatype())) {
+		if(datatype.equals(Datatype.INT) || datatype.equals(Datatype.DOUBLE)) {
 			if(Double.valueOf(literal) >= 0) {
 				return "+" + literal;
 			} else {
 				return "-" + literal;
 			}
-		} else if(datatype.equals(OWL2Datatype.STRING.getDatatype())) {
+		} else if(datatype.equals(Datatype.STRING)) {
 			return "\"" + literal + "\"";
 		} else {
 			return "\"" + literal + "\"^^" + datatype.toManchesterSyntaxString(baseURI, prefixes);

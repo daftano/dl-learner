@@ -8,12 +8,11 @@ import org.dllearner.algorithms.celoe.CELOE;
 import org.dllearner.core.ComponentInitException;
 import org.dllearner.core.ComponentManager;
 import org.dllearner.core.EvaluatedDescription;
-import org.dllearner.core.AbstractKnowledgeSource;
-import org.dllearner.core.AbstractCELA;
-import org.dllearner.core.AbstractLearningProblem;
+import org.dllearner.core.KnowledgeSource;
+import org.dllearner.core.LearningAlgorithm;
+import org.dllearner.core.LearningProblem;
 import org.dllearner.core.owl.Description;
 import org.dllearner.core.owl.Individual;
-import org.dllearner.core.owl.NamedClass;
 import org.dllearner.kb.OWLAPIOntology;
 import org.dllearner.learningproblems.ClassLearningProblem;
 import org.dllearner.learningproblems.EvaluatedDescriptionClass;
@@ -53,10 +52,10 @@ public class Manager implements OWLModelManagerListener, OWLSelectionModelListen
 	private boolean reinitNecessary = true;
 	
 	private ComponentManager cm;
-	private AbstractLearningProblem lp;
-	private AbstractCELA la;
+	private LearningProblem lp;
+	private LearningAlgorithm la;
 	private ProtegeReasoner reasoner;
-	private AbstractKnowledgeSource ks;
+	private KnowledgeSource ks;
 	
 	private LearningType learningType;
 	private int maxExecutionTimeInSeconds;
@@ -108,8 +107,6 @@ public class Manager implements OWLModelManagerListener, OWLSelectionModelListen
 	}
 	
 	public void initLearningAlgorithm() throws Exception {
-		System.out.print("Initializing learning algorithm...");
-		long startTime = System.currentTimeMillis();
 		la = cm.learningAlgorithm(CELOE.class, lp, reasoner);
 		cm.applyConfigEntry(la, "useAllConstructor", useAllConstructor);
 		cm.applyConfigEntry(la, "useExistsConstructor", useExistsConstructor);
@@ -126,13 +123,10 @@ public class Manager implements OWLModelManagerListener, OWLSelectionModelListen
 				maxExecutionTimeInSeconds);
 
 		la.init();
-		System.out.println("done in " + (System.currentTimeMillis()-startTime) + "ms.");
 
 	}
 	
 	public void initLearningProblem() throws Exception {
-		System.out.print("Initializing learning problem...");
-		long startTime = System.currentTimeMillis();
 		lp = cm.learningProblem(ClassLearningProblem.class, reasoner);
 		cm.applyConfigEntry(lp, "classToDescribe", editorKit.getOWLWorkspace()
 				.getOWLSelectionModel().getLastSelectedClass().getIRI().toURI()
@@ -142,10 +136,9 @@ public class Manager implements OWLModelManagerListener, OWLSelectionModelListen
 		} else if (learningType == LearningType.SUPER) {
 			cm.applyConfigEntry(lp, "type", "superClass");
 		}
-		cm.applyConfigEntry(lp, "checkConsistency", false);
 
 		lp.init();
-		System.out.println("Done in " + (System.currentTimeMillis()-startTime) + "ms.");
+
 	}
 	
 	public void initKnowledgeSource() throws Exception{
@@ -154,20 +147,16 @@ public class Manager implements OWLModelManagerListener, OWLSelectionModelListen
 	}
 	
 	public void initReasoner() throws Exception{
-		System.out.print("Initializing reasoner...");
-		long startTime = System.currentTimeMillis();
 		reasoner = cm.reasoner(ProtegeReasoner.class, ks);
 		reasoner.setOWLReasoner(editorKit.getOWLModelManager().getReasoner());
 		reasoner.setProgressMonitor(progressMonitor);
 		reasoner.init();
-		System.out.println("Done in " + (System.currentTimeMillis()-startTime) + "ms.");
 	}
 	
 	public void initReasonerAsynchronously(){
 		reasoner = cm.reasoner(ProtegeReasoner.class, ks);
 		reasoner.setOWLReasoner(editorKit.getOWLModelManager().getReasoner());
 		reasoner.setProgressMonitor(progressMonitor);
-		
 		Thread t = new Thread(new Runnable() {
 			@Override
 			public void run() {
@@ -212,13 +201,10 @@ public class Manager implements OWLModelManagerListener, OWLSelectionModelListen
 	}
 	
 	public void startLearning(){
-		System.out.print("Started learning algorithm...");
 		la.start();
-		System.out.println("Done.");
 	}
 	
 	public void stopLearning(){
-		System.out.println("Stopped learning algorithm.");
 		la.stop();
 	}
 	

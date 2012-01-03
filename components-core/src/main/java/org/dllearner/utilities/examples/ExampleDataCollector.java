@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2008, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.utilities.examples;
 
 import java.io.File;
@@ -33,13 +33,12 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 import org.dllearner.algorithms.ocel.OCEL;
-import org.dllearner.core.AbstractKnowledgeSource;
-import org.dllearner.core.ComponentManager;
+import org.dllearner.core.KnowledgeSource;
+import org.dllearner.core.configurators.ComponentFactory;
 import org.dllearner.kb.OWLFile;
 import org.dllearner.learningproblems.PosNegLPStandard;
 import org.dllearner.reasoning.FastInstanceChecker;
 import org.dllearner.utilities.Files;
-import org.dllearner.utilities.Helper;
 import org.dllearner.utilities.URLencodeUTF8;
 
 /**
@@ -73,28 +72,25 @@ public class ExampleDataCollector {
 		urls.addAll (convert(baseDir, pos));
 		urls.addAll (convert(baseDir, neg));
 		
-		Set<AbstractKnowledgeSource> tmp = new HashSet<AbstractKnowledgeSource>();
+		Set<KnowledgeSource> tmp = new HashSet<KnowledgeSource>();
 		try {
 			URL add = new File(baseDir+"tiger.rdf").toURI().toURL();
 //			 add = new File(baseDir+"new.rdf").toURI().toURL();
 			urls.add(add);
 			
 			for(URL u: urls){
-				OWLFile ks = new OWLFile();
-				ks.setUrl(u);
+				OWLFile ks = ComponentFactory.getOWLFile(u);
 				tmp.add(ks);
 			}
 			
-			FastInstanceChecker rc = new FastInstanceChecker(tmp);
-			PosNegLPStandard lp = new PosNegLPStandard(rc);
-			lp.setPositiveExamples(Helper.getIndividualSet(pos));
-			lp.setNegativeExamples(Helper.getIndividualSet(neg));
-			OCEL la = ComponentManager.getInstance().learningAlgorithm(OCEL.class, lp, rc);
+			FastInstanceChecker rc = ComponentFactory.getFastInstanceChecker(tmp);
+			PosNegLPStandard lp = ComponentFactory.getPosNegLPStandard(rc, pos, neg);
+			OCEL la = ComponentFactory.getROLComponent2(lp, rc);
 //			la.getConfigurator().setUseNegation(false);
 //			la.getConfigurator().setUseAllConstructor(false);
 //			la.getConfigurator().setUseExistsConstructor(false);
-			la.setUseDataHasValueConstructor(true);
-			for(AbstractKnowledgeSource ks: tmp){
+			la.getConfigurator().setUseDataHasValueConstructor(true);
+			for(KnowledgeSource ks: tmp){
 				ks.init();
 			}
 			rc.init();

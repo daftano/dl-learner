@@ -30,8 +30,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
-import java.util.SortedMap;
-import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.apache.log4j.ConsoleAppender;
@@ -39,14 +37,10 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.SimpleLayout;
 import org.dllearner.algorithms.gp.GP;
-import org.dllearner.cli.CLI;
 import org.dllearner.cli.QuickStart;
 import org.dllearner.cli.Start;
-import org.dllearner.core.AbstractCELA;
-import org.dllearner.core.ClassExpressionLearningAlgorithm;
 import org.dllearner.core.ComponentInitException;
 import org.dllearner.core.ComponentManager;
-import org.dllearner.core.LearningAlgorithm;
 import org.dllearner.kb.sparql.SparqlKnowledgeSource;
 import org.dllearner.utilities.Helper;
 import org.junit.Test;
@@ -74,7 +68,7 @@ public class ExampleTests {
 		// if true, then examples are executed in random order (avoids the problem
 		// that the same examples are tested first on several runs); otherwise
 		// it runs the examples in alphabetical order
-		boolean randomize = false;
+		boolean randomize = true;
 		
 		// GPs can be excluded temporarily (because those tests are very time-consuming)
 		boolean testGP = false;
@@ -92,8 +86,8 @@ public class ExampleTests {
 		logger.setLevel(Level.WARN);
 
 		// map containing a list of conf files for each path
-		Map<String, ArrayList<String>> confFiles = new TreeMap<String, ArrayList<String>>();
-		String exampleDir = ".." + File.separator + "examples";
+		HashMap<String, ArrayList<String>> confFiles = new HashMap<String, ArrayList<String>>();
+		String exampleDir = "." + File.separator + "examples";
 		File f = new File(exampleDir);
 		QuickStart.getAllConfs(f, exampleDir, confFiles);
 
@@ -161,22 +155,16 @@ public class ExampleTests {
 				boolean success = false, started = false;
 				try {
 					// start example
-					CLI start = new CLI(new File(conf));
-					start.init();
-					start.run();
+					Start start = new Start(new File(conf));
 //					System.out.println("algorithm: " + start.getLearningAlgorithm());
-					boolean isSparql = start.getKnowledgeSource() instanceof SparqlKnowledgeSource;
-//					boolean isSparql = false;
-					LearningAlgorithm algorithm = start.getLearningAlgorithm();
-					if((testGP || !(algorithm instanceof GP)) &&
+					boolean isSparql = start.getSources().iterator().next() instanceof SparqlKnowledgeSource;
+					if((testGP || !(start.getLearningAlgorithm() instanceof GP)) &&
 							(sparql == 0 || (sparql == 1 &&  isSparql) || (sparql == 2 && !isSparql) ) ) {
 						started = true;
-//						start.start(false);
+						start.start(false);
 						// test is successful if a concept was learned
-						if(algorithm instanceof AbstractCELA){
-							assert (((AbstractCELA) algorithm).getCurrentlyBestDescription() != null);
-						}
-//						start.getReasonerComponent().releaseKB();
+						assert (start.getLearningAlgorithm().getCurrentlyBestDescription() != null);
+						start.getReasonerComponent().releaseKB();
 						success = true;						
 					} else {
 						System.out.println("Test skipped, because of GP or SPARQL settings.");

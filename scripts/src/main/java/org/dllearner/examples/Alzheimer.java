@@ -766,7 +766,7 @@ public class Alzheimer {
 				content.append("-\"" + getIndividual(key) + "\"\n");
 			}
 		}
-		Files.appendToFile(file, content.toString());
+		Files.appendFile(file, content.toString());
 	}
 
 	private static void generateConfFile(File file) {
@@ -778,7 +778,7 @@ public class Alzheimer {
 		confHeader += "refexamples.writeSearchTree = false;\n";
 		confHeader += "refexamples.searchTreeFile = \"log/alzheimer/searchTree.log\";\n";
 		confHeader += "\n";
-		Files.appendToFile(file, confHeader);
+		Files.appendFile(file, confHeader);
 	}
 
 	// returns URI including quotationsmark (need for KBparser)

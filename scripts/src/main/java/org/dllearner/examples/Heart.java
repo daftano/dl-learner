@@ -31,14 +31,14 @@ import org.semanticweb.owlapi.model.IRI;
 public class Heart {
 
 	private static IRI ontologyIRI = IRI.create("http://dl-learner.org/heart");
-	private static final String fileName = "../test/heart/files/heart.dat";
+	private static final String fileName = "test/heart/files/heart.dat";
 	private static HashMap<String, Integer> patients = new HashMap<String, Integer>();
 	private static List<Axiom> axioms = new LinkedList<Axiom>();
 	private static Set<String> thals = new TreeSet<String>();
 
 	public static void main(String agrs[]) throws FileNotFoundException, ParseException {
 		Scanner input = new Scanner(new File(fileName), "UTF-8");
-		File owlFile = new File("../test/heart/heart.owl");
+		File owlFile = new File("test/heart/heart.owl");
 		long startTime, duration;
 		String time;
 		mapThalValues();
@@ -130,7 +130,7 @@ public class Heart {
 
 		// generating second conf file
 		System.out.print("Generating  conf file ... ");
-		File confTrainFile = new File("../test/heart/train.conf");
+		File confTrainFile = new File("test/heart/train.conf");
 		Files.clearFile(confTrainFile);
 		generateConfFile(confTrainFile);
 		generateExamples(confTrainFile);
@@ -307,7 +307,7 @@ public class Heart {
 		confHeader += "refexamples.writeSearchTree = false;\n";
 		confHeader += "refexamples.searchTreeFile = \"log/heart/searchTree.log\";\n";
 		confHeader += "\n";
-		Files.appendToFile(file, confHeader);
+		Files.appendFile(file, confHeader);
 	}
 
 	private static void generateExamples(File file) {
@@ -321,7 +321,7 @@ public class Heart {
 				content.append("-\"" + getIndividual(key) + "\"\n");
 			}
 		}
-		Files.appendToFile(file, content.toString());
+		Files.appendFile(file, content.toString());
 	}
 
 	private static String getURI(String name) {

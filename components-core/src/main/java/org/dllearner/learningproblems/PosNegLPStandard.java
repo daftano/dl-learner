@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.learningproblems;
 
 import java.util.Collection;
@@ -26,19 +26,17 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import org.dllearner.core.AbstractReasonerComponent;
-import org.dllearner.core.ComponentAnn;
-import org.dllearner.core.ComponentInitException;
 import org.dllearner.core.EvaluatedDescription;
-import org.dllearner.core.config.ConfigOption;
+import org.dllearner.core.ReasonerComponent;
+import org.dllearner.core.configurators.PosNegLPStandardConfigurator;
 import org.dllearner.core.options.BooleanConfigOption;
+import org.dllearner.core.options.ConfigOption;
 import org.dllearner.core.options.DoubleConfigOption;
 import org.dllearner.core.options.StringConfigOption;
 import org.dllearner.core.owl.Description;
 import org.dllearner.core.owl.Individual;
 import org.dllearner.learningproblems.Heuristics.HeuristicType;
 import org.dllearner.utilities.Helper;
-import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 
 /**
  * The aim of this learning problem is to learn a concept definition such that
@@ -53,81 +51,65 @@ import org.springframework.beans.propertyeditors.StringTrimmerEditor;
  * @author Jens Lehmann
  * 
  */
-@ComponentAnn(name = "PosNegLPStandard", shortName = "posNegStandard", version = 0.8)
 public class PosNegLPStandard extends PosNegLP {
 	
-
 	// approximation and F-measure
 	// (taken from class learning => super class instances corresponds to negative examples
 	// and class instances to positive examples)
-    @ConfigOption(name = "approxDelta", description = "The Approximate Delta", defaultValue = "0.05", required = false)
 	private double approxDelta = 0.05;
-    
-    @ConfigOption(name = "useApproximations", description = "Use Approximations", defaultValue = "false", required = false)
 	private boolean useApproximations;
-    
-    @ConfigOption(name = "accuracyMethod", description = "Specifies, which method/function to use for computing accuracy.",defaultValue = "predacc", propertyEditorClass = StringTrimmerEditor.class)
-    private String accuracyMethod = "predacc";
+//	private boolean useFMeasure;
+    private String accuracyMethod = "standard";
 
-//	private boolean useFMeasure;	
-	private boolean useOldDIGOptions = false;
-	
 	private HeuristicType heuristic = HeuristicType.PRED_ACC;
-	
 
-	public PosNegLPStandard() {
+	@Override
+	public PosNegLPStandardConfigurator getConfigurator() {
+		throw new RuntimeException("Don't use configurator - use dependency injection");
 	}
 
-    public PosNegLPStandard(AbstractReasonerComponent reasoningService){
-        super(reasoningService);
-    }
+	public PosNegLPStandard(ReasonerComponent reasoningService) {
+		super(reasoningService);
+		this.configurator = new PosNegLPStandardConfigurator(this);
+	}
 
-	public PosNegLPStandard(AbstractReasonerComponent reasoningService, SortedSet<Individual> positiveExamples, SortedSet<Individual> negativeExamples) {
-		this.setReasoner(reasoningService);
+	public PosNegLPStandard(ReasonerComponent reasoningService, SortedSet<Individual> positiveExamples, SortedSet<Individual> negativeExamples) {
+		super(reasoningService);
 		this.positiveExamples = positiveExamples;
 		this.negativeExamples = negativeExamples;
+		this.configurator = new PosNegLPStandardConfigurator(this);
 	}
-
-	public static Collection<org.dllearner.core.options.ConfigOption<?>> createConfigOptions() {
-		Collection<org.dllearner.core.options.ConfigOption<?>> options = new LinkedList<org.dllearner.core.options.ConfigOption<?>>(PosNegLP.createConfigOptions());
-		BooleanConfigOption approx = new BooleanConfigOption("useApproximations", "whether to use stochastic approximations for computing accuracy", false);
-		options.add(approx);
-		DoubleConfigOption approxAccuracy = new DoubleConfigOption("approxAccuracy", "accuracy of the approximation (only for expert use)", 0.05);
-		options.add(approxAccuracy);
-		StringConfigOption accMethod = new StringConfigOption("accuracyMethod", "Specifies, which method/function to use for computing accuracy.","predacc"); //  or domain/range of a property.
-		accMethod.setAllowedValues(new String[] {"fmeasure", "predacc"});
-		options.add(accMethod);		
-		return options;
-	}	
 	
 	@Override
-	public void init() throws ComponentInitException {
+	public void init() {
 		super.init();
+        useApproximations = isUseApproximations();
+		approxDelta = getApproxAccuracy();
 
-		String accM = getAccuracyMethod();
+        String accM = getAccuracyMethod();
 		if(accM.equals("standard")) {
-			heuristic = HeuristicType.AMEASURE;
+			setHeuristic(HeuristicType.AMEASURE);
 		} else if(accM.equals("fmeasure")) {
-			heuristic = HeuristicType.FMEASURE;
+			setHeuristic(HeuristicType.FMEASURE);
 		} else if(accM.equals("generalised_fmeasure")) {
-			heuristic = HeuristicType.GEN_FMEASURE;
+			setHeuristic(HeuristicType.GEN_FMEASURE);
 		} else if(accM.equals("jaccard")) {
-			heuristic = HeuristicType.JACCARD;
+			setHeuristic(HeuristicType.JACCARD);
 		} else if(accM.equals("pred_acc")) {
-			heuristic = HeuristicType.PRED_ACC;
+			setHeuristic(HeuristicType.PRED_ACC);
 		}
-		
+
 //		useFMeasure = configurator.getAccuracyMethod().equals("fmeasure");
-		
+
 //		if((!useApproximations && useFMeasure) || (useApproximations && !useFMeasure)) {
 //			System.err.println("Currently F measure can only be used in combination with approximated reasoning.");
 //			System.exit(0);
 //		}
-		
-		if(useApproximations && heuristic.equals(HeuristicType.PRED_ACC)) {
+
+		if(useApproximations && getHeuristic().equals(HeuristicType.PRED_ACC)) {
 			System.err.println("Approximating predictive accuracy is an experimental feature. USE IT AT YOUR OWN RISK. If you consider to use it for anything serious, please extend the unit tests at org.dllearner.test.junit.HeuristicTests first and verify that it works.");
 		}
-		
+
 	}
 	
 	/*
@@ -138,7 +120,19 @@ public class PosNegLPStandard extends PosNegLP {
 	public static String getName() {
 		return "pos neg learning problem";
 	}
-
+	
+	public static Collection<ConfigOption<?>> createConfigOptions() {
+		Collection<ConfigOption<?>> options = new LinkedList<ConfigOption<?>>(PosNegLP.createConfigOptions());
+		BooleanConfigOption approx = new BooleanConfigOption("useApproximations", "whether to use stochastic approximations for computing accuracy", false);
+		options.add(approx);
+		DoubleConfigOption approxAccuracy = new DoubleConfigOption("approxAccuracy", "accuracy of the approximation (only for expert use)", 0.05);
+		options.add(approxAccuracy);
+		StringConfigOption accMethod = new StringConfigOption("accuracyMethod", "Specifies, which method/function to use for computing accuracy.","predacc"); //  or domain/range of a property.
+		accMethod.setAllowedValues(new String[] {"fmeasure", "predacc"});
+		options.add(accMethod);		
+		return options;
+	}
+	
 	/**
 	 * This method computes (using the reasoner) whether a concept is too weak.
 	 * If it is not weak, it returns the number of covered negative examples. It
@@ -154,10 +148,10 @@ public class PosNegLPStandard extends PosNegLP {
 	 */
 	@Override
 	public int coveredNegativeExamplesOrTooWeak(Description concept) {
-		
-		if (isUseRetrievalForClassification()) {
-			SortedSet<Individual> posClassified = getReasoner().getIndividuals(concept);
-			Set<Individual> negAsPos = Helper.intersection(negativeExamples, posClassified);
+
+		if (useRetrievalForClassification) {
+			SortedSet<Individual> posClassified = reasoner.getIndividuals(concept);
+			SortedSet<Individual> negAsPos = Helper.intersection(negativeExamples, posClassified);
 			SortedSet<Individual> posAsNeg = new TreeSet<Individual>();
 
 			// the set is constructed piecewise to avoid expensive set
@@ -175,21 +169,21 @@ public class PosNegLPStandard extends PosNegLP {
 			else
 				return negAsPos.size();
 		} else {
-			if (getUseMultiInstanceChecks() != UseMultiInstanceChecks.NEVER) {
+			if (useMultiInstanceChecks != UseMultiInstanceChecks.NEVER) {
 				// two checks
-				if (getUseMultiInstanceChecks() == UseMultiInstanceChecks.TWOCHECKS) {
-					Set<Individual> s = getReasoner().hasType(concept, positiveExamples);
+				if (useMultiInstanceChecks == UseMultiInstanceChecks.TWOCHECKS) {
+					Set<Individual> s = reasoner.hasType(concept, positiveExamples);
 					// if the concept is too weak, then do not query negative
 					// examples
 					if (s.size() != positiveExamples.size())
 						return -1;
 					else {
-						s = getReasoner().hasType(concept, negativeExamples);
+						s = reasoner.hasType(concept, negativeExamples);
 						return s.size();
 					}
 					// one check
 				} else {
-					Set<Individual> s = getReasoner().hasType(concept, allExamples);
+					Set<Individual> s = reasoner.hasType(concept, allExamples);
 					// test whether all positive examples are covered
 					if (s.containsAll(positiveExamples))
 						return s.size() - positiveExamples.size();
@@ -201,12 +195,12 @@ public class PosNegLPStandard extends PosNegLP {
 				SortedSet<Individual> negAsPos = new TreeSet<Individual>();
 
 				for (Individual example : positiveExamples) {
-					if (!getReasoner().hasType(concept, example))
+					if (!reasoner.hasType(concept, example))
 						return -1;
 					// posAsNeg.add(example);
 				}
 				for (Individual example : negativeExamples) {
-					if (getReasoner().hasType(concept, example))
+					if (reasoner.hasType(concept, example))
 						negAsPos.add(example);
 				}
 
@@ -223,9 +217,6 @@ public class PosNegLPStandard extends PosNegLP {
 	 * to implement TWO_CHECKS in this function, because we have to test all
 	 * examples to create a score object anyway).
 	 * 
-	 * NOTE: The options above are no longer supported, because of interface changes (the options
-	 * are more or less only relevant in combination with DIG).
-	 * 
 	 * @see org.dllearner.learningproblems.PosNegLP.UseMultiInstanceChecks
 	 * @param concept
 	 *            The concept to test.
@@ -233,92 +224,63 @@ public class PosNegLPStandard extends PosNegLP {
 	 */
 	@Override
 	public ScorePosNeg computeScore(Description concept) {
-		if(useOldDIGOptions) {
-			if (isUseRetrievalForClassification()) {
-				SortedSet<Individual> posClassified = getReasoner().getIndividuals(concept);
-				Set<Individual> posAsPos = Helper.intersection(positiveExamples, posClassified);
-				Set<Individual> negAsPos = Helper.intersection(negativeExamples, posClassified);
-				SortedSet<Individual> posAsNeg = new TreeSet<Individual>();
+		if (useRetrievalForClassification) {
+			SortedSet<Individual> posClassified = reasoner.getIndividuals(concept);
+			SortedSet<Individual> posAsPos = Helper.intersection(positiveExamples, posClassified);
+			SortedSet<Individual> negAsPos = Helper.intersection(negativeExamples, posClassified);
+			SortedSet<Individual> posAsNeg = new TreeSet<Individual>();
 
-				// piecewise set construction
-				for (Individual posExample : positiveExamples) {
-					if (!posClassified.contains(posExample))
-						posAsNeg.add(posExample);
-				}
-				SortedSet<Individual> negAsNeg = new TreeSet<Individual>();
-				for (Individual negExample : negativeExamples) {
-					if (!posClassified.contains(negExample))
-						negAsNeg.add(negExample);
-				}
-				return new ScoreTwoValued(concept.getLength(), getPercentPerLengthUnit(), posAsPos, posAsNeg, negAsPos, negAsNeg);
-			// instance checks for classification
-			} else {		
-				Set<Individual> posAsPos = new TreeSet<Individual>();
-				Set<Individual> posAsNeg = new TreeSet<Individual>();
-				Set<Individual> negAsPos = new TreeSet<Individual>();
-				Set<Individual> negAsNeg = new TreeSet<Individual>();
-				
-				if (getUseMultiInstanceChecks() != UseMultiInstanceChecks.NEVER) {
-					SortedSet<Individual> posClassified = getReasoner().hasType(concept,
-                            allExamples);
-					Set<Individual> negClassified = Helper.difference(allExamples,
-							posClassified);
-					posAsPos = Helper.intersection(positiveExamples, posClassified);
-					posAsNeg = Helper.intersection(positiveExamples, negClassified);
-					negAsPos = Helper.intersection(negativeExamples, posClassified);
-					negAsNeg = Helper.intersection(negativeExamples, negClassified);
-					
-					// System.out.println("pos classified: " + posClassified);
-					
-					return new ScoreTwoValued(concept.getLength(), getPercentPerLengthUnit(), posAsPos, posAsNeg, negAsPos,
-							negAsNeg);
-				} else {
-					
-					for (Individual example : positiveExamples) {
-						if (getReasoner().hasType(concept, example)) {
-							posAsPos.add(example);
-						} else {
-							posAsNeg.add(example);
-						}
-					}
-					for (Individual example : negativeExamples) {
-						if (getReasoner().hasType(concept, example))
-							negAsPos.add(example);
-						else
-							negAsNeg.add(example);
-					}
-					return new ScoreTwoValued(concept.getLength(), getPercentPerLengthUnit(), posAsPos, posAsNeg, negAsPos,
-							negAsNeg);
-				}
+			// piecewise set construction
+			for (Individual posExample : positiveExamples) {
+				if (!posClassified.contains(posExample))
+					posAsNeg.add(posExample);
 			}
-		} else {
-			
+			SortedSet<Individual> negAsNeg = new TreeSet<Individual>();
+			for (Individual negExample : negativeExamples) {
+				if (!posClassified.contains(negExample))
+					negAsNeg.add(negExample);
+			}
+			return new ScoreTwoValued(concept.getLength(), percentPerLengthUnit, posAsPos, posAsNeg, negAsPos, negAsNeg);
+		// instance checks for classification
+		} else {		
 			SortedSet<Individual> posAsPos = new TreeSet<Individual>();
 			SortedSet<Individual> posAsNeg = new TreeSet<Individual>();
 			SortedSet<Individual> negAsPos = new TreeSet<Individual>();
 			SortedSet<Individual> negAsNeg = new TreeSet<Individual>();
 			
-			for (Individual example : positiveExamples) {
-				if (getReasoner().hasType(concept, example)) {
-					posAsPos.add(example);
-				} else {
-					posAsNeg.add(example);
+			if (useMultiInstanceChecks != UseMultiInstanceChecks.NEVER) {
+				SortedSet<Individual> posClassified = reasoner.hasType(concept,
+						allExamples);
+				SortedSet<Individual> negClassified = Helper.difference(allExamples,
+						posClassified);
+				posAsPos = Helper.intersection(positiveExamples, posClassified);
+				posAsNeg = Helper.intersection(positiveExamples, negClassified);
+				negAsPos = Helper.intersection(negativeExamples, posClassified);
+				negAsNeg = Helper.intersection(negativeExamples, negClassified);
+				
+				// System.out.println("pos classified: " + posClassified);
+				
+				return new ScoreTwoValued(concept.getLength(), percentPerLengthUnit, posAsPos, posAsNeg, negAsPos,
+						negAsNeg);
+			} else {
+				
+				for (Individual example : positiveExamples) {
+					if (reasoner.hasType(concept, example)) {
+						posAsPos.add(example);
+					} else {
+						posAsNeg.add(example);
+					}
 				}
+				for (Individual example : negativeExamples) {
+					if (reasoner.hasType(concept, example))
+						negAsPos.add(example);
+					else
+						negAsNeg.add(example);
+				}
+				return new ScoreTwoValued(concept.getLength(), percentPerLengthUnit, posAsPos, posAsNeg, negAsPos,
+						negAsNeg);
 			}
-			for (Individual example : negativeExamples) {
-				if (getReasoner().hasType(concept, example))
-					negAsPos.add(example);
-				else
-					negAsNeg.add(example);
-			}
-			
-			// TODO: this computes accuracy twice - more elegant method should be implemented 
-			double accuracy = getAccuracyOrTooWeakExact(concept,1);
-			
-			return new ScoreTwoValued(concept.getLength(), getPercentPerLengthUnit(), posAsPos, posAsNeg, negAsPos,
-						negAsNeg, accuracy);
 		}
-
 	}
 
 	/* (non-Javadoc)
@@ -326,9 +288,9 @@ public class PosNegLPStandard extends PosNegLP {
 	 */
 	@Override
 	public double getAccuracy(Description description) {
-		// a noise value of 1.0 means that we never return too weak (-1.0) 
-		return getAccuracyOrTooWeak(description, 1.0);		
-		/*				
+		// a noise value of 1.0 means that we never return too weak (-1.0)
+		return getAccuracyOrTooWeak(description, 1.0);
+		/*
 		int coveredPos = 0;
 		int coveredNeg = 0;
 		
@@ -348,79 +310,88 @@ public class PosNegLPStandard extends PosNegLP {
 	}
 
 	@Override
-	public double getAccuracyOrTooWeak(Description description, double noise) {	
+	public double getAccuracyOrTooWeak(Description description, double noise) {
 		// delegates to the appropriate methods
-		return useApproximations ? getAccuracyOrTooWeakApprox(description, noise) : getAccuracyOrTooWeakExact(description, noise);				
-	}	
+		return useApproximations ? getAccuracyOrTooWeakApprox(description, noise) : getAccuracyOrTooWeakExact(description, noise);
+		/*
+		if(useApproximations) {
+			if(useFMeasure) {
+				return getFMeasureOrTooWeakApprox(description, noise);
+			} else {
+				throw new Error("approximating pred. acc not implemented");
+			}
+		} else {
+			return getPredAccuracyOrTooWeakExact(description, noise);
+		}
+		*/
+	}
 	
 	public double getAccuracyOrTooWeakApprox(Description description, double noise) {
-		if(heuristic.equals(HeuristicType.PRED_ACC)) {
+		if(getHeuristic().equals(HeuristicType.PRED_ACC)) {
 			int maxNotCovered = (int) Math.ceil(noise*positiveExamples.size());
-			
+
 			int notCoveredPos = 0;
 //			int notCoveredNeg = 0;
-			
+
 			int posClassifiedAsPos = 0;
 			int negClassifiedAsNeg = 0;
-			
+
 			int nrOfPosChecks = 0;
 			int nrOfNegChecks = 0;
-			
+
 			// special case: we test positive and negative examples in turn
 			Iterator<Individual> itPos = positiveExamples.iterator();
 			Iterator<Individual> itNeg = negativeExamples.iterator();
-			
+
 			do {
 				// in each loop we pick 0 or 1 positives and 0 or 1 negative
 				// and classify it
-				
+
 				if(itPos.hasNext()) {
 					Individual posExample = itPos.next();
 //					System.out.println(posExample);
-					
-					if(getReasoner().hasType(description, posExample)) {
+
+					if(reasoner.hasType(description, posExample)) {
 						posClassifiedAsPos++;
 					} else {
 						notCoveredPos++;
 					}
 					nrOfPosChecks++;
-					
+
 					// take noise into account
 					if(notCoveredPos > maxNotCovered) {
 						return -1;
 					}
 				}
-				
+
 				if(itNeg.hasNext()) {
 					Individual negExample = itNeg.next();
-					if(!getReasoner().hasType(description, negExample)) {
+					if(!reasoner.hasType(description, negExample)) {
 						negClassifiedAsNeg++;
 					}
 					nrOfNegChecks++;
 				}
-			
+
 				// compute how accurate our current approximation is and return if it is sufficiently accurate
 				double approx[] = Heuristics.getPredAccApproximation(positiveExamples.size(), negativeExamples.size(), 1, nrOfPosChecks, posClassifiedAsPos, nrOfNegChecks, negClassifiedAsNeg);
 				if(approx[1]<approxDelta) {
 //					System.out.println(approx[0]);
 					return approx[0];
 				}
-				
+
 			} while(itPos.hasNext() || itNeg.hasNext());
-			
+
 			double ret = Heuristics.getPredictiveAccuracy(positiveExamples.size(), negativeExamples.size(), posClassifiedAsPos, negClassifiedAsNeg, 1);
 			return ret;
-					
-		} else if(heuristic.equals(HeuristicType.FMEASURE)) {
-//			System.out.println("Testing " + description);
-			
+
+		} else if(getHeuristic().equals(HeuristicType.FMEASURE)) {
 			// we abort when there are too many uncovered positives
 			int maxNotCovered = (int) Math.ceil(noise*positiveExamples.size());
 			int instancesCovered = 0;
 			int instancesNotCovered = 0;
-			
+
 			for(Individual ind : positiveExamples) {
-				if(getReasoner().hasType(description, ind)) {
+				if(reasoner.hasType(description, ind)) {
 					instancesCovered++;
 				} else {
 					instancesNotCovered ++;
@@ -428,45 +399,43 @@ public class PosNegLPStandard extends PosNegLP {
 						return -1;
 					}
 				}
-			}	
-			
+			}
+
 			double recall = instancesCovered/(double)positiveExamples.size();
-			
+
 			int testsPerformed = 0;
 			int instancesDescription = 0;
-			
+
 			for(Individual ind : negativeExamples) {
 
-				if(getReasoner().hasType(description, ind)) {
+				if(reasoner.hasType(description, ind)) {
 					instancesDescription++;
 				}
 				testsPerformed++;
-				
+
 				// check whether approximation is sufficiently accurate
 				double[] approx = Heuristics.getFScoreApproximation(instancesCovered, recall, 1, negativeExamples.size(), testsPerformed, instancesDescription);
 				if(approx[1]<approxDelta) {
 					return approx[0];
 				}
-				
-			}		
-			
+
+			}
+
 			// standard computation (no approximation)
 			double precision = instancesCovered/(double)(instancesDescription+instancesCovered);
 //			if(instancesCovered + instancesDescription == 0) {
 //				precision = 0;
 //			}
-			return Heuristics.getFScore(recall, precision, 1);			
+			return Heuristics.getFScore(recall, precision, 1);
 		} else {
-			throw new Error("Approximation for " + heuristic + " not implemented.");
+			throw new Error("Approximation for " + getHeuristic() + " not implemented.");
 		}
 	}
-	
+
 	public double getAccuracyOrTooWeakExact(Description description, double noise) {
-		if(heuristic.equals(HeuristicType.PRED_ACC)) {
+		if(getHeuristic().equals(HeuristicType.PRED_ACC)) {
 			return getPredAccuracyOrTooWeakExact(description, noise);
-		} else if(heuristic.equals(HeuristicType.FMEASURE)) {
-			return getFMeasureOrTooWeakExact(description, noise);
-			/*
+		} else if(getHeuristic().equals(HeuristicType.FMEASURE)) {
 			// computing R(C) restricted to relevant instances
 			int additionalInstances = 0;
 			for(Individual ind : negativeExamples) {
@@ -474,7 +443,7 @@ public class PosNegLPStandard extends PosNegLP {
 					additionalInstances++;
 				}
 			}
-			
+
 			// computing R(A)
 			int coveredInstances = 0;
 			for(Individual ind : positiveExamples) {
@@ -482,55 +451,39 @@ public class PosNegLPStandard extends PosNegLP {
 					coveredInstances++;
 				}
 			}
-			
+
 			double recall = coveredInstances/(double)positiveExamples.size();
-			double precision = (additionalInstances + coveredInstances == 0) ? 0 : coveredInstances / (double) (coveredInstances + additionalInstances);			
-			
+			double precision = (additionalInstances + coveredInstances == 0) ? 0 : coveredInstances / (double) (coveredInstances + additionalInstances);
+
 			return Heuristics.getFScore(recall, precision);
-			*/
 		} else {
-			throw new Error("Heuristic " + heuristic + " not implemented.");
-		}		
+			throw new Error("Heuristic " + getHeuristic() + " not implemented.");
+		}
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see org.dllearner.core.LearningProblem#getAccuracyOrTooWeak(org.dllearner.core.owl.Description, double)
 	 */
 	public double getPredAccuracyOrTooWeakExact(Description description, double noise) {
-		// TODO: what we essentially need here is that if the noise justifies 
-		// not covering 1.23 examples, then we stop with 2 examples not covered;
-		// but when noise justifies not covering exactly 2 examples, we can actually
-		// only stop with 3 examples; so we would have to add 1 for exact matches
-		// which is not done yet
-		int maxNotCovered = (int) Math.ceil(noise*positiveExamples.size());
-		// maybe use this approach:
-//		int maxNotCovered = (int) Math.ceil(noise*positiveExamples.size()+0.0001);
 		
-//		System.out.println("noise: " + noise);
-//		System.out.println("max not covered: " + maxNotCovered);
+		int maxNotCovered = (int) Math.ceil(noise*positiveExamples.size());
 		
 		int notCoveredPos = 0;
 		int notCoveredNeg = 0;
 		
 		for (Individual example : positiveExamples) {
-			if (!getReasoner().hasType(description, example)) {
+			if (!reasoner.hasType(description, example)) {
 				notCoveredPos++;
-				
-//				System.out.println("d:" + description + "; ex:" + example);
-				
 				if(notCoveredPos >= maxNotCovered) {
 					return -1;
 				}
 			} 
 		}
 		for (Individual example : negativeExamples) {
-			if (!getReasoner().hasType(description, example)) {
+			if (!reasoner.hasType(description, example)) {
 				notCoveredNeg++;
 			}
 		}
-		
-//		System.out.println("not covered pos: " + notCoveredPos);
-//		System.out.println("not covered neg: " + notCoveredNeg);
 		
 //		if(useFMeasure) {
 //			double recall = (positiveExamples.size() - notCoveredPos) / (double) positiveExamples.size();
@@ -544,14 +497,14 @@ public class PosNegLPStandard extends PosNegLP {
 	public double getFMeasureOrTooWeakExact(Description description, double noise) {
 		int additionalInstances = 0;
 		for(Individual ind : negativeExamples) {
-			if(getReasoner().hasType(description, ind)) {
+			if(reasoner.hasType(description, ind)) {
 				additionalInstances++;
 			}
 		}
 		
 		int coveredInstances = 0;
 		for(Individual ind : positiveExamples) {
-			if(getReasoner().hasType(description, ind)) {
+			if(reasoner.hasType(description, ind)) {
 				coveredInstances++;
 			}
 		}
@@ -564,8 +517,7 @@ public class PosNegLPStandard extends PosNegLP {
 		
 		double precision = (additionalInstances + coveredInstances == 0) ? 0 : coveredInstances / (double) (coveredInstances + additionalInstances);
 		
-//		return getFMeasure(recall, precision);
-		return Heuristics.getFScore(recall, precision);		
+		return getFMeasure(recall, precision);		
 	}
 	
 	// instead of using the standard operation, we use optimisation
@@ -586,7 +538,7 @@ public class PosNegLPStandard extends PosNegLP {
 		int upperEstimateA = positiveExamples.size();
 		
 		for(Individual ind : positiveExamples) {
-			if(getReasoner().hasType(description, ind)) {
+			if(reasoner.hasType(description, ind)) {
 				instancesCovered++;
 			} else {
 				instancesNotCovered ++;
@@ -649,7 +601,7 @@ public class PosNegLPStandard extends PosNegLP {
 		
 		for(Individual ind : negativeExamples) {
 
-			if(getReasoner().hasType(description, ind)) {
+			if(reasoner.hasType(description, ind)) {
 				instancesDescription++;
 			}
 			
@@ -707,12 +659,15 @@ public class PosNegLPStandard extends PosNegLP {
 		return 2 * precision * recall / (precision + recall);
 	}
 
-    public double getApproxDelta() {
+
+    /** Begin ISS CODE */
+
+    public double getApproxAccuracy() {
         return approxDelta;
     }
 
-    public void setApproxDelta(double approxDelta) {
-        this.approxDelta = approxDelta;
+    public void setApproxAccuracy(double approx) {
+        this.approxDelta = approx;
     }
 
     public boolean isUseApproximations() {
@@ -723,6 +678,15 @@ public class PosNegLPStandard extends PosNegLP {
         this.useApproximations = useApproximations;
     }
 
+    public HeuristicType getHeuristic() {
+        return heuristic;
+    }
+
+    public void setHeuristic(HeuristicType heuristic) {
+        this.heuristic = heuristic;
+    }
+
+    /** TODO set this outside of here */
     public String getAccuracyMethod() {
         return accuracyMethod;
     }

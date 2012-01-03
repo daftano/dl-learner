@@ -28,14 +28,14 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.dllearner.cli.Start;
-import org.dllearner.core.AbstractComponent;
+import org.dllearner.core.Component;
 import org.dllearner.core.ComponentInitException;
 import org.dllearner.core.ComponentManager;
-import org.dllearner.core.AbstractKnowledgeSource;
-import org.dllearner.core.AbstractCELA;
-import org.dllearner.core.AbstractLearningProblem;
+import org.dllearner.core.KnowledgeSource;
+import org.dllearner.core.LearningAlgorithm;
+import org.dllearner.core.LearningProblem;
 import org.dllearner.core.LearningProblemUnsupportedException;
-import org.dllearner.core.AbstractReasonerComponent;
+import org.dllearner.core.ReasonerComponent;
 import org.dllearner.core.options.ConfigEntry;
 import org.dllearner.core.options.ConfigOption;
 import org.dllearner.kb.KBFile;
@@ -60,11 +60,11 @@ public class Config {
 	private static Logger logger = Logger.getLogger(Config.class);
 
 	// the components currently active
-	private AbstractKnowledgeSource source;
-	private AbstractReasonerComponent reasoner;
+	private KnowledgeSource source;
+	private ReasonerComponent reasoner;
 //	private ReasonerComponent rs;
-	private AbstractLearningProblem lp;
-	private AbstractCELA la;
+	private LearningProblem lp;
+	private LearningAlgorithm la;
 
 	// stores which components need to be initialised (either
 	// because they have not been initialiased or previous components
@@ -92,7 +92,7 @@ public class Config {
 	 * @param lp
 	 * @param la
 	 */
-	public Config(ComponentManager cm, AbstractKnowledgeSource source, AbstractReasonerComponent reasoner, AbstractLearningProblem lp, AbstractCELA la) {
+	public Config(ComponentManager cm, KnowledgeSource source, ReasonerComponent reasoner, LearningProblem lp, LearningAlgorithm la) {
 		super();
 		this.cm = cm;
 		this.source = source;
@@ -142,7 +142,7 @@ public class Config {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			Set<AbstractKnowledgeSource> sources = start.getSources();
+			Set<KnowledgeSource> sources = start.getSources();
 			if (sources.size() != 1) {
 				gui.getStatusPanel().setExceptionMessage(
 						"Warning: GUI supports only one knowledge source.");
@@ -187,7 +187,7 @@ public class Config {
 	 * 
 	 * @return KnowledgeSource
 	 */
-	public AbstractKnowledgeSource getKnowledgeSource() {
+	public KnowledgeSource getKnowledgeSource() {
 		return source;
 	}
 
@@ -198,7 +198,7 @@ public class Config {
 	 *            knowledge source class
 	 * @return knowledge source instance
 	 */
-	public AbstractKnowledgeSource newKnowledgeSource(Class<? extends AbstractKnowledgeSource> clazz) {
+	public KnowledgeSource newKnowledgeSource(Class<? extends KnowledgeSource> clazz) {
 		source = cm.knowledgeSource(clazz);
 		// logger.debug("new knowledge source " + clazz + " created");
 		return source;
@@ -213,9 +213,9 @@ public class Config {
 	 *            knowledge source class
 	 * @return knowledge source instance
 	 */
-	public AbstractKnowledgeSource changeKnowledgeSource(Class<? extends AbstractKnowledgeSource> clazz) {
+	public KnowledgeSource changeKnowledgeSource(Class<? extends KnowledgeSource> clazz) {
 		source = cm.knowledgeSource(clazz);
-		Set<AbstractKnowledgeSource> sources = new HashSet<AbstractKnowledgeSource>();
+		Set<KnowledgeSource> sources = new HashSet<KnowledgeSource>();
 		sources.add(source);
 		reasoner.changeSources(sources);
 		// logger.debug("knowledge source " + clazz + " changed");
@@ -250,7 +250,7 @@ public class Config {
 	 * 
 	 * @return reasoner
 	 */
-	public AbstractReasonerComponent getReasoner() {
+	public ReasonerComponent getReasoner() {
 		return this.reasoner;
 	}
 
@@ -259,7 +259,7 @@ public class Config {
 	 * @param clazz The class of the reasoner.
 	 * @return A reasoner instance.
 	 */
-	public AbstractReasonerComponent newReasoner(Class<? extends AbstractReasonerComponent> clazz) {
+	public ReasonerComponent newReasoner(Class<? extends ReasonerComponent> clazz) {
 		reasoner = cm.reasoner(clazz, source);
 //		rs = cm.reasoningService(reasoner);
 		return reasoner;
@@ -271,7 +271,7 @@ public class Config {
 	 * @param clazz The reasoner class.
 	 * @return A reasoner instance.
 	 */
-	public AbstractReasonerComponent changeReasoner(Class<? extends AbstractReasonerComponent> clazz) {
+	public ReasonerComponent changeReasoner(Class<? extends ReasonerComponent> clazz) {
 		reasoner = cm.reasoner(clazz, source);
 //		rs = cm.reasoningService(reasoner);
 		lp.changeReasonerComponent(reasoner);
@@ -287,7 +287,7 @@ public class Config {
 	 * 
 	 * @return learningProblem
 	 */
-	public AbstractLearningProblem getLearningProblem() {
+	public LearningProblem getLearningProblem() {
 		return this.lp;
 	}
 
@@ -296,7 +296,7 @@ public class Config {
 	 * @param clazz The class of the learning problem.
 	 * @return A learning problem instance.
 	 */	
-	public AbstractLearningProblem newLearningProblem(Class<? extends AbstractLearningProblem> clazz) {
+	public LearningProblem newLearningProblem(Class<? extends LearningProblem> clazz) {
 		lp = cm.learningProblem(clazz, reasoner);
 		return lp;
 	}
@@ -307,7 +307,7 @@ public class Config {
 	 * @param clazz The learning problem class.
 	 * @return A learning problem instance.
 	 */	
-	public AbstractLearningProblem changeLearningProblem(Class<? extends AbstractLearningProblem> clazz) {
+	public LearningProblem changeLearningProblem(Class<? extends LearningProblem> clazz) {
 		lp = cm.learningProblem(clazz, reasoner);
 		la.changeLearningProblem(lp);
 		needsInit[2] = true;
@@ -320,7 +320,7 @@ public class Config {
 	 * 
 	 * @return LearningAlgorithm
 	 */
-	public AbstractCELA getLearningAlgorithm() {
+	public LearningAlgorithm getLearningAlgorithm() {
 		return this.la;
 	}
 
@@ -332,7 +332,7 @@ public class Config {
 	 * by GUI).
 	 * @return A learning algorithm instance.
 	 */
-	public AbstractCELA newLearningAlgorithm(Class<? extends AbstractCELA> clazz)
+	public LearningAlgorithm newLearningAlgorithm(Class<? extends LearningAlgorithm> clazz)
 			throws LearningProblemUnsupportedException {
 		la = cm.learningAlgorithm(clazz, lp, reasoner);
 		return la;
@@ -346,7 +346,7 @@ public class Config {
 	 * by GUI).
 	 * @return A learning algorithm instance.
 	 */
-	public AbstractCELA changeLearningAlgorithm(Class<? extends AbstractCELA> clazz)
+	public LearningAlgorithm changeLearningAlgorithm(Class<? extends LearningAlgorithm> clazz)
 			throws LearningProblemUnsupportedException {
 		la = cm.learningAlgorithm(clazz, lp, reasoner);
 		needsInit[3] = true;		
@@ -417,7 +417,7 @@ public class Config {
 	 * @param tabIndex A list of components (0 = knowledge source, 1 = reasoner, ...).
 	 */ 
 	public void init(List<Integer> tabIndex) {
-		List<AbstractComponent> components = new LinkedList<AbstractComponent>();
+		List<Component> components = new LinkedList<Component>();
 		for (int i : tabIndex) {
 			switch (i) {
 			case 0:
@@ -454,19 +454,19 @@ public class Config {
 	/**
 	 * Applies a configuration option and cares for all consequences
 	 * the GUI needs to take.
-	 * @see ComponentManager#applyConfigEntry(AbstractComponent, ConfigEntry)
+	 * @see ComponentManager#applyConfigEntry(Component, ConfigEntry)
 	 * @param <T> The type of config entry.
 	 * @param component The component to apply the entry to.
 	 * @param entry The config entry to apply.
 	 */
-	public <T> void applyConfigEntry(AbstractComponent component, ConfigEntry<T> entry) {
+	public <T> void applyConfigEntry(Component component, ConfigEntry<T> entry) {
 		System.out.println("Applying " + entry + " to " + component.getClass().getName() + ".");
 
 		cm.applyConfigEntry(component, entry);
 		// enable tabs if setting the value completed mandatory settings
 		enableComponentsIfPossible();
 		// invalidate components
-		if (component instanceof AbstractKnowledgeSource) {
+		if (component instanceof KnowledgeSource) {
 			needsInit[0] = true;
 			needsInit[1] = true;
 			needsInit[2] = true;
@@ -475,7 +475,7 @@ public class Config {
 				gui
 						.setStatusMessage("All mandatory options filled in. You can continue to the reasoner tab.");
 			}
-		} else if (component instanceof AbstractReasonerComponent) {
+		} else if (component instanceof ReasonerComponent) {
 			needsInit[1] = true;
 			needsInit[2] = true;
 			needsInit[3] = true;
@@ -483,14 +483,14 @@ public class Config {
 				gui
 						.setStatusMessage("All mandatory options filled in. You can continue to the learning problem tab.");
 			}
-		} else if (component instanceof AbstractLearningProblem) {
+		} else if (component instanceof LearningProblem) {
 			needsInit[2] = true;
 			needsInit[3] = true;
 			if (isEnabled[2]) {
 				gui
 						.setStatusMessage("All mandatory options filled in. You can continue to the learning algorithm tab.");
 			}
-		} else if (component instanceof AbstractCELA) {
+		} else if (component instanceof LearningAlgorithm) {
 			needsInit[3] = true;
 			if (isEnabled[3]) {
 				gui
@@ -531,7 +531,7 @@ public class Config {
 	 * @return True if all mandatory options are set and false otherwise.
 	 */
 	@SuppressWarnings("unchecked")
-	public boolean mandatoryOptionsSpecified(AbstractComponent component) {
+	public boolean mandatoryOptionsSpecified(Component component) {
 		// System.out.println("check mandatory options for " +
 		// component.getClass().getName());
 		if (component instanceof OWLFile) {
@@ -573,13 +573,13 @@ public class Config {
 
 	/**
 	 * Delegate method for getting config option values.
-	 * @see ComponentManager#getConfigOptionValue(AbstractComponent, ConfigOption)
+	 * @see ComponentManager#getConfigOptionValue(Component, ConfigOption)
 	 * @param <T> Type of option.
 	 * @param component Component, which has the option.
 	 * @param option The option for which we want to know the value.
 	 * @return The value of the specified option.
 	 */
-	public <T> T getConfigOptionValue(AbstractComponent component, ConfigOption<T> option) {
+	public <T> T getConfigOptionValue(Component component, ConfigOption<T> option) {
 		return cm.getConfigOptionValue(component, option);
 	}
 

@@ -16,10 +16,12 @@ import java.util.StringTokenizer;
 import java.util.TreeSet;
 
 import org.dllearner.algorithms.ocel.OCEL;
-import org.dllearner.core.AbstractCELA;
-import org.dllearner.core.AbstractKnowledgeSource;
-import org.dllearner.core.AbstractReasonerComponent;
 import org.dllearner.core.ComponentManager;
+import org.dllearner.core.KnowledgeSource;
+import org.dllearner.core.LearningAlgorithm;
+import org.dllearner.core.LearningProblem;
+import org.dllearner.core.ReasonerComponent;
+import org.dllearner.core.configurators.ComponentFactory;
 import org.dllearner.core.owl.ClassAssertionAxiom;
 import org.dllearner.core.owl.Description;
 import org.dllearner.core.owl.Individual;
@@ -82,12 +84,12 @@ public class KRKModular {
 	static HashMap<String, SortedSet<Individual>> classToInd = new HashMap<String, SortedSet<Individual>>();
 	static HashMap<Individual, String> indToClass = new HashMap<Individual, String>();
 	
-	static Set<AbstractReasonerComponent> allReasoners =  new HashSet<AbstractReasonerComponent>();
+	static Set<ReasonerComponent> allReasoners =  new HashSet<ReasonerComponent>();
 	static int negativeExamplesAdded = 200;
 	
 	// static LinkedList<String> words;
 	public KB kb;
-	public AbstractReasonerComponent reasoner;
+	public ReasonerComponent reasoner;
 	
 	
 	//public FastInstanceChecker fic;
@@ -247,47 +249,43 @@ public class KRKModular {
 		System.out.println(neg);
 		
 		ComponentManager cm = ComponentManager.getInstance();
-		AbstractCELA la = null;
-        try {
-            Set<AbstractKnowledgeSource> sources = new HashSet<AbstractKnowledgeSource>();
-            sources.add(new KBFile(kb));
-            FastInstanceChecker r = new FastInstanceChecker();
-            r.setSources(sources);
-
-            r.init();
+		LearningAlgorithm la = null;
+		try {
+		Set<KnowledgeSource> sources = new HashSet<KnowledgeSource>();
+		sources.add(new KBFile(kb));
+		ReasonerComponent r = new FastInstanceChecker(sources);
+		r.init();
 //		ReasonerComponent rs = new ReasonerComponent(r); 
-
-            //cm.learningProblem(lpClass, reasoner)
-            PosNegLPStandard lp = new PosNegLPStandard();
-            lp.setReasoner(r);
-            //cm.getConfigOptionValue(lp, "");
-            cm.applyConfigEntry(lp, "positiveExamples", pos);
-            cm.applyConfigEntry(lp, "negativeExamples", neg);
-
-            lp.init();
-
-            la = cm.learningAlgorithm(OCEL.class, lp, r);
-            SortedSet<String> ignoredConcepts = getIgnoredConcepts(pos, neg);
-
-            cm.applyConfigEntry(la, "useAllConstructor", false);
-            cm.applyConfigEntry(la, "useExistsConstructor", true);
-            cm.applyConfigEntry(la, "useCardinalityRestrictions", false);
-            cm.applyConfigEntry(la, "useNegation", false);
-            //cm.applyConfigEntry(la,"quiet",false);
-            cm.applyConfigEntry(la, "ignoredConcepts", ignoredConcepts);
-
-            la.init();
-
-            System.out.println("start learning");
-
-            la.start();
-            //System.out.println("best"+la.getBestSolution());
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return la.getCurrentlyBestDescription();
-    }
+		
+		//cm.learningProblem(lpClass, reasoner)
+		LearningProblem lp = new PosNegLPStandard(r);
+		//cm.getConfigOptionValue(lp, "");
+		cm.applyConfigEntry(lp, "positiveExamples",pos);
+		cm.applyConfigEntry(lp, "negativeExamples",neg);
+		
+		lp.init();
+		
+		la = cm.learningAlgorithm(OCEL.class, lp, r);
+		SortedSet<String> ignoredConcepts = getIgnoredConcepts(pos, neg);
+		
+		cm.applyConfigEntry(la,"useAllConstructor",false);
+		cm.applyConfigEntry(la,"useExistsConstructor",true);
+		cm.applyConfigEntry(la,"useCardinalityRestrictions",false);
+		cm.applyConfigEntry(la,"useNegation",false);
+		//cm.applyConfigEntry(la,"quiet",false);
+		cm.applyConfigEntry(la,"ignoredConcepts",ignoredConcepts);
+		
+		
+		la.init();	
+		
+		System.out.println("start learning");
+		
+		la.start();
+		//System.out.println("best"+la.getBestSolution());
+		
+		}catch (Exception e) {e.printStackTrace();}
+		return la.getCurrentlyBestDescription();
+	}
 	
 	static KB getKB(SortedSet<Integer> lines){
 		BufferedReader in = null;
@@ -471,7 +469,7 @@ public class KRKModular {
 		SortedSet<Individual> ret = new TreeSet<Individual>(); 
 		try{
 			
-			for (AbstractReasonerComponent onereasoner : allReasoners) {
+			for (ReasonerComponent onereasoner : allReasoners) {
 				ret.addAll(onereasoner.getIndividuals(d));
 			}
 			
@@ -485,12 +483,12 @@ public class KRKModular {
 	
 	public void initReasonerFact(){
 		KBFile kbFile = new KBFile(this.kb);
-		Set<AbstractKnowledgeSource> ks = new HashSet<AbstractKnowledgeSource>();
+		Set<KnowledgeSource> ks = new HashSet<KnowledgeSource>();
 		ks.add(kbFile);
 		
-		reasoner = new OWLAPIReasoner(ks);
+		reasoner = ComponentFactory.getOWLAPIReasoner(ks);
 		
-		((OWLAPIReasoner)reasoner).setReasonerTypeString("fact");
+		((OWLAPIReasoner)reasoner).getConfigurator().setReasonerType("fact");
 		try{
 			reasoner.init();
 		}catch (Exception e) {e.printStackTrace();}
@@ -500,11 +498,10 @@ public class KRKModular {
 	
 	public void initFIC(){
 		KBFile kbFile = new KBFile(this.kb);
-		Set<AbstractKnowledgeSource> ks = new HashSet<AbstractKnowledgeSource>();
+		Set<KnowledgeSource> ks = new HashSet<KnowledgeSource>();
 		ks.add(kbFile);
 		//System.out.println("blabla");
-		reasoner = new FastInstanceChecker();
-        reasoner.setSources(ks);
+		reasoner = new FastInstanceChecker(ks);
 		//fic.setReasonerType("fact");
 		try{
 		reasoner.init();

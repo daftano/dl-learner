@@ -19,11 +19,12 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import org.dllearner.algorithms.celoe.CELOE;
-import org.dllearner.core.AbstractReasonerComponent;
 import org.dllearner.core.ComponentInitException;
 import org.dllearner.core.ComponentManager;
 import org.dllearner.core.EvaluatedDescription;
 import org.dllearner.core.LearningProblemUnsupportedException;
+import org.dllearner.core.ReasonerComponent;
+import org.dllearner.core.configurators.CELOEConfigurator;
 import org.dllearner.core.owl.Axiom;
 import org.dllearner.core.owl.Description;
 import org.dllearner.core.owl.EquivalentClassesAxiom;
@@ -32,16 +33,14 @@ import org.dllearner.core.owl.Thing;
 import org.dllearner.kb.OWLFile;
 import org.dllearner.learningproblems.ClassLearningProblem;
 import org.dllearner.learningproblems.EvaluatedDescriptionClass;
-import org.dllearner.learningproblems.Heuristics.HeuristicType;
 import org.dllearner.reasoning.FastInstanceChecker;
 import org.dllearner.reasoning.OWLAPIReasoner;
-import org.dllearner.refinementoperators.RhoDRDown;
 import org.dllearner.utilities.owl.ConceptComparator;
 
 
 public class EvaluationComputingScript {
 	
-	private AbstractReasonerComponent reasoner;
+	private ReasonerComponent reasoner;
 	private OWLFile ks;
 	
 	private String baseURI;
@@ -164,7 +163,7 @@ public class EvaluationComputingScript {
 		ComponentManager cm = ComponentManager.getInstance();
 		// initialize KnowledgeSource
 		ks = cm.knowledgeSource(OWLFile.class);
-		ks.setURL(ontologyURI.toURL());
+		ks.getConfigurator().setUrl(ontologyURI.toURL());
 		ks.init();
 			
 		System.out.println("Loaded ontology " + ontologyURI + ".");
@@ -226,7 +225,7 @@ public class EvaluationComputingScript {
 		ComponentManager cm = ComponentManager.getInstance();
 		ClassLearningProblem lp = null;
 		CELOE celoe = null;
-//		CELOEConfigurator cf = null;
+		CELOEConfigurator cf = null;
 		TreeSet<EvaluatedDescriptionClass> suggestions;
 		for (int i = 0; i <= 1; i++) {
 			if (i == 0) {
@@ -251,42 +250,35 @@ public class EvaluationComputingScript {
 //					lp.getConfigurator().setClassToDescribe(nc.getURI().toURL());
 					for (int k = 0; k <= 3; k++) {
 						lp = cm.learningProblem(ClassLearningProblem.class, reasoner);
-						lp.setClassToDescribe(nc);
-						lp.setCheckConsistency(false);
-						lp.setEquivalence(true);
-//						lp.setType("equivalence");
+						lp.getConfigurator().setClassToDescribe(nc.getURI().toURL());
+						lp.getConfigurator().setCheckConsistency(false);
+						lp.getConfigurator().setType("equivalence");
 						System.out.println("Learning equivalentClass expressions");
 						if (k == 0) {
-//							lp.getConfigurator().setAccuracyMethod("standard");
-							lp.setHeuristic(HeuristicType.AMEASURE);
+							lp.getConfigurator().setAccuracyMethod("standard");
 							System.out.println("Using accuracy method: standard");
 						} else if (k == 1) {
-//							lp.getConfigurator().setAccuracyMethod("fmeasure");
-							lp.setHeuristic(HeuristicType.AMEASURE);
+							lp.getConfigurator().setAccuracyMethod("fmeasure");
 							System.out.println("Using accuracy method: F-Measure");
 						} else if (k == 2) {
-//							lp.getConfigurator().setAccuracyMethod("pred_acc");
-							lp.setHeuristic(HeuristicType.PRED_ACC);
+							lp.getConfigurator().setAccuracyMethod("pred_acc");
 							System.out.println("Using accuracy method: Predictive accuracy");
 						} else if (k == 3) {
-//							lp.getConfigurator().setAccuracyMethod("jaccard");
-							lp.setHeuristic(HeuristicType.JACCARD);
+							lp.getConfigurator().setAccuracyMethod("jaccard");
 							System.out.println("Using accuracy method: Jaccard");
 						} else {
-//							lp.getConfigurator().setAccuracyMethod("generalised_fmeasure");
-							lp.setHeuristic(HeuristicType.GEN_FMEASURE);
+							lp.getConfigurator().setAccuracyMethod("generalised_fmeasure");
 							System.out.println("Using accuracy method: Generalised F-Measure");
 						}
-						lp.setUseApproximations(useApproximations);
+						lp.getConfigurator().setUseApproximations(useApproximations);
 						lp.init();
 						celoe = cm.learningAlgorithm(CELOE.class, lp, reasoner);
-//						cf = celoe.getConfigurator();
-						RhoDRDown op = (RhoDRDown) celoe.getOperator();
-						op.setUseNegation(false);
-						op.setFrequencyThreshold(3);
-						celoe.setMaxExecutionTimeInSeconds(algorithmRuntimeInSeconds);
-						celoe.setNoisePercentage(noisePercent);
-						celoe.setMaxNrOfResults(10);
+						cf = celoe.getConfigurator();
+						cf.setUseNegation(false);
+						cf.setValueFrequencyThreshold(3);
+						cf.setMaxExecutionTimeInSeconds(algorithmRuntimeInSeconds);
+						cf.setNoisePercentage(noisePercent);
+						cf.setMaxNrOfResults(10);
 //						if(testReuseExistingDescription == ThreeValuedLogic.True){
 //							cf.setReuseExistingDescription(true);
 //						} else {
@@ -297,8 +289,8 @@ public class EvaluationComputingScript {
 //						} else {
 //							cf.setFilterDescriptionsFollowingFromKB(false);
 //						}
-						celoe.setReuseExistingDescription(reuseExistingDescription);
-						celoe.setFilterDescriptionsFollowingFromKB(filterDescriptionsFollowingFromKB);
+						cf.setReuseExistingDescription(reuseExistingDescription);
+						cf.setFilterDescriptionsFollowingFromKB(filterDescriptionsFollowingFromKB);
 						
 						celoe.init();
 
@@ -361,7 +353,7 @@ public class EvaluationComputingScript {
 		ComponentManager cm = ComponentManager.getInstance();
 		ClassLearningProblem lp = null;
 		CELOE celoe = null;
-//		CELOEConfigurator cf = null;
+		CELOEConfigurator cf = null;
 		TreeSet<EvaluatedDescriptionClass> suggestions;
 		for (int i = 0; i <= 1; i++) {
 			if (i == 0) {
@@ -371,7 +363,7 @@ public class EvaluationComputingScript {
 			} else {
 				reasoner = null;
 				reasoner = cm.reasoner(FastInstanceChecker.class, ks);
-				((FastInstanceChecker) reasoner).setDefaultNegation(false);
+				((FastInstanceChecker) reasoner).getConfigurator().setDefaultNegation(false);
 				System.out.println("using FastInstanceChecker");
 			}
 
@@ -383,24 +375,21 @@ public class EvaluationComputingScript {
 					System.out.println("\nlearning axioms for class " + nc.toManchesterSyntaxString(baseURI, prefixes));
 					
 					lp = cm.learningProblem(ClassLearningProblem.class, reasoner);
-					lp.setClassToDescribe(nc);
-					lp.setCheckConsistency(false);
-//					lp.getConfigurator().setType("equivalence");
-					lp.setEquivalence(true);
+					lp.getConfigurator().setClassToDescribe(nc.getURI().toURL());
+					lp.getConfigurator().setCheckConsistency(false);
+					lp.getConfigurator().setType("equivalence");
 					System.out.println("Learning equivalentClass expressions");
-//					lp.getConfigurator().setAccuracyMethod("generalised_fmeasure");
-					lp.setHeuristic(HeuristicType.GEN_FMEASURE);
+					lp.getConfigurator().setAccuracyMethod("generalised_fmeasure");
 					System.out.println("Using accuracy method: Generalised F-Measure");
-					lp.setUseApproximations(useApproximations);
+					lp.getConfigurator().setUseApproximations(useApproximations);
 					lp.init();
 					celoe = cm.learningAlgorithm(CELOE.class, lp, reasoner);
-					RhoDRDown op = (RhoDRDown) celoe.getOperator();
-//					cf = celoe.getConfigurator();
-					op.setUseNegation(false);
-					op.setFrequencyThreshold(3);
-					celoe.setMaxExecutionTimeInSeconds(algorithmRuntimeInSeconds);
-					celoe.setNoisePercentage(noisePercent);
-					celoe.setMaxNrOfResults(10);
+					cf = celoe.getConfigurator();
+					cf.setUseNegation(false);
+					cf.setValueFrequencyThreshold(3);
+					cf.setMaxExecutionTimeInSeconds(algorithmRuntimeInSeconds);
+					cf.setNoisePercentage(noisePercent);
+					cf.setMaxNrOfResults(10);
 //					if(testReuseExistingDescription == ThreeValuedLogic.True){
 //						cf.setReuseExistingDescription(true);
 //					} else {
@@ -411,8 +400,8 @@ public class EvaluationComputingScript {
 //					} else {
 //						cf.setFilterDescriptionsFollowingFromKB(false);
 //					}
-					celoe.setReuseExistingDescription(reuseExistingDescription);
-					celoe.setFilterDescriptionsFollowingFromKB(filterDescriptionsFollowingFromKB);
+					cf.setReuseExistingDescription(reuseExistingDescription);
+					cf.setFilterDescriptionsFollowingFromKB(filterDescriptionsFollowingFromKB);
 					celoe.init();
 
 					celoe.start();
@@ -455,7 +444,7 @@ public class EvaluationComputingScript {
 		// shrinkSet(classes, 20);
 		ClassLearningProblem lp = null;
 		CELOE celoe = null;
-//		CELOEConfigurator cf = null;
+		CELOEConfigurator cf = null;
 		for (NamedClass nc : classes) {
 			// check whether the class has sufficient instances
 			int instanceCount = reasoner.getIndividuals(nc).size();
@@ -467,22 +456,19 @@ public class EvaluationComputingScript {
 						+ " with " + instanceCount + " instances");
 				
 				lp = cm.learningProblem(ClassLearningProblem.class, reasoner);
-				lp.setClassToDescribe(nc);
-				lp.setCheckConsistency(false);
-//				lp.getConfigurator().setType("equivalence");
-				lp.setEquivalence(true);
+				lp.getConfigurator().setClassToDescribe(nc.getURI().toURL());
+				lp.getConfigurator().setCheckConsistency(false);
+				lp.getConfigurator().setType("equivalence");
 				System.out.println("Learning equivalentClass expressions");
-//				lp.getConfigurator().setUseApproximations(true);
-				lp.setUseApproximations(true);
+				lp.getConfigurator().setUseApproximations(true);
 				lp.init();
 				celoe = cm.learningAlgorithm(CELOE.class, lp, reasoner);
-				RhoDRDown op = (RhoDRDown) celoe.getOperator();
-//				cf = celoe.getConfigurator();
-				op.setUseNegation(false);
-				op.setFrequencyThreshold(3);
-				celoe.setMaxExecutionTimeInSeconds(algorithmRuntimeInSeconds);
-				celoe.setNoisePercentage(noisePercent);
-				celoe.setMaxNrOfResults(10);
+				cf = celoe.getConfigurator();
+				cf.setUseNegation(false);
+				cf.setValueFrequencyThreshold(3);
+				cf.setMaxExecutionTimeInSeconds(algorithmRuntimeInSeconds);
+				cf.setNoisePercentage(noisePercent);
+				cf.setMaxNrOfResults(10);
 //				if(testReuseExistingDescription == ThreeValuedLogic.True){
 //					cf.setReuseExistingDescription(true);
 //				} else {
@@ -493,8 +479,8 @@ public class EvaluationComputingScript {
 //				} else {
 //					cf.setFilterDescriptionsFollowingFromKB(false);
 //				}
-				celoe.setReuseExistingDescription(reuseExistingDescription);
-				celoe.setFilterDescriptionsFollowingFromKB(filterDescriptionsFollowingFromKB);
+				cf.setReuseExistingDescription(reuseExistingDescription);
+				cf.setFilterDescriptionsFollowingFromKB(filterDescriptionsFollowingFromKB);
 				celoe.init();
 
 				celoe.start();

@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2008, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,11 +15,10 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.core.owl;
 
-import java.net.URI;
 import java.util.Map;
 
 /**
@@ -43,8 +42,6 @@ public class Thing extends Description {
 	private static final long serialVersionUID = -880276915058868775L;
 	public static final Thing instance = new Thing();
 	
-	private static final URI uri = URI.create("http://www.w3.org/2002/07/owl#Thing");
-	
     public String toString(String baseURI, Map<String,String> prefixes) {
         return "TOP";
     }
@@ -60,11 +57,7 @@ public class Thing extends Description {
 		//return "owl:Thing";
 		return "Thing";
 		
-	}	  
-	
-	public URI getURI(){
-		return uri;
-	}
+	}	    
     
 	public int getLength() {
 		return 1;

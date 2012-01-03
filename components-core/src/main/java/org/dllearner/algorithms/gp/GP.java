@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,6 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
 
 package org.dllearner.algorithms.gp;
@@ -24,14 +25,15 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedList;
-import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import org.dllearner.algorithms.hybridgp.Psi;
-import org.dllearner.core.AbstractCELA;
-import org.dllearner.core.AbstractLearningProblem;
-import org.dllearner.core.AbstractReasonerComponent;
+import org.dllearner.core.LearningAlgorithm;
+import org.dllearner.core.LearningProblem;
+import org.dllearner.core.ReasonerComponent;
+import org.dllearner.core.configurators.GPConfigurator;
 import org.dllearner.core.options.BooleanConfigOption;
 import org.dllearner.core.options.ConfigEntry;
 import org.dllearner.core.options.ConfigOption;
@@ -53,13 +55,13 @@ import org.dllearner.utilities.Helper;
  * @author Jens Lehmann
  * 
  */
-public class GP extends AbstractCELA {
+public class GP extends LearningAlgorithm {
 	
-//	private GPConfigurator configurator;
-//	@Override
-//	public GPConfigurator getConfigurator(){
-//		return configurator;
-//	}
+	private GPConfigurator configurator;
+	@Override
+	public GPConfigurator getConfigurator(){
+		return configurator;
+	}
 	
 	
     // NumberFormat f;
@@ -138,17 +140,17 @@ public class GP extends AbstractCELA {
      * 1.0 and a probability of mutation of 0.01.
      * 
      */
-    public GP(PosNegLP learningProblem, AbstractReasonerComponent rs) {
+    public GP(PosNegLP learningProblem, ReasonerComponent rs) {
        	super(learningProblem, rs);
-//    	this.configurator = new GPConfigurator(this);
+    	this.configurator = new GPConfigurator(this);
     }
       
 	public static String getName() {
 		return "genetic programming learning algorithm";
 	} 	    
     
-	public static Collection<Class<? extends AbstractLearningProblem>> supportedLearningProblems() {
-		Collection<Class<? extends AbstractLearningProblem>> problems = new LinkedList<Class<? extends AbstractLearningProblem>>();
+	public static Collection<Class<? extends LearningProblem>> supportedLearningProblems() {
+		Collection<Class<? extends LearningProblem>> problems = new LinkedList<Class<? extends LearningProblem>>();
 		problems.add(PosNegLP.class);
 		return problems;
 	}	

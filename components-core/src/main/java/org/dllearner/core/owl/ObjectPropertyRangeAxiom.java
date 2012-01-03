@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2008, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.core.owl;
 
 import java.util.Map;
@@ -48,7 +48,8 @@ public class ObjectPropertyRangeAxiom extends PropertyRangeAxiom {
 	 * @see org.dllearner.core.owl.KBElement#toString(java.lang.String, java.util.Map)
 	 */
 	public String toString(String baseURI, Map<String, String> prefixes) {
-		return "Range(" + getProperty() + ", " + getRange() +  ")";
+		// TODO Auto-generated method stub
+		return null;
 	}
 	
 	public String toKBSyntaxString(String baseURI, Map<String, String> prefixes) {
@@ -80,7 +81,7 @@ public class ObjectPropertyRangeAxiom extends PropertyRangeAxiom {
 	 */
 	@Override
 	public String toManchesterSyntaxString(String baseURI, Map<String, String> prefixes) {
-		return "Range(" + getProperty().toManchesterSyntaxString(baseURI, prefixes) + ", " + getRange().toManchesterSyntaxString(baseURI, prefixes) +  ")";
+		return "OBJECTPROPERTYRANGE NOT IMPLEMENTED";
 	}
 
 	

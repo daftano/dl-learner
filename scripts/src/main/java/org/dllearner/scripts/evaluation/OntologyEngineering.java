@@ -36,11 +36,12 @@ import java.util.TreeSet;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.dllearner.algorithms.celoe.CELOE;
-import org.dllearner.core.AbstractReasonerComponent;
 import org.dllearner.core.ComponentInitException;
 import org.dllearner.core.ComponentManager;
 import org.dllearner.core.EvaluatedDescription;
 import org.dllearner.core.LearningProblemUnsupportedException;
+import org.dllearner.core.ReasonerComponent;
+import org.dllearner.core.configurators.CELOEConfigurator;
 import org.dllearner.core.owl.Description;
 import org.dllearner.core.owl.Individual;
 import org.dllearner.core.owl.NamedClass;
@@ -48,10 +49,8 @@ import org.dllearner.core.owl.Thing;
 import org.dllearner.kb.OWLFile;
 import org.dllearner.learningproblems.ClassLearningProblem;
 import org.dllearner.learningproblems.EvaluatedDescriptionClass;
-import org.dllearner.learningproblems.Heuristics.HeuristicType;
 import org.dllearner.reasoning.FastInstanceChecker;
 import org.dllearner.reasoning.OWLAPIReasoner;
-import org.dllearner.refinementoperators.RhoDRDown;
 import org.dllearner.utilities.statistics.Stat;
 
 /**
@@ -104,13 +103,13 @@ public class OntologyEngineering {
 		// load OWL in reasoner
 		OWLFile ks = cm.knowledgeSource(OWLFile.class);
 		if(args[0].startsWith("http")) {
-			ks.setURL(new URL(args[0]));
+			ks.getConfigurator().setUrl(new URL(args[0]));
 		} else {
 			File owlFile = new File(args[0]);
-			ks.setURL(owlFile.toURI().toURL());
+			ks.getConfigurator().setUrl(owlFile.toURI().toURL());
 		}
 		ks.init();
-		AbstractReasonerComponent reasoner = null;
+		ReasonerComponent reasoner = null;
 		if(useFastInstanceChecker) {
 			reasoner = cm.reasoner(FastInstanceChecker.class, ks);
 		} else {
@@ -138,7 +137,7 @@ public class OntologyEngineering {
 	}
 		
 	@SuppressWarnings("unchecked")
-	public static void run(AbstractReasonerComponent reasoner) throws ComponentInitException, IOException, LearningProblemUnsupportedException {
+	public static void run(ReasonerComponent reasoner) throws ComponentInitException, IOException, LearningProblemUnsupportedException {
 		ComponentManager cm = ComponentManager.getInstance();
 		
 		String baseURI = reasoner.getBaseURI();
@@ -204,34 +203,30 @@ public class OntologyEngineering {
 					// learn equivalence axiom
 					ClassLearningProblem lp = cm.learningProblem(ClassLearningProblem.class,
 							reasoner);
-					lp.setClassToDescribe(nc);
+					lp.getConfigurator().setClassToDescribe(nc.getURI().toURL());
 					if (i == 0) {
 						System.out
 								.println("generating suggestions for equivalent class (please wait "
 										+ algorithmRuntimeInSeconds + " seconds)");
-//						lp.getConfigurator().setType("equivalence");
-						lp.setEquivalence(true);
+						lp.getConfigurator().setType("equivalence");
 					} else {
 						System.out.println("suggestions for super class (please wait "
 								+ algorithmRuntimeInSeconds + " seconds)");
-//						lp.getConfigurator().setType("superClass");
-						lp.setEquivalence(false);
+						lp.getConfigurator().setType("superClass");
 					}
-					lp.setUseApproximations(useApproximations);
+					lp.getConfigurator().setUseApproximations(useApproximations);
 					if(useFMeasure) {
-//						lp.getConfigurator().setAccuracyMethod("fmeasure");
-						lp.setHeuristic(HeuristicType.FMEASURE);
+						lp.getConfigurator().setAccuracyMethod("fmeasure");	
 					}
 					lp.init();
 
 					CELOE celoe = cm.learningAlgorithm(CELOE.class, lp, reasoner);
-//					CELOEConfigurator cf = celoe.getConfigurator();
-					RhoDRDown op = (RhoDRDown) celoe.getOperator();
-					op.setUseNegation(false);
-					op.setFrequencyThreshold(3);
-					celoe.setMaxExecutionTimeInSeconds(algorithmRuntimeInSeconds);
-					celoe.setNoisePercentage(noisePercent);
-					celoe.setMaxNrOfResults(10);
+					CELOEConfigurator cf = celoe.getConfigurator();
+					cf.setUseNegation(false);
+					cf.setValueFrequencyThreshold(3);
+					cf.setMaxExecutionTimeInSeconds(algorithmRuntimeInSeconds);
+					cf.setNoisePercentage(noisePercent);
+					cf.setMaxNrOfResults(10);
 					celoe.init();
 
 					celoe.start();

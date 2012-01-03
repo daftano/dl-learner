@@ -35,7 +35,6 @@ import org.dllearner.algorithms.celoe.OEHeuristicRuntime;
 import org.dllearner.algorithms.ocel.NodeComparatorStable;
 import org.dllearner.algorithms.ocel.OCEL;
 import org.dllearner.learningproblems.PosNegLPStandard;
-import org.dllearner.utilities.Helper;
 
 /**
  * Window, which displays the search tree.
@@ -93,8 +92,8 @@ public class TreeWindow extends JFrame implements TreeWillExpandListener {
 		if (config.getLearningAlgorithm() instanceof OCEL) {
 			// collect some helper values for display and accuracy calculations
 			PosNegLPStandard lp = (PosNegLPStandard) config.getLearningProblem();
-			Set<String> posExamples = Helper.getStringSet(lp.getPositiveExamples());
-			Set<String> negExamples = Helper.getStringSet(lp.getNegativeExamples());
+			Set<String> posExamples = lp.getConfigurator().getPositiveExamples();
+			Set<String> negExamples = lp.getConfigurator().getNegativeExamples();
 			int nrOfPositiveExamples = posExamples.size();
 			int nrOfNegativeExamples = negExamples.size();
 

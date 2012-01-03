@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2008, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.refinementoperators;
 
 import java.util.ArrayList;
@@ -41,8 +41,7 @@ import org.dllearner.algorithms.el.ELDescriptionTree;
 import org.dllearner.algorithms.el.ELDescriptionTreeComparator;
 import org.dllearner.algorithms.el.TreeAndRoleSet;
 import org.dllearner.algorithms.el.TreeAndRoleSetComparator;
-import org.dllearner.core.AbstractReasonerComponent;
-import org.dllearner.core.ComponentInitException;
+import org.dllearner.core.ReasonerComponent;
 import org.dllearner.core.owl.Description;
 import org.dllearner.core.owl.Intersection;
 import org.dllearner.core.owl.NamedClass;
@@ -79,7 +78,7 @@ public class ELDown2 extends RefinementOperatorAdapter {
 
 	private static Logger logger = Logger.getLogger(ELDown2.class);	
 	
-	private AbstractReasonerComponent rs;
+	private ReasonerComponent rs;
 	
 	// hierarchies
 	private ClassHierarchy subsumptionHierarchy;
@@ -103,11 +102,11 @@ public class ELDown2 extends RefinementOperatorAdapter {
 	private ELDescriptionEdgeComparator edgeComp = new ELDescriptionEdgeComparator();
 	private TreeAndRoleSetComparator mComp = new TreeAndRoleSetComparator();
 	
-	public ELDown2(AbstractReasonerComponent rs) {
+	public ELDown2(ReasonerComponent rs) {
 		this(rs, true);
 	}
 	
-	public ELDown2(AbstractReasonerComponent rs, boolean instanceBasedDisjoints) {
+	public ELDown2(ReasonerComponent rs, boolean instanceBasedDisjoints) {
 		this.rs = rs;
 		subsumptionHierarchy = rs.getClassHierarchy();
 		opHierarchy = rs.getObjectPropertyHierarchy();
@@ -381,7 +380,7 @@ public class ELDown2 extends RefinementOperatorAdapter {
 			
 			// init sets R' and R''
 			// more efficient
-			Set<ObjectProperty> rpSet = utility.computeMgr(appOPs);
+			SortedSet<ObjectProperty> rpSet = utility.computeMgr(appOPs);
 			rpSet.retainAll(rSet);
 //			SortedSet<ObjectProperty> rpSet = new TreeSet<ObjectProperty>();
 //			for(ObjectProperty rEl : rSet) {
@@ -602,12 +601,6 @@ public class ELDown2 extends RefinementOperatorAdapter {
 			}
 		}
 		return false;
-	}
-
-	@Override
-	public void init() throws ComponentInitException {
-		// TODO Auto-generated method stub
-		
 	}
 	
 }

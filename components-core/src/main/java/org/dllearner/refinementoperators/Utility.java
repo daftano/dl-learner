@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2008, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.refinementoperators;
 
 import java.util.Map;
@@ -25,7 +25,7 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import org.dllearner.core.AbstractReasonerComponent;
+import org.dllearner.core.ReasonerComponent;
 import org.dllearner.core.owl.Description;
 import org.dllearner.core.owl.Individual;
 import org.dllearner.core.owl.Intersection;
@@ -49,7 +49,7 @@ import com.jamonapi.MonitorFactory;
  */
 public final class Utility {
 		
-	private AbstractReasonerComponent reasoner;
+	private ReasonerComponent reasoner;
 	ClassHierarchy sh; 
 	private Map<ObjectProperty,Description> opDomains;
 	
@@ -66,11 +66,11 @@ public final class Utility {
 	// cache for applicaple object properties
 	private Map<Description, SortedSet<ObjectProperty>> appOPCache = new TreeMap<Description, SortedSet<ObjectProperty>>(conceptComparator);
 	
-	public Utility(AbstractReasonerComponent rs) {
+	public Utility(ReasonerComponent rs) {
 		throw new Error("not implemented yet");
 	}
 	
-	public Utility(AbstractReasonerComponent rs, Map<ObjectProperty,Description> opDomains, boolean instanceBasedDisjoints) {
+	public Utility(ReasonerComponent rs, Map<ObjectProperty,Description> opDomains, boolean instanceBasedDisjoints) {
 		this.reasoner = rs;
 		sh = rs.getClassHierarchy();
 		// we cache object property domains
@@ -117,7 +117,7 @@ public final class Utility {
 	 * @param applicableObjectProperties The set of applicable properties.
 	 * @return The most general applicable properties.
 	 */
-	public Set<ObjectProperty> computeMgr(Set<ObjectProperty> applicableObjectProperties) {
+	public SortedSet<ObjectProperty> computeMgr(SortedSet<ObjectProperty> applicableObjectProperties) {
 		return Helper.intersection(reasoner.getMostGeneralProperties(), applicableObjectProperties);
 	}
 	

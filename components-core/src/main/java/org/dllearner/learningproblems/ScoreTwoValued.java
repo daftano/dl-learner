@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2008, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,6 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
 
 package org.dllearner.learningproblems;
@@ -53,7 +54,6 @@ public class ScoreTwoValued extends ScorePosNeg {
 		this(0,0,posAsPos,posAsNeg,negAsPos,negAsNeg);
 	}    
     
-	@Deprecated
 	public ScoreTwoValued(int conceptLength, double percentPerLengthUnit, Set<Individual> posAsPos, Set<Individual> posAsNeg, Set<Individual> negAsPos, Set<Individual> negAsNeg) {
     	this.conceptLength = conceptLength;
     	this.percentPerLengthUnit = percentPerLengthUnit;
@@ -65,21 +65,6 @@ public class ScoreTwoValued extends ScorePosNeg {
 		computeScore();
 	}
 	
-	public ScoreTwoValued(int conceptLength, double percentPerLengthUnit, Set<Individual> posAsPos, Set<Individual> posAsNeg, Set<Individual> negAsPos, Set<Individual> negAsNeg, double accuracy) {
-    	this.conceptLength = conceptLength;
-    	this.percentPerLengthUnit = percentPerLengthUnit;
-		this.posAsPos = posAsPos;
-		this.posAsNeg = posAsNeg;
-		this.negAsPos = negAsPos;
-		this.negAsNeg = negAsNeg;
-		nrOfExamples = posAsPos.size()+posAsNeg.size()+negAsPos.size()+negAsNeg.size();
-		this.accuracy = accuracy;
-		score = accuracy - 1 - percentPerLengthUnit * conceptLength;
-	}
-	
-	// score should not be computed within this class anymore, but directly within learning problem (to support
-	// different functions like predictive accuracy, F-measure etc.)
-	@Deprecated
 	private void computeScore() {
 		// compute accuracy
 		accuracy = posAsPos.size() + negAsNeg.size();

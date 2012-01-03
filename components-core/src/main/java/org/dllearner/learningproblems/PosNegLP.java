@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,46 +15,44 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.learningproblems;
 
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Set;
-import java.util.TreeSet;
+import java.util.SortedSet;
 
-import org.dllearner.core.AbstractLearningProblem;
-import org.dllearner.core.AbstractReasonerComponent;
-import org.dllearner.core.ComponentInitException;
+import org.dllearner.core.LearningProblem;
+import org.dllearner.core.ReasonerComponent;
 import org.dllearner.core.options.BooleanConfigOption;
+import org.dllearner.core.options.CommonConfigMappings;
 import org.dllearner.core.options.CommonConfigOptions;
+import org.dllearner.core.options.ConfigEntry;
+import org.dllearner.core.options.ConfigOption;
+import org.dllearner.core.options.InvalidConfigOptionValueException;
 import org.dllearner.core.options.StringConfigOption;
 import org.dllearner.core.options.StringSetConfigOption;
 import org.dllearner.core.owl.Description;
 import org.dllearner.core.owl.Individual;
 import org.dllearner.utilities.Helper;
-import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 
 /**
  * @author Jens Lehmann
  *
  */
-public abstract class PosNegLP extends AbstractLearningProblem {
+public abstract class PosNegLP extends LearningProblem {
 	
-	protected Set<Individual> positiveExamples = new TreeSet<Individual>();
-	protected Set<Individual> negativeExamples = new TreeSet<Individual>();
-	protected Set<Individual> allExamples = new TreeSet<Individual>();
+	protected SortedSet<Individual> positiveExamples;
+	protected SortedSet<Individual> negativeExamples;
+	protected SortedSet<Individual> allExamples;
+	
+	protected boolean useRetrievalForClassification = false;
+	protected UseMultiInstanceChecks useMultiInstanceChecks = UseMultiInstanceChecks.TWOCHECKS;
+	protected double percentPerLengthUnit = 0.05;
 
-    @org.dllearner.core.config.ConfigOption(name = "useRetrievalForClassification", description = "\"Specifies whether to use retrieval or instance checks for testing a concept. - NO LONGER FULLY SUPPORTED.",defaultValue = "false")
-    private boolean useRetrievalForClassification = false;
-    @org.dllearner.core.config.ConfigOption(name = "useMultiInstanceChecks", description = "Use The Multi Instance Checks", defaultValue = "UseMultiInstanceChecks.TWOCHECKS", required = false, propertyEditorClass = StringTrimmerEditor.class)
-    private UseMultiInstanceChecks useMultiInstanceChecks = UseMultiInstanceChecks.TWOCHECKS;
-    @org.dllearner.core.config.ConfigOption(name = "percentPerLengthUnit", description = "Percent Per Length Unit", defaultValue = "0.05", required = false)
-    private double percentPerLengthUnit = 0.05;
-
-
-    /**
+	/**
 	 * If instance checks are used for testing concepts (e.g. no retrieval), then
 	 * there are several options to do this. The enumeration lists the supported
 	 * options. These options are only important if the reasoning mechanism 
@@ -79,61 +77,79 @@ public abstract class PosNegLP extends AbstractLearningProblem {
 		 */
 		ONECHECK
 	};
-
-
-    public PosNegLP(){
-
-    }
-
-	public PosNegLP(AbstractReasonerComponent reasoningService) {
+	
+	public PosNegLP(ReasonerComponent reasoningService) {
 		super(reasoningService);
 	}
 	
-	public static Collection<org.dllearner.core.options.ConfigOption<?>> createConfigOptions() {
-		Collection<org.dllearner.core.options.ConfigOption<?>> options = new LinkedList<org.dllearner.core.options.ConfigOption<?>>();
+	public static Collection<ConfigOption<?>> createConfigOptions() {
+		Collection<ConfigOption<?>> options = new LinkedList<ConfigOption<?>>();
 		options.add(new StringSetConfigOption("positiveExamples",
 				"positive examples",null, true, false));
 		options.add(new StringSetConfigOption("negativeExamples",
 				"negative examples",null, true, false));
 		options.add(new BooleanConfigOption("useRetrievalForClassficiation", 
-				"Specifies whether to use retrieval or instance checks for testing a concept. - NO LONGER FULLY SUPPORTED.", false));
+				"Specifies whether to use retrieval or instance checks for testing a concept.", false));
 		options.add(CommonConfigOptions.getPercentPerLenghtUnitOption(0.05));
-		StringConfigOption multiInstanceChecks = new StringConfigOption("useMultiInstanceChecks", "See UseMultiInstanceChecks enum. - NO LONGER FULLY SUPPORTED.","twoChecks");
+		StringConfigOption multiInstanceChecks = new StringConfigOption("useMultiInstanceChecks", "See UseMultiInstanceChecks enum.","twoChecks");
 		multiInstanceChecks.setAllowedValues(new String[] {"never", "twoChecks", "oneCheck"});
 		options.add(multiInstanceChecks);
 		return options;
-	}	
-
+	}
+	
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.dllearner.core.Component#applyConfigEntry(org.dllearner.core.ConfigEntry)
+	 */
+	@Override
+	@SuppressWarnings( { "unchecked" })
+	public <T> void applyConfigEntry(ConfigEntry<T> entry) throws InvalidConfigOptionValueException {
+		String name = entry.getOptionName();
+		if (name.equals("positiveExamples"))
+			positiveExamples = CommonConfigMappings
+					.getIndividualSet((Set<String>) entry.getValue());
+		else if (name.equals("negativeExamples"))
+			negativeExamples = CommonConfigMappings
+					.getIndividualSet((Set<String>) entry.getValue());
+		else if (name.equals("useRetrievalForClassficiation")) {
+			useRetrievalForClassification = (Boolean) entry.getValue();
+		} else if (name.equals("percentPerLengthUnit"))
+			percentPerLengthUnit = (Double) entry.getValue();
+		else if (name.equals("useMultiInstanceChecks")) {
+			String value = (String) entry.getValue();
+			if(value.equals("oneCheck"))
+				useMultiInstanceChecks = UseMultiInstanceChecks.ONECHECK;
+			else if(value.equals("twoChecks"))
+				useMultiInstanceChecks = UseMultiInstanceChecks.TWOCHECKS;
+			else
+				useMultiInstanceChecks = UseMultiInstanceChecks.NEVER;	
+		}
+	}
+	
 	/*
 	 * (non-Javadoc)
 	 * 
 	 * @see org.dllearner.core.Component#init()
 	 */
 	@Override
-	public void init() throws ComponentInitException {
+	public void init() {
 		allExamples = Helper.union(positiveExamples, negativeExamples);
-		
-		if(!reasoner.getIndividuals().containsAll(allExamples)) {
-			String str = "The examples below are not contained in the knowledge base (check spelling and prefixes)\n";
-			Set<Individual> inds = Helper.difference(allExamples, reasoner.getIndividuals());
-			str += inds.toString();
-			throw new ComponentInitException(str);
-		}
 	}
 	
-	public Set<Individual> getNegativeExamples() {
+	public SortedSet<Individual> getNegativeExamples() {
 		return negativeExamples;
 	}
 
-	public Set<Individual> getPositiveExamples() {
+	public SortedSet<Individual> getPositiveExamples() {
 		return positiveExamples;
 	}
 	
-	public void setNegativeExamples(Set<Individual> set) {
+	public void setNegativeExamples(SortedSet<Individual> set) {
 		this.negativeExamples=set;
 	}
 
-	public void setPositiveExamples(Set<Individual> set) {
+	public void setPositiveExamples(SortedSet<Individual> set) {
 		this.positiveExamples=set;
 	}
 	
@@ -142,26 +158,5 @@ public abstract class PosNegLP extends AbstractLearningProblem {
 	public double getPercentPerLengthUnit() {
 		return percentPerLengthUnit;
 	}
-
-    public void setPercentPerLengthUnit(double percentPerLengthUnit) {
-        this.percentPerLengthUnit = percentPerLengthUnit;
-    }
-
-    public boolean isUseRetrievalForClassification() {
-        return useRetrievalForClassification;
-    }
-
-    public void setUseRetrievalForClassification(boolean useRetrievalForClassification) {
-        this.useRetrievalForClassification = useRetrievalForClassification;
-    }
-
-    public UseMultiInstanceChecks getUseMultiInstanceChecks() {
-        return useMultiInstanceChecks;
-    }
-
-    public void setUseMultiInstanceChecks(UseMultiInstanceChecks useMultiInstanceChecks) {
-        this.useMultiInstanceChecks = useMultiInstanceChecks;
-    }
-
-
+	
 }

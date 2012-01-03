@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2008, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,10 +15,11 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.test;
 
+import org.dllearner.kb.sparql.EndpointBasedSparqlQuery;
 import org.dllearner.kb.sparql.SparqlEndpoint;
 import org.dllearner.kb.sparql.SparqlQuery;
 
@@ -52,7 +53,7 @@ public class JenaQueryToResultSpeedTest {
 	
 	public static void testJenaAsXML(int howOften, String queryString){
 		SparqlEndpoint sse = SparqlEndpoint.getEndpointDBpedia();
-		SparqlQuery sqJena = new SparqlQuery(queryString, sse);
+		SparqlQuery sqJena = new EndpointBasedSparqlQuery(queryString, sse);
 		// first query is not counted
 		sqJena.send();
 		sqJena.getXMLString();
@@ -74,7 +75,7 @@ public class JenaQueryToResultSpeedTest {
 	
 	public static void testJenaAsList(int howOften, String queryString){
 		SparqlEndpoint sse = SparqlEndpoint.getEndpointDBpedia();
-		SparqlQuery sqJena = new SparqlQuery(queryString, sse);
+		SparqlQuery sqJena = new EndpointBasedSparqlQuery(queryString, sse);
 		// first query is not counted
 		//sqJena.getAsList();
 		sqJena.send();
@@ -98,7 +99,7 @@ public class JenaQueryToResultSpeedTest {
 	
 	public static void testJenaAsJSON(int howOften, String queryString){
 		SparqlEndpoint sse = SparqlEndpoint.getEndpointDBpedia();
-		SparqlQuery sqJena = new SparqlQuery(queryString, sse);
+		SparqlQuery sqJena = new EndpointBasedSparqlQuery(queryString, sse);
 		// first query is not counted
 		sqJena.send();
 		sqJena.getJson();
@@ -121,7 +122,7 @@ public class JenaQueryToResultSpeedTest {
 	
 	public static void testJenaAsJSONandBack(int howOften, String queryString){
 		SparqlEndpoint sse = SparqlEndpoint.getEndpointDBpedia();
-		SparqlQuery sqJena = new SparqlQuery(queryString, sse);
+		SparqlQuery sqJena = new EndpointBasedSparqlQuery(queryString, sse);
 		// first query is not counted
 		sqJena.send();
 		sqJena.getJson();		
@@ -147,7 +148,7 @@ public class JenaQueryToResultSpeedTest {
 
 	public static void compareResults(String queryString) {
 		SparqlEndpoint sse = SparqlEndpoint.getEndpointDBpedia();
-		SparqlQuery sqJena = new SparqlQuery(queryString, sse);
+		SparqlQuery sqJena = new EndpointBasedSparqlQuery(queryString, sse);
 		// SparqlQueryConventional sqConv=new SparqlQueryConventional(sse);
 
 		sqJena.send();

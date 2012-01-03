@@ -1,22 +1,3 @@
-/**
- * Copyright (C) 2007-2011, Jens Lehmann
- *
- * This file is part of DL-Learner.
- *
- * DL-Learner is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * DL-Learner is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
 package org.dllearner.kb.extraction;
 
 import java.io.File;
@@ -32,12 +13,13 @@ import org.semanticweb.owlapi.model.OWLOntologyChangeException;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.util.SimpleIRIMapper;
+import uk.ac.manchester.cs.owl.owlapi.OWLDataFactoryImpl;
 
 public class OWLAPIOntologyCollector {
 	
 	private static Logger logger = Logger.getLogger(OWLAPIOntologyCollector.class);
 	 
-	private OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+	private OWLOntologyManager manager;
 	private OWLDataFactory factory;
 	private OWLOntology currentOntology;
 	private IRI ontologyIRI;
@@ -47,9 +29,14 @@ public class OWLAPIOntologyCollector {
 
 	public OWLAPIOntologyCollector(){
 		 this("http://www.fragment.org/fragment", "cache/"+System.currentTimeMillis()+".owl");
+
 	 }
 	 
 	 public OWLAPIOntologyCollector(String ontologyIRI, String physicalIRI){
+         /** Explicitly create the data factory here - that way it's not shared - if it is shared it won't be thread safe*/
+         factory = new OWLDataFactoryImpl();
+         manager = OWLManager.createOWLOntologyManager(factory);
+
 		 this.ontologyIRI = IRI.create(ontologyIRI);
 		 this.physicalIRI = IRI.create(new File(physicalIRI));
 		 SimpleIRIMapper mapper = new SimpleIRIMapper(this.ontologyIRI, this.physicalIRI);
@@ -60,7 +47,6 @@ public class OWLAPIOntologyCollector {
 			 logger.error("FATAL failed to create Ontology " + this.ontologyIRI);
 			 e.printStackTrace();
 		 }
-		 this.factory = manager.getOWLDataFactory();
 		 
 	 }
 

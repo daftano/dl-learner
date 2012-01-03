@@ -1,22 +1,3 @@
-/**
- * Copyright (C) 2007-2011, Jens Lehmann
- *
- * This file is part of DL-Learner.
- *
- * DL-Learner is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * DL-Learner is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
 package org.dllearner.reasoning;
 
 import java.io.File;
@@ -40,10 +21,11 @@ import java.util.TreeSet;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.dllearner.core.AbstractKnowledgeSource;
-import org.dllearner.core.AbstractReasonerComponent;
 import org.dllearner.core.ComponentInitException;
+import org.dllearner.core.KnowledgeSource;
+import org.dllearner.core.ReasonerComponent;
 import org.dllearner.core.ReasoningMethodUnsupportedException;
+import org.dllearner.core.configurators.PelletReasonerConfigurator;
 import org.dllearner.core.options.BooleanConfigOption;
 import org.dllearner.core.options.ConfigOption;
 import org.dllearner.core.owl.Axiom;
@@ -63,7 +45,6 @@ import org.dllearner.core.owl.KB;
 import org.dllearner.core.owl.NamedClass;
 import org.dllearner.core.owl.Negation;
 import org.dllearner.core.owl.Nothing;
-import org.dllearner.core.owl.OWL2Datatype;
 import org.dllearner.core.owl.ObjectAllRestriction;
 import org.dllearner.core.owl.ObjectCardinalityRestriction;
 import org.dllearner.core.owl.ObjectMaxCardinalityRestriction;
@@ -126,7 +107,7 @@ import com.clarkparsia.modularity.IncrementalClassifier;
 import com.clarkparsia.modularity.PelletIncremantalReasonerFactory;
 import com.clarkparsia.pellet.owlapiv3.PelletReasonerFactory;
 
-public class PelletReasoner extends AbstractReasonerComponent {
+public class PelletReasoner extends ReasonerComponent {
 	
 	private com.clarkparsia.pellet.owlapiv3.PelletReasoner reasoner;
 	private OWLOntologyManager manager;
@@ -134,6 +115,8 @@ public class PelletReasoner extends AbstractReasonerComponent {
 	private IncrementalClassifier classifier;
 	// the data factory is used to generate OWL API objects
 	private OWLDataFactory factory;
+	
+	private PelletReasonerConfigurator configurator;
 	
 	private Set<OWLOntology> loadedOntologies;
 	
@@ -175,10 +158,10 @@ public class PelletReasoner extends AbstractReasonerComponent {
 	
 	// references to OWL API ontologies
 	private List<OWLOntology> owlAPIOntologies = new LinkedList<OWLOntology>();
-	private boolean defaultNegation = true;
 
-	public PelletReasoner(Set<AbstractKnowledgeSource> sources) {
+	public PelletReasoner(Set<KnowledgeSource> sources) {
 		super(sources);
+		this.configurator = new PelletReasonerConfigurator(this);
 	}
 	
 	public void loadOntologies() throws URISyntaxException, OWLOntologyCreationException {
@@ -198,7 +181,7 @@ public class PelletReasoner extends AbstractReasonerComponent {
 		Set<OWLOntology> allImports = new HashSet<OWLOntology>();
 		prefixes = new TreeMap<String, String>();
 
-		for (AbstractKnowledgeSource source : sources) {
+		for (KnowledgeSource source : sources) {
 
 			if (source instanceof OWLFile
 					|| source instanceof SparqlKnowledgeSource
@@ -262,13 +245,13 @@ public class PelletReasoner extends AbstractReasonerComponent {
 							OWLDataRange range = it.next();
 							if(range.isDatatype()) {
 								URI uri = ((OWLDatatype)range).getIRI().toURI();
-								if(uri.equals(OWL2Datatype.BOOLEAN.getURI()))
+								if(uri.equals(Datatype.BOOLEAN.getURI()))
 									booleanDatatypeProperties.add(dtp);
-								else if(uri.equals(OWL2Datatype.DOUBLE.getURI()))
+								else if(uri.equals(Datatype.DOUBLE.getURI()))
 									doubleDatatypeProperties.add(dtp);
-								else if(uri.equals(OWL2Datatype.INT.getURI()))
+								else if(uri.equals(Datatype.INT.getURI()))
 									intDatatypeProperties.add(dtp);
-								else if(uri.equals(OWL2Datatype.STRING.getURI()))
+								else if(uri.equals(Datatype.STRING.getURI()))
 									stringDatatypeProperties.add(dtp);
 							}
 						}
@@ -365,7 +348,7 @@ public class PelletReasoner extends AbstractReasonerComponent {
 			SortedSet<Individual> pos = getIndividualsWithPellet(atomicConcept);
 			classInstancesPos.put(atomicConcept, (TreeSet<Individual>) pos);
 
-			if (defaultNegation) {
+			if (configurator.getDefaultNegation()) {
 				classInstancesNeg.put(atomicConcept, (TreeSet<Individual>) Helper.difference(individuals, pos));
 			} else {
 				// Pellet needs approximately infinite time to answer
@@ -420,6 +403,11 @@ public class PelletReasoner extends AbstractReasonerComponent {
 		classifier.dispose();
 	}
 
+	@Override
+	public PelletReasonerConfigurator getConfigurator() {
+		return configurator;
+	}
+	
 	/**
 	 * @return The options of this component.
 	 */
@@ -472,7 +460,7 @@ public class PelletReasoner extends AbstractReasonerComponent {
 		Set<OWLOntology> allImports = new HashSet<OWLOntology>();
 		prefixes = new TreeMap<String, String>();
 
-		for (AbstractKnowledgeSource source : sources) {
+		for (KnowledgeSource source : sources) {
 
 			if (source instanceof OWLFile
 					|| source instanceof SparqlKnowledgeSource
@@ -740,7 +728,7 @@ public class PelletReasoner extends AbstractReasonerComponent {
 				return classInstancesNeg.get((NamedClass) child).contains(individual);
 			} else {
 				// default negation
-				if(defaultNegation) {
+				if(configurator.getDefaultNegation()) {
 					return !hasTypeImpl(child, individual);
 				} else {
 					logger.debug("Converting description to negation normal form in fast instance check (should be avoided if possible).");
@@ -1010,9 +998,6 @@ public SortedSet<Individual> getIndividualsImplFast(Description description)
 	// policy: returned sets are clones, i.e. can be modified
 	// (of course we only have to clone the leafs of a class description tree)
 	if (description instanceof NamedClass) {
-		if(((NamedClass) description).getName().equals("http://www.w3.org/2002/07/owl#Nothing")){
-			return new TreeSet<Individual>();
-		}
 		return (TreeSet<Individual>) classInstancesPos.get((NamedClass) description).clone();
 	} else if (description instanceof Negation) {
 		if(description.getChild(0) instanceof NamedClass) {

@@ -20,9 +20,6 @@
 package org.dllearner.examples;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -42,13 +39,11 @@ import org.dllearner.core.owl.DoubleDatatypePropertyAssertion;
 import org.dllearner.core.owl.Individual;
 import org.dllearner.core.owl.KB;
 import org.dllearner.core.owl.NamedClass;
-import org.dllearner.core.owl.OWL2Datatype;
 import org.dllearner.core.owl.SubClassAxiom;
 import org.dllearner.reasoning.OWLAPIReasoner;
 import org.dllearner.utilities.Files;
 import org.dllearner.utilities.Helper;
-import org.ini4j.IniPreferences;
-import org.ini4j.InvalidFileFormatException;
+import org.ini4j.IniFile;
 import org.semanticweb.owlapi.model.IRI;
 
 /**
@@ -110,7 +105,7 @@ public class MonogenicDiseases {
 	private static boolean learnMutation = true; 
 	// private static boolean onlyFragment = true;
 	
-	public static void main(String[] args) throws ClassNotFoundException, BackingStoreException, SQLException, InvalidFileFormatException, FileNotFoundException, IOException {
+	public static void main(String[] args) throws ClassNotFoundException, BackingStoreException, SQLException {
 
 		if (algorithmus == 1) {							// LearnAlgo-Check					
 			generatePosExampleClass = false;
@@ -123,7 +118,7 @@ public class MonogenicDiseases {
 		
 		// reading values for db connection from ini file
 		String iniFile = "src/dl-learner/org/dllearner/examples/mutation.ini";
-		Preferences prefs = new IniPreferences(new FileReader(new File(iniFile)));
+		Preferences prefs = new IniFile(new File(iniFile));
 		String dbServer = prefs.node("database").get("server", null);
 		String dbName = prefs.node("database").get("db", null);
 		String dbPort = prefs.node("database").get("port", null);
@@ -189,7 +184,7 @@ public class MonogenicDiseases {
 		// score
 		DatatypeProperty scoreProp = new DatatypeProperty(getURI("modifScore"));
 		kb.addAxiom(new DatatypePropertyDomainAxiom(scoreProp, mutationClass));
-		kb.addAxiom(new DatatypePropertyRangeAxiom(scoreProp, OWL2Datatype.DOUBLE.getDatatype()));
+		kb.addAxiom(new DatatypePropertyRangeAxiom(scoreProp, Datatype.DOUBLE));
 		
 		// g_p
 		NamedClass gpIncClass = new NamedClass(getURI("GPIncreasingMutation"));
@@ -202,22 +197,22 @@ public class MonogenicDiseases {
 		// conservation_wt
 		DatatypeProperty conservationWTProp = new DatatypeProperty(getURI("convservationWT"));
 		kb.addAxiom(new DatatypePropertyDomainAxiom(conservationWTProp, mutationClass));
-		kb.addAxiom(new DatatypePropertyRangeAxiom(conservationWTProp, OWL2Datatype.DOUBLE.getDatatype()));		
+		kb.addAxiom(new DatatypePropertyRangeAxiom(conservationWTProp, Datatype.DOUBLE));		
 		
 		// conservation_mut
 		DatatypeProperty conservationMutProp = new DatatypeProperty(getURI("convservationMut"));
 		kb.addAxiom(new DatatypePropertyDomainAxiom(conservationMutProp, mutationClass));
-		kb.addAxiom(new DatatypePropertyRangeAxiom(conservationMutProp, OWL2Datatype.DOUBLE.getDatatype()));		
+		kb.addAxiom(new DatatypePropertyRangeAxiom(conservationMutProp, Datatype.DOUBLE));		
 		
 		// freq_at_pos
 		DatatypeProperty freqAtPosProp = new DatatypeProperty(getURI("freqAtPos"));
 		kb.addAxiom(new DatatypePropertyDomainAxiom(freqAtPosProp, mutationClass));
-		kb.addAxiom(new DatatypePropertyRangeAxiom(freqAtPosProp, OWL2Datatype.DOUBLE.getDatatype()));			
+		kb.addAxiom(new DatatypePropertyRangeAxiom(freqAtPosProp, Datatype.DOUBLE));			
 		
 		// cluster_5res_size
 		DatatypeProperty cluster5ResSizeProp = new DatatypeProperty(getURI("cluster5resSize"));
 		kb.addAxiom(new DatatypePropertyDomainAxiom(cluster5ResSizeProp, mutationClass));
-		kb.addAxiom(new DatatypePropertyRangeAxiom(cluster5ResSizeProp, OWL2Datatype.DOUBLE.getDatatype()));		
+		kb.addAxiom(new DatatypePropertyRangeAxiom(cluster5ResSizeProp, Datatype.DOUBLE));		
 		
 		// secondary_struc
 		NamedClass scHelixClass = new NamedClass(getURI("SCHelixMutation"));
@@ -230,64 +225,64 @@ public class MonogenicDiseases {
 		// gain_contact
 		DatatypeProperty gainContactProp = new DatatypeProperty(getURI("gainContact"));
 		kb.addAxiom(new DatatypePropertyDomainAxiom(gainContactProp, mutationClass));
-		kb.addAxiom(new DatatypePropertyRangeAxiom(gainContactProp, OWL2Datatype.DOUBLE.getDatatype()));				
+		kb.addAxiom(new DatatypePropertyRangeAxiom(gainContactProp, Datatype.DOUBLE));				
 		
 		// lost_contact
 		DatatypeProperty lostContactProp = new DatatypeProperty(getURI("lostContact"));
 		kb.addAxiom(new DatatypePropertyDomainAxiom(lostContactProp, mutationClass));
-		kb.addAxiom(new DatatypePropertyRangeAxiom(lostContactProp, OWL2Datatype.DOUBLE.getDatatype()));				
+		kb.addAxiom(new DatatypePropertyRangeAxiom(lostContactProp, Datatype.DOUBLE));				
 			
 		// identical_contact
 		DatatypeProperty identicalContactProp = new DatatypeProperty(getURI("identicalContact"));
 		kb.addAxiom(new DatatypePropertyDomainAxiom(identicalContactProp, mutationClass));
-		kb.addAxiom(new DatatypePropertyRangeAxiom(identicalContactProp, OWL2Datatype.DOUBLE.getDatatype()));				
+		kb.addAxiom(new DatatypePropertyRangeAxiom(identicalContactProp, Datatype.DOUBLE));				
 			
 		// gain_n1_contact
 		DatatypeProperty gainN1ContactProp = new DatatypeProperty(getURI("gainN1Contact"));
 		kb.addAxiom(new DatatypePropertyDomainAxiom(gainN1ContactProp, mutationClass));
-		kb.addAxiom(new DatatypePropertyRangeAxiom(gainN1ContactProp, OWL2Datatype.DOUBLE.getDatatype()));				
+		kb.addAxiom(new DatatypePropertyRangeAxiom(gainN1ContactProp, Datatype.DOUBLE));				
 		
 		// lost_n1_contact
 		DatatypeProperty lostN1ContactProp = new DatatypeProperty(getURI("lostN1Contact"));
 		kb.addAxiom(new DatatypePropertyDomainAxiom(lostN1ContactProp, mutationClass));
-		kb.addAxiom(new DatatypePropertyRangeAxiom(lostN1ContactProp, OWL2Datatype.DOUBLE.getDatatype()));				
+		kb.addAxiom(new DatatypePropertyRangeAxiom(lostN1ContactProp, Datatype.DOUBLE));				
 			
 		// identical_n1_contact
 		DatatypeProperty identicalN1ContactProp = new DatatypeProperty(getURI("identicalN1Contact"));
 		kb.addAxiom(new DatatypePropertyDomainAxiom(identicalN1ContactProp, mutationClass));
-		kb.addAxiom(new DatatypePropertyRangeAxiom(identicalN1ContactProp, OWL2Datatype.DOUBLE.getDatatype()));				
+		kb.addAxiom(new DatatypePropertyRangeAxiom(identicalN1ContactProp, Datatype.DOUBLE));				
 			
 		// wt_accessibility
 		DatatypeProperty wtAccessibilityProp = new DatatypeProperty(getURI("wtAccessibility"));
 		kb.addAxiom(new DatatypePropertyDomainAxiom(wtAccessibilityProp, mutationClass));
-		kb.addAxiom(new DatatypePropertyRangeAxiom(wtAccessibilityProp, OWL2Datatype.DOUBLE.getDatatype()));				
+		kb.addAxiom(new DatatypePropertyRangeAxiom(wtAccessibilityProp, Datatype.DOUBLE));				
 					
 		// mut_accessibility
 		DatatypeProperty mutAccessibilityProp = new DatatypeProperty(getURI("mutAccessibility"));
 		kb.addAxiom(new DatatypePropertyDomainAxiom(mutAccessibilityProp, mutationClass));
-		kb.addAxiom(new DatatypePropertyRangeAxiom(mutAccessibilityProp, OWL2Datatype.DOUBLE.getDatatype()));				
+		kb.addAxiom(new DatatypePropertyRangeAxiom(mutAccessibilityProp, Datatype.DOUBLE));				
 					
 		// cluster3d_10
 		DatatypeProperty cluster3D10Prop = new DatatypeProperty(getURI("cluster3d10"));
 		kb.addAxiom(new DatatypePropertyDomainAxiom(cluster3D10Prop, mutationClass));
-		kb.addAxiom(new DatatypePropertyRangeAxiom(cluster3D10Prop, OWL2Datatype.DOUBLE.getDatatype()));				
+		kb.addAxiom(new DatatypePropertyRangeAxiom(cluster3D10Prop, Datatype.DOUBLE));				
 				
 		// cluster3d_20
 		DatatypeProperty cluster3D20Prop = new DatatypeProperty(getURI("cluster3d20"));
 		kb.addAxiom(new DatatypePropertyDomainAxiom(cluster3D20Prop, mutationClass));
-		kb.addAxiom(new DatatypePropertyRangeAxiom(cluster3D20Prop, OWL2Datatype.DOUBLE.getDatatype()));				
+		kb.addAxiom(new DatatypePropertyRangeAxiom(cluster3D20Prop, Datatype.DOUBLE));				
 		
 		// cluster3d_30
 		DatatypeProperty cluster3D30Prop = new DatatypeProperty(getURI("cluster3d30"));
 		kb.addAxiom(new DatatypePropertyDomainAxiom(cluster3D30Prop, mutationClass));
-		kb.addAxiom(new DatatypePropertyRangeAxiom(cluster3D30Prop, OWL2Datatype.DOUBLE.getDatatype()));				
+		kb.addAxiom(new DatatypePropertyRangeAxiom(cluster3D30Prop, Datatype.DOUBLE));				
 				
 		// TODO: stability missing
 		
 		// reliability_deltag
 		DatatypeProperty reliabilityDeltagProp = new DatatypeProperty(getURI("reliabilityDeltag"));
 		kb.addAxiom(new DatatypePropertyDomainAxiom(reliabilityDeltagProp, mutationClass));
-		kb.addAxiom(new DatatypePropertyRangeAxiom(reliabilityDeltagProp, OWL2Datatype.DOUBLE.getDatatype()));				
+		kb.addAxiom(new DatatypePropertyRangeAxiom(reliabilityDeltagProp, Datatype.DOUBLE));				
 			
 		if(generatePosExampleClass) {
 			kb.addAxiom(new SubClassAxiom(deleteriousMutationClass, mutationClass));
@@ -361,61 +356,61 @@ int neg_count = 1;
 			String pt = rs.getString("phenotype");	
 			if ((pt.toLowerCase().contains("polymorphism"))&&( neg_count<=negEx )) { 
 				if (writeAlephFiles) {
-					Files.appendToFile(badFile, "deleterious(id"+mutationID+").\n");
+					Files.appendFile(badFile, "deleterious(id"+mutationID+").\n");
 				}
 				if (writeYYFiles) {
-					Files.appendToFile(yybadFile, "http://example.com/mutation/mutation#mutation"+mutationID+"\n");
+					Files.appendFile(yybadFile, "http://example.com/mutation/mutation#mutation"+mutationID+"\n");
 				}
 				if (cvAleph){
 					switch (kn) {					
 						case 1: 
 							aneg++;
-							Files.appendToFile(split1n, "deleterious(id"+mutationID+").\n");
+							Files.appendFile(split1n, "deleterious(id"+mutationID+").\n");
 							if (aneg == neps) {aneg = 0; kn++;}
 							break;
 						case 2: 
 							aneg++;
-							Files.appendToFile(split2n, "deleterious(id"+mutationID+").\n");
+							Files.appendFile(split2n, "deleterious(id"+mutationID+").\n");
 							if (aneg == neps) {aneg = 0; kn++;}
 							break;
 						case 3: 
 							aneg++;
-							Files.appendToFile(split3n, "deleterious(id"+mutationID+").\n");
+							Files.appendFile(split3n, "deleterious(id"+mutationID+").\n");
 							if (aneg == neps) {aneg = 0; kn++;}
 							break;
 						case 4: 
 							aneg++;
-							Files.appendToFile(split4n, "deleterious(id"+mutationID+").\n");
+							Files.appendFile(split4n, "deleterious(id"+mutationID+").\n");
 							if (aneg == neps) {aneg = 0; kn++;}
 							break;
 						case 5: 
 							aneg++;
-							Files.appendToFile(split5n, "deleterious(id"+mutationID+").\n");
+							Files.appendFile(split5n, "deleterious(id"+mutationID+").\n");
 							if (aneg == neps) {aneg = 0; kn++;}
 							break;
 						case 6: 
 							aneg++;
-							Files.appendToFile(split6n, "deleterious(id"+mutationID+").\n");
+							Files.appendFile(split6n, "deleterious(id"+mutationID+").\n");
 							if (aneg == neps) {aneg = 0; kn++;}
 							break;
 						case 7: 
 							aneg++;
-							Files.appendToFile(split7n, "deleterious(id"+mutationID+").\n");
+							Files.appendFile(split7n, "deleterious(id"+mutationID+").\n");
 							if (aneg == neps) {aneg = 0; kn++;}
 							break;
 						case 8: 
 							aneg++;
-							Files.appendToFile(split8n, "deleterious(id"+mutationID+").\n");
+							Files.appendFile(split8n, "deleterious(id"+mutationID+").\n");
 							if (aneg == neps) {aneg = 0; kn++;}
 							break;
 						case 9: 
 							aneg++;
-							Files.appendToFile(split9n, "deleterious(id"+mutationID+").\n");
+							Files.appendFile(split9n, "deleterious(id"+mutationID+").\n");
 							if (aneg == neps) {aneg = 0; kn++;}
 							break;
 						case 10: 
 							aneg++;
-							Files.appendToFile(split10n, "deleterious(id"+mutationID+").\n");
+							Files.appendFile(split10n, "deleterious(id"+mutationID+").\n");
 //							if (aneg == neps) {aneg = 0; kn++;}
 							break;			
 //						case 11: 						// without comment its round negExamples / 10
@@ -427,61 +422,61 @@ int neg_count = 1;
 				}
 			if ((!pt.toLowerCase().contains("polymorphism"))&& ( pos_count<=posEx)) { 
 				if (writeAlephFiles) {
-					Files.appendToFile(posFile, "deleterious(id"+mutationID+").\n");
+					Files.appendFile(posFile, "deleterious(id"+mutationID+").\n");
 				}
 				if (writeYYFiles) {
-				Files.appendToFile(yyposFile, "http://example.com/mutation/mutation#mutation"+mutationID+"\n");
+				Files.appendFile(yyposFile, "http://example.com/mutation/mutation#mutation"+mutationID+"\n");
 				}
 				if (cvAleph){
 					switch (kp) {					
 						case 1: 
 							apos++;
-							Files.appendToFile(split1f, "deleterious(id"+mutationID+").\n");
+							Files.appendFile(split1f, "deleterious(id"+mutationID+").\n");
 							if (apos == peps) {apos = 0; kp++;}
 							break;
 						case 2: 
 							apos++;
-							Files.appendToFile(split2f, "deleterious(id"+mutationID+").\n");
+							Files.appendFile(split2f, "deleterious(id"+mutationID+").\n");
 							if (apos == peps) {apos = 0; kp++;}
 							break;
 						case 3: 
 							apos++;
-							Files.appendToFile(split3f, "deleterious(id"+mutationID+").\n");
+							Files.appendFile(split3f, "deleterious(id"+mutationID+").\n");
 							if (apos == peps) {apos = 0; kp++;}
 							break;
 						case 4: 
 							apos++;
-							Files.appendToFile(split4f, "deleterious(id"+mutationID+").\n");
+							Files.appendFile(split4f, "deleterious(id"+mutationID+").\n");
 							if (apos == peps) {apos = 0; kp++;}
 							break;
 						case 5: 
 							apos++;
-							Files.appendToFile(split5f, "deleterious(id"+mutationID+").\n");
+							Files.appendFile(split5f, "deleterious(id"+mutationID+").\n");
 							if (apos == peps) {apos = 0; kp++;}
 							break;
 						case 6: 
 							apos++;
-							Files.appendToFile(split6f, "deleterious(id"+mutationID+").\n");
+							Files.appendFile(split6f, "deleterious(id"+mutationID+").\n");
 							if (apos == peps) {apos = 0; kp++;}
 							break;
 						case 7: 
 							apos++;
-							Files.appendToFile(split7f, "deleterious(id"+mutationID+").\n");
+							Files.appendFile(split7f, "deleterious(id"+mutationID+").\n");
 							if (apos == peps) {apos = 0; kp++;}
 							break;
 						case 8: 
 							apos++;
-							Files.appendToFile(split8f, "deleterious(id"+mutationID+").\n");
+							Files.appendFile(split8f, "deleterious(id"+mutationID+").\n");
 							if (apos == peps) {apos = 0; kp++;}
 							break;
 						case 9: 
 							apos++;
-							Files.appendToFile(split9f, "deleterious(id"+mutationID+").\n");
+							Files.appendFile(split9f, "deleterious(id"+mutationID+").\n");
 							if (apos == peps) {apos = 0; kp++;}
 							break;
 						case 10: 
 							apos++;
-							Files.appendToFile(split10f, "deleterious(id"+mutationID+").\n");
+							Files.appendFile(split10f, "deleterious(id"+mutationID+").\n");
 //							if (apos == peps) {apos = 0; kp++;}
 							break;
 //						case 11:				// without comments its round to posExamples / 10	
@@ -712,7 +707,7 @@ count++;
 			confHeader += "\n";
 		}
 		
-		Files.appendToFile(confFile, confHeader);
+		Files.appendFile(confFile, confHeader);
 		if(!generatePosExampleClass) {
 			MonogenicDiseases.appendPosExamples(confFile, posExamples);
 			MonogenicDiseases.appendNegExamples(confFile, negExamples);
@@ -751,7 +746,7 @@ count++;
 			else
 				content.append("-\""+example.toString()+"\"\n");
 		}
-		Files.appendToFile(file, content.toString());
+		Files.appendFile(file, content.toString());
 	}
 	
 	public static void appendNegExamples(File file, List<Individual> examples) {
@@ -762,6 +757,6 @@ count++;
 			else
 				content.append("+\""+example.toString()+"\"\n");
 		}
-		Files.appendToFile(file, content.toString());
+		Files.appendFile(file, content.toString());
 	}	
 }

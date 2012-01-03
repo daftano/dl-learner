@@ -20,6 +20,7 @@
 package org.dllearner.scripts;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -31,8 +32,7 @@ import java.sql.Statement;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
-import org.ini4j.IniPreferences;
-import org.ini4j.InvalidFileFormatException;
+import org.ini4j.IniFile;
 
 /**
  * Fills that database needed for running DBpedia Navigator.
@@ -61,11 +61,11 @@ public class CalculatePageRank {
 	
 	private static Connection con;
 	
-	public CalculatePageRank() throws BackingStoreException, InvalidFileFormatException, FileNotFoundException, IOException
+	public CalculatePageRank() throws BackingStoreException
 	{
 		// reading values from ini file
 		String iniFile = "../src/dbpedia-navigator/settings.ini";
-		Preferences prefs = new IniPreferences(new FileReader(iniFile));
+		Preferences prefs = new IniFile(new File(iniFile));
 		dbServer = prefs.node("database").get("server", null);
 		dbName = prefs.node("database").get("name", null);
 		dbUser = prefs.node("database").get("user", null);
@@ -332,7 +332,7 @@ public class CalculatePageRank {
 		}
 	}
 	
-	public static void main(String[] args) throws ClassNotFoundException,SQLException,BackingStoreException, InvalidFileFormatException, FileNotFoundException, IOException{
+	public static void main(String[] args) throws ClassNotFoundException,SQLException,BackingStoreException{
 		CalculatePageRank cal=new CalculatePageRank();
 		Class.forName("com.mysql.jdbc.Driver");
 		String url =

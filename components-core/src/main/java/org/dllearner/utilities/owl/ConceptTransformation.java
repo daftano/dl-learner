@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2009, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.utilities.owl;
 
 import java.util.Collections;
@@ -28,7 +28,7 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import org.dllearner.core.AbstractReasonerComponent;
+import org.dllearner.core.ReasonerComponent;
 import org.dllearner.core.owl.ObjectAllRestriction;
 import org.dllearner.core.owl.NamedClass;
 import org.dllearner.core.owl.Nothing;
@@ -476,7 +476,7 @@ public class ConceptTransformation {
 	// replaces EXISTS hasChild.TOP with EXISTS hasChild.Person, 
 	// i.e. TOP is replaced by the range of the property; 
 	// this is semantically equivalent, but easier to read for some people
-	public static void replaceRange(Description description, AbstractReasonerComponent rs) {
+	public static void replaceRange(Description description, ReasonerComponent rs) {
 		if(description instanceof ObjectSomeRestriction && description.getChild(0) instanceof Thing) {
 			ObjectPropertyExpression p = ((ObjectSomeRestriction)description).getRole();
 			if(p instanceof ObjectProperty) {

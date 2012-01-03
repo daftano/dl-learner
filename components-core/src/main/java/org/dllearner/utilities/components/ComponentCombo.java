@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2008, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.utilities.components;
 
 import java.net.URL;
@@ -26,11 +26,11 @@ import java.util.Set;
 import org.dllearner.algorithms.ocel.OCEL;
 import org.dllearner.core.ComponentInitException;
 import org.dllearner.core.ComponentManager;
-import org.dllearner.core.AbstractKnowledgeSource;
-import org.dllearner.core.AbstractCELA;
-import org.dllearner.core.AbstractLearningProblem;
+import org.dllearner.core.KnowledgeSource;
+import org.dllearner.core.LearningAlgorithm;
+import org.dllearner.core.LearningProblem;
 import org.dllearner.core.LearningProblemUnsupportedException;
-import org.dllearner.core.AbstractReasonerComponent;
+import org.dllearner.core.ReasonerComponent;
 import org.dllearner.kb.OWLFile;
 import org.dllearner.learningproblems.PosNegLPStandard;
 import org.dllearner.reasoning.FastInstanceChecker;
@@ -47,10 +47,10 @@ import org.dllearner.reasoning.FastInstanceChecker;
  */
 public class ComponentCombo {
 
-	private Set<AbstractKnowledgeSource> sources;
-	private AbstractReasonerComponent reasoner;
-	private AbstractLearningProblem problem;
-	private AbstractCELA algorithm;
+	private Set<KnowledgeSource> sources;
+	private ReasonerComponent reasoner;
+	private LearningProblem problem;
+	private LearningAlgorithm algorithm;
 	
 	/**
 	 * Builds a component combination object from the specified components. 
@@ -59,7 +59,7 @@ public class ComponentCombo {
 	 * @param problem A learning problem.
 	 * @param algorithm A learning algorithm.
 	 */
-	public ComponentCombo(AbstractKnowledgeSource source, AbstractReasonerComponent reasoner, AbstractLearningProblem problem, AbstractCELA algorithm) {
+	public ComponentCombo(KnowledgeSource source, ReasonerComponent reasoner, LearningProblem problem, LearningAlgorithm algorithm) {
 		this(getSourceSet(source), reasoner, problem, algorithm);
 	}	
 	
@@ -70,15 +70,15 @@ public class ComponentCombo {
 	 * @param problem A learning problem.
 	 * @param algorithm A learning algorithm.
 	 */	
-	public ComponentCombo(Set<AbstractKnowledgeSource> sources, AbstractReasonerComponent reasoner, AbstractLearningProblem problem, AbstractCELA algorithm) {
+	public ComponentCombo(Set<KnowledgeSource> sources, ReasonerComponent reasoner, LearningProblem problem, LearningAlgorithm algorithm) {
 		this.sources = sources;
 		this.reasoner = reasoner;
 		this.problem = problem;
 		this.algorithm = algorithm;
 	}		
 	
-	private static Set<AbstractKnowledgeSource> getSourceSet(AbstractKnowledgeSource source) {
-		Set<AbstractKnowledgeSource> sources = new HashSet<AbstractKnowledgeSource>();
+	private static Set<KnowledgeSource> getSourceSet(KnowledgeSource source) {
+		Set<KnowledgeSource> sources = new HashSet<KnowledgeSource>();
 		sources.add(source);
 		return sources;
 	}
@@ -94,7 +94,7 @@ public class ComponentCombo {
 	 */
 	public ComponentCombo(URL owlFile, Set<String> posExamples, Set<String> negExamples) {
 		ComponentManager cm = ComponentManager.getInstance();
-		AbstractKnowledgeSource source = cm.knowledgeSource(OWLFile.class);
+		KnowledgeSource source = cm.knowledgeSource(OWLFile.class);
 		sources = getSourceSet(source);
 		reasoner = cm.reasoner(FastInstanceChecker.class, source);
 		problem = cm.learningProblem(PosNegLPStandard.class, reasoner);
@@ -112,7 +112,7 @@ public class ComponentCombo {
 	 * @throws ComponentInitException Thrown if a component could not be initialised properly.
 	 */
 	public void initAll() throws ComponentInitException {
-		for(AbstractKnowledgeSource source : sources) {
+		for(KnowledgeSource source : sources) {
 			source.init();
 		}
 		reasoner.init();
@@ -123,28 +123,28 @@ public class ComponentCombo {
 	/**
 	 * @return the sources
 	 */
-	public Set<AbstractKnowledgeSource> getSources() {
+	public Set<KnowledgeSource> getSources() {
 		return sources;
 	}
 
 	/**
 	 * @return the reasoner
 	 */
-	public AbstractReasonerComponent getReasoner() {
+	public ReasonerComponent getReasoner() {
 		return reasoner;
 	}
 
 	/**
 	 * @return the problem
 	 */
-	public AbstractLearningProblem getProblem() {
+	public LearningProblem getProblem() {
 		return problem;
 	}
 
 	/**
 	 * @return the algorithm
 	 */
-	public AbstractCELA getAlgorithm() {
+	public LearningAlgorithm getAlgorithm() {
 		return algorithm;
 	}	
 	

@@ -1,8 +1,8 @@
 /**
- * Copyright (C) 2007-2011, Jens Lehmann
+ * Copyright (C) 2007-2008, Jens Lehmann
  *
  * This file is part of DL-Learner.
- *
+ * 
  * DL-Learner is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -15,18 +15,17 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
 package org.dllearner.test.junit;
 
 import java.io.File;
 import java.net.MalformedURLException;
-import java.util.Collections;
 
 import org.dllearner.core.ComponentInitException;
 import org.dllearner.core.ComponentManager;
-import org.dllearner.core.AbstractKnowledgeSource;
-import org.dllearner.core.AbstractReasonerComponent;
+import org.dllearner.core.KnowledgeSource;
+import org.dllearner.core.ReasonerComponent;
 import org.dllearner.core.owl.KB;
 import org.dllearner.kb.KBFile;
 import org.dllearner.kb.OWLFile;
@@ -44,7 +43,7 @@ public final class TestOntologies {
 
 	public enum TestOntology { EMPTY, SIMPLE, SIMPLE_NO_DR, SIMPLE_NO_DISJOINT, SIMPLE_NO_DR_DISJOINT, SIMPLE2, SIMPLE3, R1SUBR2, DATA1, FIVE_ROLES, FATHER, FATHER_OE, CARCINOGENESIS, EPC_OE, KRK_ZERO_ONE, DBPEDIA_OWL, TRAINS_OWL, RHO1, SWORE, MDM };
 	
-	public static AbstractReasonerComponent getTestOntology(TestOntology ont) {
+	public static ReasonerComponent getTestOntology(TestOntology ont) {
 		String kbString = "";
 		String owlFile = "";
 		
@@ -120,28 +119,28 @@ public final class TestOntologies {
 			kbString += "OPRANGE(hasOwner) = person.\n";
 			kbString += "hasOwner(opel123,person123).\n";
 		} else if(ont.equals(TestOntology.FATHER)) {
-			owlFile = "../examples/father.owl";
+			owlFile = "examples/father.owl";
 		} else if(ont.equals(TestOntology.FATHER_OE)) {
-			owlFile = "../examples/family/father_oe.owl";
+			owlFile = "examples/family/father_oe.owl";
 		} else if(ont.equals(TestOntology.CARCINOGENESIS)) {
-			owlFile = "../examples/carcinogenesis/carcinogenesis.owl";
+			owlFile = "examples/carcinogenesis/carcinogenesis.owl";
 		} else if(ont.equals(TestOntology.EPC_OE)) {
-			owlFile = "../test/epc/sap_epc_oe.owl";
+			owlFile = "examples/epc/sap_epc_oe.owl";
 		} else if(ont.equals(TestOntology.KRK_ZERO_ONE)) {
-			owlFile = "../test/krk/KRK_ZERO_ONE.owl";
+			owlFile = "examples/krk/KRK_ZERO_ONE.owl";
 		}  else if(ont.equals(TestOntology.DBPEDIA_OWL)) {
 			owlFile = "/home/jl/promotion/ontologien/dbpedia.owl";
 		} else if(ont.equals(TestOntology.TRAINS_OWL)) {
-			owlFile = "../test/cross-benchmark/trains/trains.owl";
+			owlFile = "examples/cross-benchmark/trains/trains.owl";
 		} else if(ont.equals(TestOntology.SWORE)) {
-			owlFile = "../examples/swore/swore.rdf";
+			owlFile = "examples/swore/swore.rdf";
 		} else if(ont.equals(TestOntology.MDM)) {
-			owlFile = "../test/MDM0.73.owl";
+			owlFile = "test/MDM0.73.owl";
 		} 
 		
 		try {	
 			ComponentManager cm = ComponentManager.getInstance();
-			AbstractKnowledgeSource source;
+			KnowledgeSource source;
 			
 			// parse KB string if one has been specified
 			if(!kbString.isEmpty() || ont.equals(TestOntology.EMPTY)) {
@@ -149,10 +148,17 @@ public final class TestOntologies {
 				source = new KBFile(kb);
 			// do nothing for empty ontology
 			} else {
-				source = new OWLFile(owlFile);
+				source = cm.knowledgeSource(OWLFile.class);
+				try {
+					cm.applyConfigEntry(source, "url", new File(owlFile).toURI().toURL());
+				} catch (MalformedURLException e) {
+					e.printStackTrace();
+				}			
 			}
 			
-			AbstractReasonerComponent rc = new OWLAPIReasoner(Collections.singleton(source));
+			ReasonerComponent rc = cm.reasoner(OWLAPIReasoner.class, source);
+//			ReasonerComponent rc = cm.reasoner(FastInstanceChecker.class, source);
+			source.init();
 			rc.init();
 			return rc;	
 		} catch(ParseException e) {
